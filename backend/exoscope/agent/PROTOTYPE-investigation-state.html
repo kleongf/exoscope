@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTYPE · Investigation state</title>
+<!-- PROTOTYPE: throwaway. The pure model in <script id="model"> is the part worth lifting. -->
+<style>
+  :root { --bg:#fbfaf8; --panel:#fff; --ink:#1d1d1f; --muted:#6b6b70; --line:#e6e3de; --accent:#3b5bdb; --ok:#2b8a3e; --bad:#c92a2a; --warn:#b7791f; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system, "Segoe UI", system-ui, sans-serif; }
+  main { max-width:1180px; margin:0 auto; padding:32px 20px 64px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 10px; }
+  h3 { font-size:14px; margin:14px 0 6px; }
+  .intro { color:var(--muted); max-width:820px; margin:0 0 24px; }
+  .question { background:var(--panel); border-left:3px solid var(--accent); padding:10px 14px; margin:0 0 24px; }
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 18px; }
+  .changed { background:#eef2ff; border:1px solid #c5d0fa; border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:14px; }
+  .changed.refused { background:#fff5f5; border-color:#f5c2c2; }
+  dl { display:grid; grid-template-columns: 170px 1fr; gap:4px 12px; margin:0; font-size:14px; }
+  dt { color:var(--muted); }
+  dd { margin:0; }
+  ul { margin:4px 0; padding-left:18px; font-size:14px; }
+  li { margin:2px 0; }
+  .tag { display:inline-block; font-size:12px; padding:0 7px; border-radius:999px; border:1px solid var(--line); color:var(--muted); margin-left:4px; }
+  .ok { color:var(--ok); } .bad { color:var(--bad); } .warn { color:var(--warn); }
+  .tag.live { color:var(--ok); border-color:#b2dfbd; } .tag.snap { color:var(--warn); border-color:#f0d9a8; } .tag.web { color:#7048e8; border-color:#d0bfff; }
+  button { font:inherit; font-size:13px; padding:6px 10px; margin:3px 4px 3px 0; border:1px solid var(--line); background:#fff; border-radius:7px; cursor:pointer; color:var(--ink); }
+  button:hover { border-color:var(--accent); }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button:disabled { opacity:.45; cursor:default; }
+  .group { margin-bottom:8px; }
+  .group-label { font-size:12px; color:var(--muted); margin-right:6px; }
+  .tabs { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px; }
+  .tabs button.active { background:var(--ink); color:#fff; border-color:var(--ink); }
+  ol.steps { padding-left:20px; }
+  ol.steps li { margin:6px 0; }
+  ol.steps li.done button { opacity:.5; }
+  .scenario-desc { color:var(--muted); font-size:14px; margin:0 0 10px; }
+  .muted { color:var(--muted); }
+  table { border-collapse:collapse; font-size:13px; width:100%; }
+  td, th { text-align:left; padding:3px 6px; border-bottom:1px solid var(--line); }
+  .turn { border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin:6px 0; }
+  .turn .status { font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+  .section { margin-top:22px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>ExoScope harness: Investigation state</h1>
+  <p class="intro">PROTOTYPE · throwaway. Click through what a student and Gemma do during the demo and watch the Investigation change. Nothing is saved. The NASA archive, Gemma and the web are simulated with fixed data.</p>
+  <div class="question"><strong>Question this answers:</strong> Does our harness's Investigation/turn state model represent every case the demo hits, and does it make it impossible for the agent to claim something that didn't happen?</div>
+
+  <div class="grid">
+    <section>
+      <div class="card">
+        <h2>Guided walkthroughs</h2>
+        <div class="tabs" id="tabs"></div>
+        <p class="scenario-desc" id="scenario-desc"></p>
+        <ol class="steps" id="steps"></ol>
+      </div>
+      <div class="card section">
+        <h2>Free play</h2>
+        <div id="freeplay"></div>
+      </div>
+    </section>
+    <section>
+      <div class="card">
+        <h2>Current state</h2>
+        <div id="changed"></div>
+        <div id="state"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- ======================= Pure model (liftable) ======================= -->
+<script id="model">
+const Model = (() => {
+  const CALL_CAP = 5;
+
+  // Fixture standing in for load_system's output (values from the real TRAPPIST-1 Snapshot).
+  const AGOL = "Agol et al. 2021";
+  const TRAPPIST = {
+    hostname: "TRAPPIST-1",
+    planets: [
+      ["TRAPPIST-1 b", 1.116, 0.014, 4.153, 0.16],
+      ["TRAPPIST-1 c", 1.097, 0.014, 2.214, 0.09],
+      ["TRAPPIST-1 d", 0.788, 0.011, 1.115, 0.04],
+      ["TRAPPIST-1 e", 0.920, 0.013, 0.646, 0.025],
+      ["TRAPPIST-1 f", 1.045, 0.013, 0.373, 0.015],
+      ["TRAPPIST-1 g", 1.129, 0.015, 0.252, 0.01],
+      ["TRAPPIST-1 h", 0.755, 0.014, 0.144, 0.006],
+    ],
+  };
+
+  const initialState = () => ({
+    question: null,
+    turns: [],
+    evidence: [],          // archive values and Web sources, never mixed
+    system: null,          // the one System in the System view
+    sample: null,          // Sample + its Interpretations
+    chart: null,           // what is plotted; may only reference archive evidence
+    uiCommands: [],        // validated (applied) or rejected, with reason
+    nextId: 1,
+    lastChange: { text: "A new Investigation. Nothing has happened yet.", refused: false },
+  });
+
+  // ---- helpers (pure) ----
+  const currentTurn = (s) => s.turns[s.turns.length - 1];
+  const turnOpen = (t) => t && !["done", "failed"].includes(t.status);
+  const pendingCall = (t) => t && t.calls.find((c) => c.outcome === "pending");
+  const refuse = (s, why) => ({ ...s, lastChange: { text: "Refused: " + why, refused: true } });
+  const withTurn = (s, fn) => {
+    const turns = s.turns.slice();
+    turns[turns.length - 1] = fn(currentTurn(s));
+    return { ...s, turns };
+  };
+  const resolveCall = (s, outcome, payload) =>
+    withTurn(s, (t) => ({
+      ...t,
+      status: "thinking",
+      calls: t.calls.map((c) => (c.outcome === "pending" ? { ...c, outcome, ...payload } : c)),
+    }));
+
+  function archiveEvidence(s, provenance) {
+    let id = s.nextId;
+    const ev = [];
+    for (const [name, r, rErr, insol, iErr] of TRAPPIST.planets) {
+      ev.push({ id: "E" + id++, kind: "archive", object: name, field: "radius", value: r, unit: "R⊕", errLo: rErr, errHi: rErr, source: AGOL, provenance });
+      ev.push({ id: "E" + id++, kind: "archive", object: name, field: "insolation", value: insol, unit: "S⊕", errLo: iErr, errHi: iErr, source: AGOL, provenance });
+    }
+    return { ev, nextId: id };
+  }
+
+  function loadSucceeded(s, provenance) {
+    const call = pendingCall(currentTurn(s));
+    const { ev, nextId } = archiveEvidence(s, provenance);
+    const cmd = { turn: s.turns.length, command: "show System " + TRAPPIST.hostname, status: "applied" };
+    let next = resolveCall(s, "ok", { result: `${TRAPPIST.hostname}, 7 planets` });
+    next = {
+      ...next,
+      nextId,
+      evidence: [...next.evidence.filter((e) => e.kind !== "archive"), ...ev],
+      system: { hostname: TRAPPIST.hostname, planets: TRAPPIST.planets.map((p) => p[0]), provenance },
+      uiCommands: [...next.uiCommands, cmd],
+      chart: null, // a new System invalidates the old chart
+    };
+    void call;
+    return next;
+  }
+
+  // ---- reducer ----
+  function reduce(s, a) {
+    const t = currentTurn(s);
+    switch (a.type) {
+      case "STUDENT_ASKS": {
+        if (turnOpen(t)) return refuse(s, "the previous turn has not finished; one turn at a time.");
+        const turn = { n: s.turns.length + 1, request: a.text, status: "thinking", calls: [], reply: null };
+        return {
+          ...s,
+          question: s.question ?? a.text,
+          turns: [...s.turns, turn],
+          lastChange: { text: `Student asked "${a.text}". Gemma is thinking.`, refused: false },
+        };
+      }
+
+      case "GEMMA_CALLS_TOOL": {
+        if (!turnOpen(t)) return refuse(s, "Gemma can only call tools during an open turn.");
+        if (pendingCall(t)) return refuse(s, "a tool call is still waiting for its result.");
+        if (t.status === "replying") return refuse(s, "the turn is already replying; no more tool calls.");
+        const used = t.calls.filter((c) => c.outcome !== "refused").length;
+        if (used >= CALL_CAP) {
+          const next = withTurn(s, (tt) => ({
+            ...tt,
+            status: "replying",
+            calls: [...tt.calls, { tool: a.tool, args: a.args, outcome: "refused", error: `limit of ${CALL_CAP} tool calls per turn reached` }],
+          }));
+          return { ...next, lastChange: { text: `Call ${used + 1} refused: limit of ${CALL_CAP} per turn. Gemma must now reply with what it has.`, refused: true } };
+        }
+        let next = withTurn(s, (tt) => ({ ...tt, status: "calling tools", calls: [...tt.calls, { tool: a.tool, args: a.args, outcome: "pending" }] }));
+        next = { ...next, lastChange: { text: `Gemma called ${a.tool}(${JSON.stringify(a.args)}). Waiting for the result.`, refused: false } };
+        return resolveSynchronousTools(next, a);
+      }
+
+      case "ARCHIVE_ANSWERS_LIVE": {
+        const c = pendingCall(t);
+        if (!c || c.tool !== "load_system") return refuse(s, "no load_system call is waiting for the archive.");
+        const next = loadSucceeded(s, { mode: "live", at: "14:32" });
+        return { ...next, lastChange: { text: "NASA archive answered live. TRAPPIST-1 is in the System view, labelled Live · fetched 14:32.", refused: false } };
+      }
+
+      case "ARCHIVE_TIMES_OUT": {
+        const c = pendingCall(t);
+        if (!c || c.tool !== "load_system") return refuse(s, "no load_system call is waiting for the archive.");
+        if (a.snapshot) {
+          const next = loadSucceeded(s, { mode: "snapshot", at: "2026-10-25" });
+          return { ...next, lastChange: { text: "NASA timed out after 5 s. The Snapshot was used instead and is labelled Cached · Snapshot 2026-10-25.", refused: false } };
+        }
+        const next = resolveCall(s, "error", { error: "catalog_unavailable: archive timed out and no Snapshot exists" });
+        return { ...next, lastChange: { text: "NASA timed out and there is no Snapshot for this System. The tool returned an error.", refused: false } };
+      }
+
+      case "CATALOG_REJECTS_NAME": {
+        const c = pendingCall(t);
+        if (!c || c.tool !== "load_system") return refuse(s, "no load_system call is waiting.");
+        const error = a.reason === "ambiguous"
+          ? `ambiguous_system: "${c.args.name}" matches ${a.total} Systems (e.g. ${a.candidates.join(", ")})`
+          : `unknown_system: no System called "${c.args.name}"`;
+        const next = resolveCall(s, "error", { error });
+        return { ...next, lastChange: { text: "The catalog rejected the name. The System view is unchanged.", refused: false } };
+      }
+
+      case "SEARCH_RETURNS": {
+        const c = pendingCall(t);
+        if (!c || c.tool !== "search_catalog") return refuse(s, "no search_catalog call is waiting.");
+        const sample = { filters: c.args.filters, interpretations: c.args.interpretations, count: a.count, excluded: a.excluded, provenance: { mode: "live", at: "14:35" } };
+        const next = resolveCall(s, "ok", { result: `${a.count} planets (${a.excluded} excluded: missing values)` });
+        return { ...next, sample, lastChange: { text: `Live search returned a Sample of ${a.count} planets; ${a.excluded} excluded for missing values. Interpretations shown as chips.`, refused: false } };
+      }
+
+      case "WEB_SEARCH_RETURNS": {
+        const c = pendingCall(t);
+        if (!c || c.tool !== "web_search") return refuse(s, "no web_search call is waiting.");
+        let id = s.nextId;
+        const sources = a.sources.map((src) => ({ id: "W" + id++, kind: "web", title: src.title, url: src.url, retrievedAt: "14:37" }));
+        const next = resolveCall(s, "ok", { result: `${sources.length} Web sources`, sourceIds: sources.map((x) => x.id) });
+        return { ...next, nextId: id, evidence: [...next.evidence, ...sources], lastChange: { text: `Web search returned ${sources.length} Web sources. They are citable, never plottable.`, refused: false } };
+      }
+
+      case "WEB_SEARCH_FAILS": {
+        const c = pendingCall(t);
+        if (!c || c.tool !== "web_search") return refuse(s, "no web_search call is waiting.");
+        const next = resolveCall(s, "error", { error: "search returned no grounded sources" });
+        return { ...next, lastChange: { text: "Web search came back with no sources. Gemma may not cite anything.", refused: false } };
+      }
+
+      case "GEMMA_REPLIES": {
+        if (!turnOpen(t)) return refuse(s, "there is no open turn to reply to.");
+        if (pendingCall(t)) return refuse(s, "Gemma cannot reply while a tool result is still pending.");
+        const allowed = new Set(allowedClaims(s).map((c) => c.key));
+        const claims = a.claims.map((c) => ({ ...c, supported: allowed.has(c.key) }));
+        const unsupported = claims.filter((c) => !c.supported);
+        const next = withTurn(s, (tt) => ({ ...tt, status: "done", reply: { text: a.text, claims } }));
+        return {
+          ...next,
+          lastChange: unsupported.length
+            ? { text: `Reply blocked from claiming: ${unsupported.map((c) => `"${c.text}"`).join(", ")}. No successful tool result supports it.`, refused: true }
+            : { text: "Gemma replied. Every claim in the reply is backed by a successful tool result.", refused: false },
+        };
+      }
+
+      case "GEMMA_UNAVAILABLE": {
+        if (!turnOpen(t)) return refuse(s, "there is no open turn.");
+        const next = withTurn(s, (tt) => ({ ...tt, status: "failed", reply: { text: "Gemma could not be reached. Nothing was changed.", claims: [] } }));
+        return { ...next, lastChange: { text: "Gemma API failed. The turn is marked failed; earlier results are kept.", refused: true } };
+      }
+
+      default:
+        return s;
+    }
+  }
+
+  // Tools that need no outside service resolve inside the reducer, so their validation can't be skipped.
+  function resolveSynchronousTools(s, a) {
+    if (a.tool === "set_scene_view") {
+      const { focus } = a.args;
+      if (!s.system) {
+        const next = resolveCall(s, "error", { error: "no System is loaded" });
+        return { ...next, uiCommands: [...next.uiCommands, { turn: s.turns.length, command: `focus ${focus}`, status: "rejected", reason: "no System loaded" }], lastChange: { text: "Scene command rejected: no System is loaded.", refused: true } };
+      }
+      const known = s.system.planets.includes(focus);
+      if (!known) {
+        const next = resolveCall(s, "error", { error: `unknown planet "${focus}" in ${s.system.hostname}` });
+        return { ...next, uiCommands: [...next.uiCommands, { turn: s.turns.length, command: `focus ${focus}`, status: "rejected", reason: `no planet "${focus}" in ${s.system.hostname}` }], lastChange: { text: `Scene command rejected on the server: "${focus}" is not a planet in ${s.system.hostname}. The scene did not change.`, refused: true } };
+      }
+      const next = resolveCall(s, "ok", { result: `focused ${focus}, time ×${a.args.timeScale ?? 1}` });
+      return { ...next, uiCommands: [...next.uiCommands, { turn: s.turns.length, command: `focus ${focus}, time ×${a.args.timeScale ?? 1}`, status: "applied" }], lastChange: { text: `Scene command validated and applied: focus ${focus}.`, refused: false } };
+    }
+    if (a.tool === "compare") {
+      const { x, y, include } = a.args;
+      const webRefs = (include ?? []).filter((id) => s.evidence.find((e) => e.id === id && e.kind === "web"));
+      if (webRefs.length) {
+        const next = resolveCall(s, "refused", { error: "Web sources cannot be plotted; only archive values can." });
+        return { ...next, lastChange: { text: "Refused: Gemma tried to put a Web source on the chart. Only archive values can be plotted.", refused: true } };
+      }
+      const points = s.evidence.filter((e) => e.kind === "archive" && (e.field === x || e.field === y));
+      if (!points.length) {
+        const next = resolveCall(s, "error", { error: "no archive values to compare" });
+        return { ...next, lastChange: { text: "Compare failed: there are no archive values loaded.", refused: true } };
+      }
+      const chart = { x, y, evidenceIds: points.map((e) => e.id), planets: new Set(points.map((e) => e.object)).size };
+      const next = resolveCall(s, "ok", { result: `${y} vs ${x}, ${chart.planets} planets` });
+      return { ...next, chart, lastChange: { text: `Chart created: ${y} vs ${x} for ${chart.planets} planets, every point linked to an archive evidence record.`, refused: false } };
+    }
+    return s; // load_system, search_catalog, web_search wait for an outside event
+  }
+
+  // ---- derived views ----
+  // The only things the agent may say happened: successful (or honestly failed) tool results.
+  function allowedClaims(s) {
+    const out = [];
+    for (const turn of s.turns) {
+      for (const c of turn.calls) {
+        if (c.outcome === "ok") {
+          if (c.tool === "load_system") out.push({ key: `loaded:${s.system?.hostname}`, text: `opened ${s.system?.hostname} (${s.system?.provenance.mode})`, turn: turn.n });
+          if (c.tool === "set_scene_view") out.push({ key: `focused:${c.args.focus}`, text: `focused on ${c.args.focus}`, turn: turn.n });
+          if (c.tool === "compare") out.push({ key: `plotted:${c.args.y}:${c.args.x}`, text: `plotted ${c.args.y} against ${c.args.x}`, turn: turn.n });
+          if (c.tool === "search_catalog") out.push({ key: "sample", text: `found a Sample (${c.result})`, turn: turn.n });
+          if (c.tool === "web_search") for (const id of c.sourceIds) out.push({ key: `cite:${id}`, text: `cite Web source ${id}`, turn: turn.n });
+        }
+        if (c.outcome === "error" || c.outcome === "refused") out.push({ key: `failed:${c.tool}`, text: `say ${c.tool} did not work: ${c.error}`, turn: turn.n });
+      }
+    }
+    return out;
+  }
+
+  // Which numbers could go into a Report, and whether each has full provenance.
+  function reportReadiness(s) {
+    const archive = s.evidence.filter((e) => e.kind === "archive");
+    const complete = archive.filter((e) => e.value != null && e.unit && e.source && e.provenance && e.errLo != null);
+    const plotted = s.chart ? s.chart.evidenceIds.length : 0;
+    const problems = [];
+    if (!s.question) problems.push("no research question yet");
+    if (!archive.length) problems.push("no archive data loaded");
+    if (archive.length && complete.length < archive.length) problems.push(`${archive.length - complete.length} values lack unit, source, provenance or uncertainty`);
+    const live = archive.some((e) => e.provenance.mode === "live");
+    const cached = archive.some((e) => e.provenance.mode === "snapshot");
+    return {
+      ready: problems.length === 0,
+      problems,
+      archiveValues: archive.length,
+      complete: complete.length,
+      plotted,
+      provenanceLine: live && cached ? "mixed Live and Snapshot" : live ? "Live" : cached ? "Snapshot (cached)" : "none",
+      webSources: s.evidence.filter((e) => e.kind === "web").length,
+      rejectedCommands: s.uiCommands.filter((c) => c.status === "rejected").length,
+      interpretations: s.sample?.interpretations?.length ?? 0,
+    };
+  }
+
+  return { initialState, reduce, allowedClaims, reportReadiness, CALL_CAP };
+})();
+</script>
+
+<!-- ======================= Throwaway page ======================= -->
+<script>
+const A = {
+  ask: (text) => ({ type: "STUDENT_ASKS", text }),
+  call: (tool, args) => ({ type: "GEMMA_CALLS_TOOL", tool, args }),
+  live: () => ({ type: "ARCHIVE_ANSWERS_LIVE" }),
+  timeout: (snapshot) => ({ type: "ARCHIVE_TIMES_OUT", snapshot }),
+  rejectName: (reason, total, candidates) => ({ type: "CATALOG_REJECTS_NAME", reason, total, candidates }),
+  search: (count, excluded) => ({ type: "SEARCH_RETURNS", count, excluded }),
+  web: () => ({ type: "WEB_SEARCH_RETURNS", sources: [
+    { title: "JWST thermal emission from TRAPPIST-1 b (Greene et al. 2023)", url: "https://www.nature.com/articles/s41586-023-05951-7" },
+    { title: "TRAPPIST-1 c: no thick CO2 atmosphere (Zieba et al. 2023)", url: "https://www.nature.com/articles/s41586-023-06232-z" },
+  ] }),
+  webFails: () => ({ type: "WEB_SEARCH_FAILS" }),
+  reply: (text, claims) => ({ type: "GEMMA_REPLIES", text, claims }),
+  down: () => ({ type: "GEMMA_UNAVAILABLE" }),
+};
+
+const step = (label, action) => ({ label, action });
+const openTrappist = [
+  step('Student asks "Open TRAPPIST-1"', A.ask("Open TRAPPIST-1")),
+  step("Gemma calls load_system(TRAPPIST-1)", A.call("load_system", { name: "TRAPPIST-1" })),
+];
+
+const SCENARIOS = [
+  { name: "Happy path", desc: "The opening beat. Watch the turn move thinking → calling tools → thinking → done, the System appear with a Live label, and the reply's claim get checked.", steps: [
+    ...openTrappist,
+    step("NASA archive answers live", A.live()),
+    step('Gemma replies "TRAPPIST-1 is open: 7 planets."', A.reply("TRAPPIST-1 is open: 7 planets.", [{ key: "loaded:TRAPPIST-1", text: "opened TRAPPIST-1" }])),
+  ] },
+  { name: "NASA timeout", desc: "NASA doesn't answer within 5 s. The Snapshot is used, and every number is labelled as cached. Watch the provenance label and the Report readiness line.", steps: [
+    ...openTrappist,
+    step("NASA times out → use the Snapshot", A.timeout(true)),
+    step('Gemma replies "Opened TRAPPIST-1 from a cached Snapshot."', A.reply("Opened TRAPPIST-1 from a cached Snapshot (2026-10-25).", [{ key: "loaded:TRAPPIST-1", text: "opened TRAPPIST-1" }])),
+  ] },
+  { name: "Ambiguous name", desc: 'The student says "Open Kepler". It matches 1,950 Systems. Gemma must not guess; then Gemma tries to claim it opened something anyway.', steps: [
+    step('Student asks "Open Kepler"', A.ask("Open Kepler")),
+    step('Gemma calls load_system("kepler")', A.call("load_system", { name: "kepler" })),
+    step("Catalog: ambiguous (1,950 matches)", A.rejectName("ambiguous", 1950, ["Kepler-186", "Kepler-22", "Kepler-452"])),
+    step('Gemma wrongly replies "Kepler-186 is open." (should be blocked)', A.reply("Kepler-186 is open.", [{ key: "loaded:Kepler-186", text: "opened Kepler-186" }])),
+  ] },
+  { name: "Planet z rejected", desc: "With TRAPPIST-1 open, Gemma is asked to focus on a planet that doesn't exist. The server rejects the scene command, and the reply may only say it failed.", steps: [
+    ...openTrappist,
+    step("NASA archive answers live", A.live()),
+    step("Gemma replies (turn 1 done)", A.reply("TRAPPIST-1 is open.", [{ key: "loaded:TRAPPIST-1", text: "opened TRAPPIST-1" }])),
+    step('Student asks "Focus on planet z"', A.ask("Focus on planet z")),
+    step('Gemma calls set_scene_view(focus: "TRAPPIST-1 z")', A.call("set_scene_view", { focus: "TRAPPIST-1 z", timeScale: 1 })),
+    step('Gemma replies "Focused on planet z." (should be blocked)', A.reply("Focused on planet z.", [{ key: "focused:TRAPPIST-1 z", text: "focused on planet z" }])),
+  ] },
+  { name: "5-call cap", desc: "Gemma loops, calling tools again and again. The 6th call is refused and the turn is forced to reply with what it has.", steps: [
+    ...openTrappist,
+    step("NASA answers live (call 1 ok)", A.live()),
+    step("Call 2: focus b", A.call("set_scene_view", { focus: "TRAPPIST-1 b" })),
+    step("Call 3: focus c", A.call("set_scene_view", { focus: "TRAPPIST-1 c" })),
+    step("Call 4: focus d", A.call("set_scene_view", { focus: "TRAPPIST-1 d" })),
+    step("Call 5: focus e", A.call("set_scene_view", { focus: "TRAPPIST-1 e" })),
+    step("Call 6: focus f (should be refused)", A.call("set_scene_view", { focus: "TRAPPIST-1 f" })),
+    step("Gemma replies with what it has", A.reply("I opened TRAPPIST-1 and focused on planet e.", [{ key: "focused:TRAPPIST-1 e", text: "focused on e" }])),
+  ] },
+  { name: "Liquid water + web", desc: "The web-search beat. The archive can't answer, Gemma searches and cites Web sources, then tries to put a Web source on the chart. That must be refused.", steps: [
+    ...openTrappist,
+    step("NASA answers live", A.live()),
+    step("Gemma replies (turn 1 done)", A.reply("TRAPPIST-1 is open.", [{ key: "loaded:TRAPPIST-1", text: "opened TRAPPIST-1" }])),
+    step('Student asks "Does any of these have liquid water?"', A.ask("Does any of these have liquid water?")),
+    step('Gemma calls web_search("JWST TRAPPIST-1 atmosphere")', A.call("web_search", { query: "JWST TRAPPIST-1 atmosphere" })),
+    step("Web search returns 2 sources", A.web()),
+    step("Gemma calls compare including a Web source (should be refused)", A.call("compare", { x: "insolation", y: "radius", include: ["W15"] })),
+    step("Gemma replies citing W15 and W16", A.reply("The catalog can't tell us about water. JWST found no thick atmosphere on b or c [W15, W16].", [{ key: "cite:W15", text: "cite W15" }, { key: "cite:W16", text: "cite W16" }])),
+  ] },
+  { name: "Report readiness", desc: "Build up a full Investigation, then look at the Report readiness panel: what's plotted, provenance, Interpretations, Web sources and rejected commands.", steps: [
+    ...openTrappist,
+    step("NASA answers live", A.live()),
+    step("Gemma calls compare(radius vs insolation)", A.call("compare", { x: "insolation", y: "radius" })),
+    step("Gemma replies", A.reply("Here's radius against insolation.", [{ key: "plotted:radius:insolation", text: "plotted radius vs insolation" }])),
+    step('Student asks "Find small planets with periods under 10 days"', A.ask("Find small planets with periods under 10 days")),
+    step('Gemma calls search_catalog with Interpretation "small = radius < 2 R⊕"', A.call("search_catalog", { filters: ["radius < 2 R⊕", "period < 10 d"], interpretations: [{ term: "small", as: "radius < 2 R⊕" }] })),
+    step("Archive returns 1,228 planets (31 excluded)", A.search(1228, 31)),
+    step("Gemma replies", A.reply("I read 'small' as under 2 Earth radii: 1,228 planets.", [{ key: "sample", text: "found a Sample" }])),
+  ] },
+];
+
+const FREEPLAY = [
+  ["Student", [
+    ['asks "Open TRAPPIST-1"', A.ask("Open TRAPPIST-1")],
+    ['asks "Open Kepler"', A.ask("Open Kepler")],
+    ['asks "Focus on planet e"', A.ask("Focus on planet e")],
+    ['asks about liquid water', A.ask("Does any of these have liquid water?")],
+  ]],
+  ["Gemma calls", [
+    ["load_system(TRAPPIST-1)", A.call("load_system", { name: "TRAPPIST-1" })],
+    ["load_system(kepler)", A.call("load_system", { name: "kepler" })],
+    ["set_scene_view(e)", A.call("set_scene_view", { focus: "TRAPPIST-1 e", timeScale: 10 })],
+    ["set_scene_view(z)", A.call("set_scene_view", { focus: "TRAPPIST-1 z" })],
+    ["compare(radius, insolation)", A.call("compare", { x: "insolation", y: "radius" })],
+    ["search_catalog(small, <10 d)", A.call("search_catalog", { filters: ["radius < 2 R⊕", "period < 10 d"], interpretations: [{ term: "small", as: "radius < 2 R⊕" }] })],
+    ["web_search(JWST)", A.call("web_search", { query: "JWST TRAPPIST-1 atmosphere" })],
+  ]],
+  ["Outside world", [
+    ["NASA answers live", A.live()],
+    ["NASA times out → Snapshot", A.timeout(true)],
+    ["NASA times out, no Snapshot", A.timeout(false)],
+    ["Catalog: ambiguous", A.rejectName("ambiguous", 1950, ["Kepler-186", "Kepler-22"])],
+    ["Catalog: unknown name", A.rejectName("unknown")],
+    ["Search returns 1,228", A.search(1228, 31)],
+    ["Web returns 2 sources", A.web()],
+    ["Web returns nothing", A.webFails()],
+  ]],
+  ["Gemma replies", [
+    ['"TRAPPIST-1 is open"', A.reply("TRAPPIST-1 is open.", [{ key: "loaded:TRAPPIST-1", text: "opened TRAPPIST-1" }])],
+    ['"Focused on planet e"', A.reply("Focused on planet e.", [{ key: "focused:TRAPPIST-1 e", text: "focused on e" }])],
+    ['"Focused on planet z"', A.reply("Focused on planet z.", [{ key: "focused:TRAPPIST-1 z", text: "focused on z" }])],
+    ['a reply with no claims', A.reply("Let me know what to look at next.", [])],
+    ["Gemma API is down", A.down()],
+  ]],
+];
+
+let state = Model.initialState();
+let active = 0, stepIdx = 0;
+const esc = (x) => String(x).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function dispatch(action) { state = Model.reduce(state, action); render(); }
+
+function renderTabs() {
+  const tabs = document.getElementById("tabs");
+  tabs.innerHTML = "";
+  SCENARIOS.forEach((sc, i) => {
+    const b = document.createElement("button");
+    b.textContent = sc.name;
+    if (i === active) b.className = "active";
+    b.onclick = () => { active = i; stepIdx = 0; state = Model.initialState(); render(); };
+    tabs.appendChild(b);
+  });
+  const sc = SCENARIOS[active];
+  document.getElementById("scenario-desc").textContent = sc.desc + " Starting a walkthrough resets the Investigation.";
+  const ol = document.getElementById("steps");
+  ol.innerHTML = "";
+  sc.steps.forEach((st, i) => {
+    const li = document.createElement("li");
+    if (i < stepIdx) li.className = "done";
+    const b = document.createElement("button");
+    b.textContent = st.label;
+    if (i === stepIdx) b.className = "primary";
+    b.disabled = i !== stepIdx;
+    b.onclick = () => { stepIdx = i + 1; dispatch(st.action); };
+    li.appendChild(b);
+    ol.appendChild(li);
+  });
+}
+
+function renderFreeplay() {
+  const el = document.getElementById("freeplay");
+  el.innerHTML = "";
+  for (const [label, items] of FREEPLAY) {
+    const g = document.createElement("div");
+    g.className = "group";
+    g.innerHTML = `<span class="group-label">${esc(label)}</span>`;
+    for (const [text, action] of items) {
+      const b = document.createElement("button");
+      b.textContent = text;
+      b.onclick = () => dispatch(action);
+      g.appendChild(b);
+    }
+    el.appendChild(g);
+  }
+  const r = document.createElement("button");
+  r.textContent = "Start a new Investigation";
+  r.onclick = () => { state = Model.initialState(); stepIdx = 0; render(); };
+  el.appendChild(r);
+}
+
+const provTag = (p) => !p ? "" : p.mode === "live" ? `<span class="tag live">Live · fetched ${p.at}</span>` : `<span class="tag snap">Cached · Snapshot ${p.at}</span>`;
+const statusClass = (s) => s === "done" ? "ok" : s === "failed" ? "bad" : "warn";
+const outcomeClass = (o) => o === "ok" ? "ok" : o === "pending" ? "warn" : "bad";
+
+function renderState() {
+  const s = state;
+  const lc = s.lastChange;
+  document.getElementById("changed").innerHTML = `<div class="changed${lc.refused ? " refused" : ""}"><strong>What just changed:</strong> ${esc(lc.text)}</div>`;
+
+  const turns = s.turns.map((t) => `
+    <div class="turn">
+      <div><strong>Turn ${t.n}</strong> · "${esc(t.request)}" · <span class="status ${statusClass(t.status)}">${esc(t.status)}</span></div>
+      ${t.calls.length ? `<ul>${t.calls.map((c, i) => `<li>${i + 1}. ${esc(c.tool)}(${esc(JSON.stringify(c.args))}) → <span class="${outcomeClass(c.outcome)}">${esc(c.outcome)}</span>${c.result ? ": " + esc(c.result) : ""}${c.error ? ": " + esc(c.error) : ""}</li>`).join("")}</ul>` : '<div class="muted">No tool calls yet.</div>'}
+      ${t.reply ? `<div>Reply: "${esc(t.reply.text)}"${t.reply.claims.map((c) => ` <span class="tag ${c.supported ? "live" : ""}" style="${c.supported ? "" : "color:var(--bad);border-color:#f5c2c2"}">${c.supported ? "✓" : "✗ unsupported"} ${esc(c.text)}</span>`).join("")}</div>` : ""}
+    </div>`).join("") || '<div class="muted">No turns yet.</div>';
+
+  const archive = s.evidence.filter((e) => e.kind === "archive");
+  const web = s.evidence.filter((e) => e.kind === "web");
+  const claims = Model.allowedClaims(s);
+  const rr = Model.reportReadiness(s);
+
+  document.getElementById("state").innerHTML = `
+    <dl>
+      <dt>Research question</dt><dd>${s.question ? esc(s.question) : '<span class="muted">not set</span>'}</dd>
+      <dt>System view</dt><dd>${s.system ? `${esc(s.system.hostname)} · ${s.system.planets.length} planets ${provTag(s.system.provenance)}` : '<span class="muted">empty</span>'}</dd>
+      <dt>Sample</dt><dd>${s.sample ? `${s.sample.count} planets, ${s.sample.excluded} excluded ${provTag(s.sample.provenance)}<br>Filters: ${esc(s.sample.filters.join(" · "))}<br>Interpretations: ${s.sample.interpretations.map((i) => `<span class="tag">"${esc(i.term)}" read as ${esc(i.as)}</span>`).join("")}` : '<span class="muted">none</span>'}</dd>
+      <dt>Chart</dt><dd>${s.chart ? `${esc(s.chart.y)} vs ${esc(s.chart.x)} · ${s.chart.planets} planets · ${s.chart.evidenceIds.length} linked archive values` : '<span class="muted">none</span>'}</dd>
+      <dt>Evidence</dt><dd>${archive.length} archive values ${archive[0] ? provTag(archive[0].provenance) : ""} · ${web.length} Web sources</dd>
+    </dl>
+
+    <h3>Turns</h3>${turns}
+
+    <h3>Scene commands sent to the browser</h3>
+    ${s.uiCommands.length ? `<ul>${s.uiCommands.map((c) => `<li>Turn ${c.turn}: ${esc(c.command)} → <span class="${c.status === "applied" ? "ok" : "bad"}">${c.status}</span>${c.reason ? ` (${esc(c.reason)})` : ""}</li>`).join("")}</ul>` : '<div class="muted">None.</div>'}
+
+    <h3>What Gemma is allowed to say happened</h3>
+    ${claims.length ? `<ul>${claims.map((c) => `<li>Turn ${c.turn}: ${esc(c.text)}</li>`).join("")}</ul>` : '<div class="muted">Nothing yet: no tool has produced a result.</div>'}
+
+    ${web.length ? `<h3>Web sources <span class="tag web">citable · never plotted</span></h3><ul>${web.map((w) => `<li>${w.id}: ${esc(w.title)} <span class="muted">(${esc(new URL(w.url).hostname)}, ${w.retrievedAt})</span></li>`).join("")}</ul>` : ""}
+
+    ${archive.length ? `<h3>Archive values (sample)</h3><table><tr><th>ID</th><th>Planet</th><th>Field</th><th>Value</th><th>Source</th><th>Provenance</th></tr>${archive.slice(0, 4).map((e) => `<tr><td>${e.id}</td><td>${esc(e.object)}</td><td>${e.field}</td><td>${e.value} ±${e.errLo} ${e.unit}</td><td>${esc(e.source)}</td><td>${e.provenance.mode} ${e.provenance.at}</td></tr>`).join("")}</table><div class="muted">…and ${archive.length - 4} more.</div>` : ""}
+
+    <h3>Report readiness</h3>
+    <dl>
+      <dt>Ready to export</dt><dd class="${rr.ready ? "ok" : "bad"}">${rr.ready ? "Yes" : "No: " + esc(rr.problems.join("; "))}</dd>
+      <dt>Values with full provenance</dt><dd>${rr.complete} of ${rr.archiveValues}</dd>
+      <dt>Plotted values</dt><dd>${rr.plotted}</dd>
+      <dt>Data provenance line</dt><dd>${esc(rr.provenanceLine)}</dd>
+      <dt>Interpretations</dt><dd>${rr.interpretations}</dd>
+      <dt>Web sources section</dt><dd>${rr.webSources ? rr.webSources + " sources" : "omitted (none)"}</dd>
+      <dt>Rejected commands</dt><dd>${rr.rejectedCommands}</dd>
+    </dl>`;
+}
+
+function render() { renderTabs(); renderState(); }
+renderFreeplay();
+render();
+</script>
+</body>
+</html>
