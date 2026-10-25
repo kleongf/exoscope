@@ -234,3 +234,19 @@ def test_overall_timeout_cancels_a_slow_drip_body(
     assert result.error and "timed out" in result.error
     assert len(mocked.requests) == 1
     assert closed == [True]
+
+
+def test_provider_boundary_accepts_shared_evidence_without_xai_transport(
+    mocked: Transport, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from tests.test_agent_web import evidence
+
+    class FixtureProvider:
+        async def search(self, query: str) -> service.WebSearchResult:
+            return evidence(query)
+
+    monkeypatch.setattr(service, "get_provider", lambda: FixtureProvider())
+    result = service.search_web("  water?  ")
+    assert result.status == "ok" and result.query == "water?"
+    assert result.sources and result.supports
+    assert mocked.requests == []

@@ -1,9 +1,8 @@
 """Enforce the archive/Web source boundary independently of model instructions."""
 
 import re
+from contextvars import ContextVar
 from dataclasses import dataclass
-
-from pydantic import BaseModel, ConfigDict, Field
 
 from exoscope.catalog import System
 from exoscope.catalog.models import Quantity
@@ -38,11 +37,6 @@ ARCHIVE_LIMITATION = "The archive cannot establish surface liquid water."
 UNAVAILABLE = "Web search is unavailable; no Web sources were obtained."
 
 
-class WebArguments(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
-    query: str = Field(min_length=1, max_length=1000, pattern=r"^[^\x00]*[^\s\x00][^\x00]*$")
-
-
 @dataclass
 class WebPolicy:
     question: str
@@ -64,6 +58,10 @@ class WebPolicy:
                 "Load or refresh the relevant archive System before searching for Web sources."
             )
         return self.refusal
+
+
+# Each synchronous turn gets its own policy, including concurrent worker threads.
+CURRENT_WEB_POLICY: ContextVar[WebPolicy | None] = ContextVar("web_policy", default=None)
 
 
 def archive_only(text: str) -> bool:

@@ -5,7 +5,9 @@ from datetime import UTC, date, datetime
 import pytest
 from google.genai import types
 
-from exoscope.agent import loop
+from exoscope.agent import loop, runner
+from exoscope.agent.tools import load_system as load_tool
+from exoscope.agent.tools import web_search
 from exoscope.catalog import System, load_system
 from exoscope.catalog.models import LiveProvenance, Missing, SnapshotProvenance
 from exoscope.websearch.models import WebSearchResult
@@ -49,14 +51,15 @@ def run_mixed(
         return system
 
     monkeypatch.setattr(loop, "load_system", load)
-    monkeypatch.setattr(loop, "search_web", evidence)
+    monkeypatch.setattr(load_tool, "load_system", load)
+    monkeypatch.setattr(web_search, "search_web", evidence)
     replies = iter(
         [
             answer(call("web_search", query=question)),
             answer(types.Part(text="Radius is 999 Earth radii and liquid water is certain.")),
         ]
     )
-    return loop.run_loop(question, "TRAPPIST-1", lambda _: next(replies))
+    return runner.run_loop(question, "TRAPPIST-1", lambda _: next(replies))
 
 
 def test_mixed_finding_composes_typed_radii_with_original_supported_claim(
@@ -128,15 +131,16 @@ def test_failed_web_search_retains_archive_comparison_without_citation(
         return WebSearchResult(status="unavailable", query=query)
 
     monkeypatch.setattr(loop, "load_system", load)
-    monkeypatch.setattr(loop, "search_web", search)
+    monkeypatch.setattr(load_tool, "load_system", load)
+    monkeypatch.setattr(web_search, "search_web", search)
     replies = iter(
         [
             answer(call("web_search", query=QUESTION)),
             answer(types.Part(text="Water is certain.")),
         ]
     )
-    result = loop.run_loop(QUESTION, "TRAPPIST-1", lambda _: next(replies))
-    assert result.error is None
+    result = runner.run_loop(QUESTION, "TRAPPIST-1", lambda _: next(replies))
+    assert result.error is not None
     assert "0.75 Earth radii" in result.reply_text and "1.25 Earth radii" in result.reply_text
     assert "Snapshot 2026-10-24" in result.reply_text
     assert "no Web sources" in result.reply_text

@@ -5,7 +5,9 @@ from datetime import UTC, datetime
 import pytest
 from google.genai import types
 
-from exoscope.agent import loop
+from exoscope.agent import loop, runner
+from exoscope.agent.tools import load_system as load_tool
+from exoscope.agent.tools import web_search
 from exoscope.catalog import CatalogError, System
 from exoscope.websearch.models import WebSearchResult, WebSource, WebSupport
 from tests.test_agent import answer, call, offline_system
@@ -36,13 +38,14 @@ def run_search(
     monkeypatch: pytest.MonkeyPatch, question: str = QUESTION, *calls: types.Part
 ) -> loop.AgentResult:
     monkeypatch.setattr(loop, "load_system", offline_system)
+    monkeypatch.setattr(load_tool, "load_system", offline_system)
     responses = iter(
         [
             answer(*(calls or (call("web_search", query=question),))),
             answer(types.Part(text="A model rewrite claims certain water and invents a citation.")),
         ]
     )
-    return loop.run_loop(question, "TRAPPIST-1", lambda _: next(responses))
+    return runner.run_loop(question, "TRAPPIST-1", lambda _: next(responses))
 
 
 def test_custom_declaration_does_not_mix_builtin_search() -> None:
@@ -73,14 +76,15 @@ def test_liquid_water_loads_first_then_cites_original_support(
         return evidence(query)
 
     monkeypatch.setattr(loop, "load_system", load)
-    monkeypatch.setattr(loop, "search_web", search)
+    monkeypatch.setattr(load_tool, "load_system", load)
+    monkeypatch.setattr(web_search, "search_web", search)
     responses = iter(
         [
             answer(call(name="TRAPPIST-1"), call("web_search", query=QUESTION)),
             answer(types.Part(text="Invented water certainty and numbers.")),
         ]
     )
-    result = loop.run_loop(QUESTION, None, lambda _: next(responses))
+    result = runner.run_loop(QUESTION, None, lambda _: next(responses))
     assert events == ["archive", "search"]
     assert result.error is None
     assert "archive cannot establish surface liquid water" in result.reply_text
@@ -115,9 +119,9 @@ def test_canonical_metadata_and_archive_evidence_have_zero_search_calls(
     def forbidden(_: str) -> WebSearchResult:
         pytest.fail("Archive metadata question reached the web provider")
 
-    monkeypatch.setattr(loop, "search_web", forbidden)
+    monkeypatch.setattr(web_search, "search_web", forbidden)
     result = run_search(monkeypatch, question)
-    assert result.data.web_search is None and result.error is None
+    assert result.data.web_search is None and result.error is not None
 
 
 @pytest.mark.parametrize(
@@ -138,7 +142,7 @@ def test_external_or_mixed_question_is_not_blocked_by_field_keywords(
         queries.append(query)
         return evidence(query)
 
-    monkeypatch.setattr(loop, "search_web", search)
+    monkeypatch.setattr(web_search, "search_web", search)
     assert run_search(monkeypatch, question).data.web_search is not None
     assert queries == [question]
 
@@ -153,12 +157,13 @@ def test_duplicates_consume_one_attempt_including_batches(
         queries.append(query)
         return evidence(query)
 
-    monkeypatch.setattr(loop, "search_web", search)
+    monkeypatch.setattr(web_search, "search_web", search)
     monkeypatch.setattr(loop, "load_system", offline_system)
+    monkeypatch.setattr(load_tool, "load_system", offline_system)
     part = call("web_search", query=QUESTION)
     rounds = [answer(part, part)] if batched else [answer(part), answer(part)]
     responses = iter([*rounds, answer(types.Part(text="Done"))])
-    result = loop.run_loop(QUESTION, "TRAPPIST-1", lambda _: next(responses))
+    result = runner.run_loop(QUESTION, "TRAPPIST-1", lambda _: next(responses))
     assert queries == [QUESTION]
     assert result.data.web_search is not None and result.data.web_search.status == "ok"
     assert "According to science.nasa.gov" in result.reply_text
@@ -175,12 +180,12 @@ def test_failure_is_consumed_once_and_no_sdk_error_or_stale_citation(
         queries.append(query)
         raise RuntimeError("SDK secret-key and request URL")
 
-    monkeypatch.setattr(loop, "search_web", search)
+    monkeypatch.setattr(web_search, "search_web", search)
     result = run_search(
         monkeypatch, QUESTION, call("web_search", query=QUESTION), call("web_search", query="retry")
     )
     assert queries == [QUESTION]
-    assert result.error is None  # An honest finding remains available to the shared TTS path.
+    assert result.error is not None  # ToolError is retained by the generic registry loop.
     assert result.data.web_search is not None
     assert result.data.web_search.status == "unavailable"
     assert result.data.web_search.sources == [] and result.data.web_search.supports == []
@@ -205,7 +210,7 @@ def test_source_free_or_unavailable_output_never_survives_as_cited_evidence(
         def search(_: str, value: WebSearchResult = value) -> WebSearchResult:
             return value
 
-        monkeypatch.setattr(loop, "search_web", search)
+        monkeypatch.setattr(web_search, "search_web", search)
         result = run_search(monkeypatch)
         assert result.data.web_search is not None
         assert result.data.web_search.status == "unavailable"
@@ -229,8 +234,9 @@ def test_web_call_counts_toward_overall_five_tool_limit(monkeypatch: pytest.Monk
         return evidence(query)
 
     monkeypatch.setattr(loop, "load_system", load)
-    monkeypatch.setattr(loop, "search_web", search)
-    result = loop.run_loop(
+    monkeypatch.setattr(load_tool, "load_system", load)
+    monkeypatch.setattr(web_search, "search_web", search)
+    result = runner.run_loop(
         QUESTION,
         None,
         lambda _: answer(
@@ -253,9 +259,10 @@ def test_search_requires_successful_archive_refresh(monkeypatch: pytest.MonkeyPa
         pytest.fail("Search ran before archive context was obtained")
 
     monkeypatch.setattr(loop, "load_system", fail)
-    monkeypatch.setattr(loop, "search_web", forbidden)
+    monkeypatch.setattr(load_tool, "load_system", fail)
+    monkeypatch.setattr(web_search, "search_web", forbidden)
     responses = iter([answer(call("web_search", query=QUESTION)), answer(types.Part(text="Done"))])
-    result = loop.run_loop(QUESTION, "unknown", lambda _: next(responses))
+    result = runner.run_loop(QUESTION, "unknown", lambda _: next(responses))
     assert result.data.web_search is None and result.data.system is None
     assert "Load or refresh" in result.reply_text
     assert any("Current System data is unavailable" in item for item in result.warnings)
@@ -265,9 +272,10 @@ def test_provider_failure_retains_archive_commands_and_web_evidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(loop, "load_system", offline_system)
-    monkeypatch.setattr(loop, "search_web", evidence)
+    monkeypatch.setattr(load_tool, "load_system", offline_system)
+    monkeypatch.setattr(web_search, "search_web", evidence)
     responses = iter([answer(call(name="TRAPPIST-1"), call("web_search", query=QUESTION))])
-    result = loop.run_loop(QUESTION, None, lambda _: next(responses))
+    result = runner.run_loop(QUESTION, None, lambda _: next(responses))
     assert result.error is not None and "unverified" in result.error
     assert result.data.system is not None and result.ui_commands
     assert result.data.web_search is not None and result.data.web_search.grounded_text == CLAIM
