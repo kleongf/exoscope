@@ -67,7 +67,7 @@ def test_one_post_configuration_and_call_time_xai_key(
     assert payload["model"] == "grok-4.20-0309-non-reasoning"
     assert payload["tools"] == [{"type": "web_search"}]
     assert payload["include"] == ["web_search_call.action.sources"]
-    assert payload["max_output_tokens"] == 512
+    assert payload["max_output_tokens"] == 200
     assert payload["stream"] is False
     assert payload["store"] is False
     assert "google" not in request.content.decode().lower()
