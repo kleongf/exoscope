@@ -59,6 +59,8 @@ export const radiusReply = {
 export const searchFailureReply = {
   ...baseReply,
   transcript: "Search for liquid water again",
+  error: "Web search is unavailable; no Web sources were obtained.",
+  reply_audio: null,
   reply_text: "Web search is unavailable. I cannot verify liquid water or provide Web sources.",
   data: {
     system: null,

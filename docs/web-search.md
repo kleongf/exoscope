@@ -2,6 +2,14 @@
 
 `web_search(query)` is a normal custom tool in the Gemma 26B loop. Its handler makes a separate xAI Responses request using `grok-4.20-0309-non-reasoning` and the built-in `web_search` tool, following the current product intent. Gemini Google Search remains diagnostic history, not the production provider.
 
+## Registry integration
+
+`agent/tools/web_search.py` defines the strict `WebArguments` model and `WEB_SEARCH` Tool, registered once beside `LOAD_SYSTEM` in `agent/tools/registry.py`. Its handler returns `ToolOutput(payload, detail)` on success and raises `ToolError` for policy refusals or unavailable evidence. The generic `agent/loop.py` is unchanged from main's registry prefactor.
+
+`agent/runner.py` is the turn entry point used by `/turn`: it scopes the original question's Web policy with a `ContextVar`, resets it after every turn, and composes original cited text with canonical archive findings. Failed validation still consumes the Web attempt through the generic loop's step history. Unrecovered Web errors retain the common tool error and skip speech synthesis; archive evidence and successful commands remain available. This supersedes the historical spoken fallback observation below.
+
+`websearch/service.py` keeps the provider boundary: `SearchProvider.search(query)` returns the shared `WebSearchResult`; `get_provider()` selects the configured provider at call time. xAI is the only implementation and remains the default. No Tavily dependency, key selection, or request path is added.
+
 ## Request and evidence boundaries
 
 - Each turn can attempt Web search once, including unsuccessful attempts, within the five-tool-call budget. The handler makes one HTTP request with no automatic retry or redirect, and a 15-second overall deadline. A request can contain multiple internal search actions by the provider.
@@ -32,6 +40,8 @@ See [service smoke evidence](service-smoke.md), [voice integration](voice.md), a
 
 ## Integrated verification
 
-Full `./scripts/verify` passed after the canonical catalog and variant A integration: 317 backend tests, 42 frontend tests, generated API, formatting/lint/strict types, production build, five backend-validated browser fixtures, and combined voice/layout/Web-source browser smoke. The screenshot and console were inspected with zero console errors. Provider and model calls in browser verification are explicitly mocked.
+Full `./scripts/verify` passed after rebasing onto the agent registry prefactor (`8603afb`): 322 backend tests, 42 frontend tests, generated API, formatting/lint/strict types, production build, five backend-validated browser fixtures, and combined voice/layout/Web-source browser smoke. The screenshot and console were inspected with zero console errors. Provider and model calls in browser verification are explicitly mocked.
+
+Focused backend coverage also exercises the production `/turn` entry point, concurrent turn policy isolation, policy cleanup, and substitution at the provider boundary.
 
 The browser flow checks per-turn source associations, numeric citations, unique anchors, retrieved-only labels, retained history and accumulated Project sources, no stale evidence on a failed current turn, spoken attribution, archive-only questions, and unchanged archive/System values. Source and transcript UI use the preserved vendored shadcn controls; the canonical catalog implementation and Snapshots are unchanged.

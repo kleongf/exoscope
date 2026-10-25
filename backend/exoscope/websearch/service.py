@@ -1,7 +1,9 @@
-"""One xAI Responses POST; no SDK, retries, redirects, or environment proxies."""
+"""Provider boundary and xAI default; no retries, redirects, or environment proxies."""
 
 import asyncio
 import os
+from dataclasses import dataclass
+from typing import Protocol
 
 import httpx
 
@@ -48,6 +50,24 @@ async def _search(query: str, key: str) -> WebSearchResult:
             return grounded_result(query, response.json())
 
 
+class SearchProvider(Protocol):
+    async def search(self, query: str) -> WebSearchResult: ...
+
+
+@dataclass(frozen=True)
+class XaiProvider:
+    key: str
+
+    async def search(self, query: str) -> WebSearchResult:
+        return await _search(query, self.key)
+
+
+def get_provider() -> SearchProvider | None:
+    """Select at call time after dotenv loading. xAI is the only provider for now."""
+    key = os.environ.get("XAI_API_KEY", "").strip()
+    return XaiProvider(key) if key else None
+
+
 def search_web(query: str) -> WebSearchResult:
     """Synchronous tool facade; caller enforces at most one search per turn.
 
@@ -61,8 +81,8 @@ def search_web(query: str) -> WebSearchResult:
             f"Web search needs a query of 1-{MAX_QUERY_CHARACTERS} characters without NUL.",
         )
     # Read only at call time, after the app has loaded its selected dotenv.
-    key = os.environ.get("XAI_API_KEY", "").strip()
-    if not key:
+    provider = get_provider()
+    if provider is None:
         return _unavailable(query, "Web search is unavailable: no xAI API key is configured.")
     try:
         asyncio.get_running_loop()
@@ -71,7 +91,7 @@ def search_web(query: str) -> WebSearchResult:
     else:
         return _unavailable(query, "Web search must run outside the active event loop.")
     try:
-        return asyncio.run(_search(query, key))
+        return asyncio.run(provider.search(query))
     except (TimeoutError, httpx.TimeoutException):
         return _unavailable(query, "Web search timed out; no Web evidence was returned.")
     except Exception:

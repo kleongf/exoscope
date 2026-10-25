@@ -3,8 +3,10 @@
 import pytest
 from google.genai import types
 
-from exoscope.agent import loop, turn
+from exoscope.agent import loop, runner, turn
 from exoscope.agent.models import TurnRequest
+from exoscope.agent.tools import load_system as load_tool
+from exoscope.agent.tools import web_search
 from exoscope.catalog import CatalogError, System
 from exoscope.catalog.models import Missing
 from exoscope.voice.models import AudioInput, ReplyAudio
@@ -14,7 +16,7 @@ from tests.test_agent_web import CLAIM, QUESTION, evidence, run_search
 
 
 @pytest.mark.parametrize("available", [True, False])
-def test_cited_or_unavailable_web_finding_uses_shared_audio_pipeline(
+def test_web_success_is_spoken_and_failure_uses_shared_error_path(
     monkeypatch: pytest.MonkeyPatch, available: bool
 ) -> None:
     events: list[str] = []
@@ -45,7 +47,7 @@ def test_cited_or_unavailable_web_finding_uses_shared_audio_pipeline(
                 answer(types.Part(text="Unsupported rewrite")),
             ]
         )
-        return loop.run_loop(text, current, lambda _: next(responses))
+        return runner.run_loop(text, current, lambda _: next(responses))
 
     def synthesize(text: str) -> ReplyAudio:
         events.append("synthesize")
@@ -57,15 +59,20 @@ def test_cited_or_unavailable_web_finding_uses_shared_audio_pipeline(
         return ReplyAudio(data_base64="UklGRg==", mime_type="audio/wav")
 
     monkeypatch.setattr(loop, "load_system", offline_system)
-    monkeypatch.setattr(loop, "search_web", search)
+    monkeypatch.setattr(load_tool, "load_system", offline_system)
+    monkeypatch.setattr(web_search, "search_web", search)
     monkeypatch.setattr(turn, "run_agent", agent)
     monkeypatch.setattr(turn.voice, "transcribe", transcribe)
     monkeypatch.setattr(turn.voice, "synthesize", synthesize)
     response = turn.handle_turn(
         TurnRequest(audio=AudioInput(data_base64="YXVkaW8=", mime_type="audio/webm"))
     )
-    assert events == ["transcribe", "agent", "search", "synthesize"]
-    assert response.error is None and response.reply_audio is not None
+    assert events == ["transcribe", "agent", "search"] + (["synthesize"] if available else [])
+    assert (response.error is None) == available
+    assert (response.reply_audio is not None) == available
+    if not available:
+        assert "no Web sources" in response.reply_text
+        assert "According to" not in response.reply_text
     assert response.transcript == QUESTION
     assert response.data.system is not None and len(response.ui_commands) == 1
     assert response.data.web_search is not None
@@ -83,11 +90,12 @@ def test_missing_archive_radius_is_never_filled_from_web(monkeypatch: pytest.Mon
         pytest.fail("Missing archive radius triggered web fallback")
 
     monkeypatch.setattr(loop, "load_system", load)
-    monkeypatch.setattr(loop, "search_web", forbidden)
+    monkeypatch.setattr(load_tool, "load_system", load)
+    monkeypatch.setattr(web_search, "search_web", forbidden)
     responses = iter(
         [answer(call("web_search", query="planet radius")), answer(types.Part(text="Radius 9999"))]
     )
-    result = loop.run_loop("What is planet b's radius?", "TRAPPIST-1", lambda _: next(responses))
+    result = runner.run_loop("What is planet b's radius?", "TRAPPIST-1", lambda _: next(responses))
     assert (
         result.data.system is not None and result.data.system.planets[0].radius.status == "missing"
     )
@@ -114,14 +122,15 @@ def test_web_numbers_and_instructions_cannot_modify_archive_or_scene(
         )
 
     monkeypatch.setattr(loop, "load_system", offline_system)
-    monkeypatch.setattr(loop, "search_web", search)
+    monkeypatch.setattr(load_tool, "load_system", offline_system)
+    monkeypatch.setattr(web_search, "search_web", search)
     responses = iter(
         [
             answer(call(name="TRAPPIST-1"), call("web_search", query=QUESTION)),
             answer(types.Part(text="Done")),
         ]
     )
-    result = loop.run_loop(QUESTION, None, lambda _: next(responses))
+    result = runner.run_loop(QUESTION, None, lambda _: next(responses))
     assert result.data.system is not None and result.data.system.model_dump_json() == original
     assert len(result.ui_commands) == 1
     assert "9999" not in result.ui_commands[0].model_dump_json()
@@ -148,15 +157,16 @@ def test_invalid_web_dispatch_reserves_attempt_and_records_real_failed_steps(
         pytest.fail("Invalid or duplicate web dispatch reached the provider")
 
     monkeypatch.setattr(loop, "load_system", offline_system)
-    monkeypatch.setattr(loop, "search_web", forbidden)
+    monkeypatch.setattr(load_tool, "load_system", offline_system)
+    monkeypatch.setattr(web_search, "search_web", forbidden)
     clock = iter([10.0, 10.025, 20.0, 20.05])
     monkeypatch.setattr(loop, "monotonic", lambda: next(clock))
     invalid = call("web_search", **arguments)
     valid = call("web_search", query=QUESTION)
     rounds = [answer(invalid, valid)] if batched else [answer(invalid), answer(valid)]
     replies = iter([*rounds, answer(types.Part(text="Claiming success"))])
-    result = loop.run_loop(QUESTION, "TRAPPIST-1", lambda _: next(replies))
-    assert result.error is None and result.data.web_search is None
+    result = runner.run_loop(QUESTION, "TRAPPIST-1", lambda _: next(replies))
+    assert result.error is not None and result.data.web_search is None
     assert "Invalid web_search arguments" in result.reply_text
     assert [step.status for step in result.steps] == ["failed", "failed"]
     assert "Invalid web_search arguments" in result.steps[0].detail
@@ -172,10 +182,11 @@ def test_web_query_accepts_exactly_1000_characters(monkeypatch: pytest.MonkeyPat
         return evidence(query)
 
     monkeypatch.setattr(loop, "load_system", offline_system)
-    monkeypatch.setattr(loop, "search_web", search)
+    monkeypatch.setattr(load_tool, "load_system", offline_system)
+    monkeypatch.setattr(web_search, "search_web", search)
     query = "x" * 1000
     replies = iter([answer(call("web_search", query=query)), answer(types.Part(text="Done"))])
-    result = loop.run_loop(QUESTION, "TRAPPIST-1", lambda _: next(replies))
+    result = runner.run_loop(QUESTION, "TRAPPIST-1", lambda _: next(replies))
     assert queries == [query] and result.error is None
     assert result.steps[0].status == "completed"
 
@@ -189,7 +200,8 @@ def test_recovered_lookup_warning_survives_a_cited_web_finding(
         return offline_system(name)
 
     monkeypatch.setattr(loop, "load_system", load)
-    monkeypatch.setattr(loop, "search_web", evidence)
+    monkeypatch.setattr(load_tool, "load_system", load)
+    monkeypatch.setattr(web_search, "search_web", evidence)
     replies = iter(
         [
             answer(call(name="Trappist One")),
@@ -197,7 +209,7 @@ def test_recovered_lookup_warning_survives_a_cited_web_finding(
             answer(types.Part(text="Done")),
         ]
     )
-    result = loop.run_loop(QUESTION, None, lambda _: next(replies))
+    result = runner.run_loop(QUESTION, None, lambda _: next(replies))
     assert result.error is None and len(result.ui_commands) == 1
     assert any("Unknown System name" in warning for warning in result.warnings)
     assert any("Snapshot" in warning for warning in result.warnings)
@@ -231,10 +243,10 @@ def test_archive_question_has_zero_search_calls(
     def forbidden(_: str) -> WebSearchResult:
         pytest.fail("Archive-only question reached the web provider")
 
-    monkeypatch.setattr(loop, "search_web", forbidden)
+    monkeypatch.setattr(web_search, "search_web", forbidden)
     result = run_search(monkeypatch, f"What is planet e's {field}?")
     assert result.data.web_search is None
     assert result.data.system is not None
     assert "Missing archive values stay missing" in result.reply_text
-    assert result.error is None
+    assert result.error is not None
     assert len(result.steps) == 1 and result.steps[0].status == "failed"

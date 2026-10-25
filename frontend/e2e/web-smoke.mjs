@@ -140,7 +140,10 @@ export async function exerciseWeb(page) {
       .count(),
     1,
   );
+  const playsBeforeFailure = await page.evaluate(() => window.voiceFixture.plays);
   const unavailable = await submit(searchFailureReply);
+  await unavailable.getByRole("alert").filter({ hasText: searchFailureReply.error }).waitFor();
+  assert.equal(await page.evaluate(() => window.voiceFixture.plays), playsBeforeFailure);
   const failedEvidence = unavailable.getByTestId("web-evidence");
   await failedEvidence.getByText(/Web search unavailable/).waitFor();
   assert.equal(await failedEvidence.getByRole("link").count(), 0);

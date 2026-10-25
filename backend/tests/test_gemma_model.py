@@ -7,6 +7,7 @@ from google.genai import errors, types
 
 from exoscope.agent import loop
 from exoscope.agent.model_config import gemma_model
+from exoscope.agent.tools import load_system as load_tool
 from tests.test_agent import answer, call, offline_system
 
 
@@ -41,6 +42,7 @@ def test_selected_model_is_preserved_after_executing_tool(
     monkeypatch.setenv("GEMINI_API_KEY", "test-secret")
     monkeypatch.setenv("GEMMA_MODEL", model)
     monkeypatch.setattr(loop, "load_system", offline_system)
+    monkeypatch.setattr(load_tool, "load_system", offline_system)
     factory = MagicMock()
     generate = factory.return_value.__enter__.return_value.models.generate_content
     responses = iter(
