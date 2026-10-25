@@ -1,12 +1,15 @@
 """Shared audio → transcript → agent/tools → short spoken reply pipeline."""
 
+from datetime import UTC, datetime
+
 from exoscope.agent.models import ToolStep, TurnRequest, TurnResponse
 from exoscope.agent.runner import run_agent
 from exoscope.agent.timing import timed_step
+from exoscope.project import Project, ProjectError, ProjectStore, StepRecord, record_turn
 from exoscope.voice import service as voice
 
 
-def handle_turn(request: TurnRequest) -> TurnResponse:
+def handle_turn(request: TurnRequest, projects: ProjectStore | None = None) -> TurnResponse:
     transcript = request.text or ""
     steps: list[ToolStep] = []
     if request.audio is not None:
@@ -29,9 +32,15 @@ def handle_turn(request: TurnRequest) -> TurnResponse:
             error="The recognized text must contain 1-2000 characters. Please type instead.",
             steps=steps,
         )
-    result = run_agent(transcript, request.current_system)
+    project, unsaved = open_project(request.project_id, projects)
+    current = request.current_system or (project.current_system if project else None)
+    result = run_agent(transcript, current)
     response = TurnResponse(transcript=transcript, **result.model_dump())
     response.steps = steps + response.steps
+    if unsaved:
+        response.warnings.append(unsaved)
+    if project is not None and projects is not None:
+        save_to_project(response, project, projects)
     if response.reply_text and not response.error:
         try:
             with timed_step("synthesize", response.steps, "Created spoken reply."):
@@ -43,3 +52,36 @@ def handle_turn(request: TurnRequest) -> TurnResponse:
                 "Spoken reply unavailable; the text and System remain available."
             )
     return response
+
+
+def open_project(
+    project_id: str | None, projects: ProjectStore | None
+) -> tuple[Project | None, str | None]:
+    """The turn's Project, or a warning saying why this turn won't be saved to it."""
+    if project_id is None or projects is None:
+        return None, None
+    try:
+        return projects.load(project_id), None
+    except ProjectError as exc:
+        return None, f"This turn was not saved to the Project: {exc}"
+
+
+def save_to_project(response: TurnResponse, project: Project, projects: ProjectStore) -> None:
+    """Record the turn in its Project and save it. A failed save warns; it never fails the turn."""
+    record_turn(
+        project,
+        response.transcript,
+        response.reply_text,
+        now=datetime.now(UTC),
+        error=response.error,
+        steps=[StepRecord.model_validate(s.model_dump()) for s in response.steps],
+        system=response.data.system,
+        comparison=response.data.comparison,
+        sample=response.data.sample,
+    )
+    try:
+        projects.save(project)
+    except OSError as exc:
+        response.warnings.append(f"This turn was not saved to the Project: {exc}")
+        return
+    response.project = project

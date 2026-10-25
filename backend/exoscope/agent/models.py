@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from exoscope.catalog import Sample, System
 from exoscope.compare import Comparison
+from exoscope.project import Project
 from exoscope.scene.commands import UiCommand
 from exoscope.voice.models import AudioInput, ReplyAudio
 from exoscope.websearch.models import WebSearchResult
@@ -16,6 +17,9 @@ class TurnRequest(BaseModel):
     text: str | None = Field(default=None, min_length=1, max_length=2000)
     audio: AudioInput | None = None
     current_system: str | None = Field(default=None, min_length=1, max_length=200)
+    project_id: str | None = Field(
+        default=None, max_length=40, description="The Project this turn is saved to"
+    )
 
     @model_validator(mode="after")
     def exactly_one_input(self) -> Self:
@@ -52,3 +56,6 @@ class TurnResponse(BaseModel):
     error: str | None = None
     warnings: list[str] = Field(default_factory=list)
     steps: list[ToolStep] = Field(default_factory=list[ToolStep])
+    project: Project | None = Field(
+        default=None, description="The Project after this turn was saved; None if not saved"
+    )

@@ -64,7 +64,8 @@ Backup demo System if TRAPPIST-1 misbehaves: TOI-700 (not Kepler-186 — its ecc
 - Web sources are a distinct evidence kind: badged, cited, never plotted, tabled or rendered in 3D.
 
 **API**
-- One endpoint: `POST /turn {text | audio} → {transcript, reply_text, reply_audio, ui_commands[], data}`. `ui_commands` are validated server-side; no WebSockets, no frontend acknowledgement.
+- One endpoint for questions: `POST /turn {text | audio, project_id} → {transcript, reply_text, reply_audio, ui_commands[], data, project}`. The turn is recorded in that Project and saved before the response returns; a failed save is a warning, never a failed turn. `ui_commands` are validated server-side; no WebSockets, no frontend acknowledgement.
+- The Project switcher alone uses `GET /projects` (newest first; unreadable files listed with their error), `POST /projects {name?}` and `GET /projects/{id}` (404 missing, 409 damaged). Files live in `projects/` (override with `EXOSCOPE_PROJECTS_DIR`).
 
 **Report**
 - Report layout (chosen from `prototype/report-look`, variant A "scientific paper"): summary, method, figures (chart beside the System view snapshot), data table with source papers, limitations, references and Web sources, tool-call log. Template-filled numbers and Gemma-written prose are visibly distinguished.

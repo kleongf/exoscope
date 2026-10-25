@@ -21,7 +21,7 @@ Read [docs/intent.md](docs/intent.md) before working. Use the vocabulary in [GLO
 
 - `catalog` is the only code that touches TAP or a Snapshot. Everything else asks `catalog`.
 - The model never writes SQL or code. Filters are allowlisted fields; the backend builds ADQL.
-- The frontend talks to the backend only via `POST /turn` through `src/api/client.ts`. Its types are generated: after changing backend models run `cd frontend && pnpm gen:api` and commit the result. Never hand-write API types.
+- The frontend talks to the backend only through `src/api/client.ts`: `POST /turn` for everything the student asks, plus `GET /projects`, `POST /projects` and `GET /projects/{id}` for the Project switcher. Its types are generated: after changing backend models run `cd frontend && pnpm gen:api` and commit the result. Never hand-write API types.
 - `ui_commands` are Pydantic models in `backend/exoscope/scene/commands.py`; anything that reaches the browser is validated there first.
 - Frontend state lives in the single zustand store (`src/store/store.ts`) and changes only by applying a `ui_command` or a user-interaction action.
 - Every number shown or exported carries its unit and its provenance (Live result or Snapshot, source paper). Missing is shown as missing, never zero.
