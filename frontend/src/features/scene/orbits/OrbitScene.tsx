@@ -25,6 +25,7 @@ import {
   Star,
 } from "./SceneParts";
 import { provenanceLabel, type OrbitSystem } from "./types";
+import { OverlayPanel } from "./OverlayPanel";
 import { Legend, ViewControls } from "./ViewControls";
 
 /** How often the date readout, spread arcs and hover card catch up with simulated time. */
@@ -150,14 +151,18 @@ export function OrbitScene(props: OrbitSceneProps) {
           showLabels={props.showLabels}
           onSelect={onSelectPlanet}
         />
-        <div className="absolute top-3 left-3 flex flex-col gap-2">
-          <LayerPanel layers={layers} onChange={setLayers} />
-          <ViewControls
-            showLabels={props.showLabels}
-            colorBy={props.colorBy}
-            onShowLabelsChange={props.onShowLabelsChange}
-            onColorByChange={props.onColorByChange}
-          />
+        <div className="absolute top-3 left-3 flex flex-col items-start gap-2">
+          <OverlayPanel title="Honesty layers">
+            <LayerPanel layers={layers} onChange={setLayers} />
+          </OverlayPanel>
+          <OverlayPanel title="Display">
+            <ViewControls
+              showLabels={props.showLabels}
+              colorBy={props.colorBy}
+              onShowLabelsChange={props.onShowLabelsChange}
+              onColorByChange={props.onColorByChange}
+            />
+          </OverlayPanel>
         </div>
         <div className="absolute bottom-3 left-3 flex flex-col items-start gap-2">
           {legend && <Legend legend={legend} />}
