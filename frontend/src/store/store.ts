@@ -7,6 +7,7 @@ import type {
   TurnResponse,
   UiCommand,
 } from "../api/client";
+import { addSample, type SampleState } from "./samples";
 
 export type TurnStatus = "idle" | "requesting" | "recording" | "processing";
 export type PlaybackStatus = "idle" | "playing" | "blocked" | "error";
@@ -31,7 +32,7 @@ interface SceneState {
   focusedPlanetName: string | null;
   daysPerSecond: number;
 }
-export interface ExoState extends SceneState {
+export interface ExoState extends SceneState, SampleState {
   loadedSystems: System[];
   /** Comparisons build up across the Project; the drawer shows the active one. */
   comparisons: SavedComparison[];
@@ -51,6 +52,7 @@ export interface ExoState extends SceneState {
   /** Select a planet from a chart or table, switching to its System when already loaded. */
   selectPlanetIn: (hostname: string, name: string) => void;
   openComparison: (id: number) => void;
+  openSample: (id: number) => void;
   setDraft: (draft: string) => void;
   setStatus: (status: TurnStatus) => void;
   setPlayback: (playback: PlaybackStatus) => void;
@@ -74,17 +76,21 @@ function remember(systems: System[], system: System | null) {
   if (!system) return systems;
   return [...systems.filter((item) => item.hostname !== system.hostname), system];
 }
-type ComparisonState = Pick<ExoState, "comparisons" | "activeComparisonId" | "drawerOpen">;
+type ComparisonState = Pick<
+  ExoState,
+  "comparisons" | "activeComparisonId" | "drawerOpen" | "drawerView"
+>;
 /** A new comparison joins the Project, becomes active and opens the drawer. */
 function addComparison(state: ComparisonState, response: TurnResponse): ComparisonState {
   const comparison = response.data?.comparison;
-  const { comparisons, activeComparisonId, drawerOpen } = state;
-  if (!comparison) return { comparisons, activeComparisonId, drawerOpen };
+  const { comparisons, activeComparisonId, drawerOpen, drawerView } = state;
+  if (!comparison) return { comparisons, activeComparisonId, drawerOpen, drawerView };
   const id = (state.comparisons.at(-1)?.id ?? 0) + 1;
   return {
     comparisons: [...state.comparisons, { id, comparison }],
     activeComparisonId: id,
     drawerOpen: true,
+    drawerView: "comparison",
   };
 }
 function finishTurn(turns: ConversationTurn[], update: Partial<ConversationTurn>) {
@@ -103,6 +109,9 @@ export const useExoStore = create<ExoState>()((set) => ({
   loadedSystems: [],
   comparisons: [],
   activeComparisonId: null,
+  samples: [],
+  activeSampleId: null,
+  drawerView: "comparison",
   drawerOpen: false,
   turns: [],
   draft: "",
@@ -129,7 +138,10 @@ export const useExoStore = create<ExoState>()((set) => ({
     });
   },
   openComparison: (id) => {
-    set({ activeComparisonId: id, drawerOpen: true });
+    set({ activeComparisonId: id, drawerOpen: true, drawerView: "comparison" });
+  },
+  openSample: (id) => {
+    set({ activeSampleId: id, drawerOpen: true, drawerView: "sample" });
   },
   setDraft: (draft) => {
     set({ draft });
@@ -181,6 +193,7 @@ export const useExoStore = create<ExoState>()((set) => ({
       return {
         ...scene,
         ...addComparison(state, response),
+        ...addSample(state, response),
         loadedSystems: loaded.reduce(
           (systems, command) => remember(systems, command.system),
           state.loadedSystems,

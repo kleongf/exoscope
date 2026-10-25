@@ -101,6 +101,49 @@ export interface components {
        */
       excluded: ("missing_x" | "missing_y" | "missing_both" | "limit_only") | null;
     };
+    /**
+     * Exclusion
+     * @description Planets that pass every known condition but lack a value the search depends on.
+     */
+    Exclusion: {
+      /** Count */
+      count: number;
+      /**
+       * By Field
+       * @description Excluded planets missing each field
+       */
+      by_field: {
+        [key: string]: number;
+      };
+      /** Reason */
+      reason: string;
+    };
+    /**
+     * Filter
+     * @description One explicit condition on an allowlisted field.
+     */
+    Filter: {
+      /**
+       * Field
+       * @description Allowlisted field name, e.g. radius or orbital_period
+       */
+      field: string;
+      /**
+       * Op
+       * @description One of < <= > >= = between is_null
+       */
+      op: string;
+      /**
+       * Value
+       * @description Number to compare with (lower bound for between); text for =
+       */
+      value?: number | string | null;
+      /**
+       * Upper
+       * @description Upper bound, only for between
+       */
+      upper?: number | null;
+    };
     /** FocusPlanet */
     FocusPlanet: {
       /**
@@ -123,6 +166,27 @@ export interface components {
     Health: {
       /** Status */
       status: string;
+    };
+    /**
+     * Interpretation
+     * @description How a vague word in the student's request was read as a concrete filter.
+     */
+    Interpretation: {
+      /**
+       * Term
+       * @description The student's word, e.g. small
+       */
+      term: string;
+      /**
+       * As
+       * @description How it was read, e.g. radius < 2 Earth radii
+       */
+      as: string;
+      /**
+       * Caveat
+       * @description Required for loaded words such as Earth-like or habitable
+       */
+      caveat?: string | null;
     };
     /** LiveProvenance */
     LiveProvenance: {
@@ -240,6 +304,65 @@ export interface components {
       /** Mime Type */
       mime_type: string;
     };
+    /**
+     * Sample
+     * @description A set of planets selected by explicit, visible filters. Missing is never treated as zero.
+     */
+    Sample: {
+      /** Filters */
+      filters: components["schemas"]["Filter"][];
+      /** Interpretations */
+      interpretations: components["schemas"]["Interpretation"][];
+      sort: components["schemas"]["Sort"] | null;
+      /** Limit */
+      limit: number;
+      /** Fields */
+      fields: components["schemas"]["SampleField"][];
+      /** Planets */
+      planets: components["schemas"]["SamplePlanet"][];
+      /**
+       * Matched
+       * @description All planets matching the filters, before the limit
+       */
+      matched: number;
+      /** Truncated */
+      truncated: boolean;
+      excluded: components["schemas"]["Exclusion"];
+      /** Provenance */
+      provenance:
+        components["schemas"]["LiveProvenance"] | components["schemas"]["SnapshotProvenance"];
+      /** Notes */
+      notes: string[];
+    };
+    /** SampleField */
+    SampleField: {
+      /** Name */
+      name: string;
+      /** Label */
+      label: string;
+      /** Unit */
+      unit: string | null;
+    };
+    /** SamplePlanet */
+    SamplePlanet: {
+      /**
+       * Name
+       * @description Canonical archive pl_name; the planet's ID
+       */
+      name: string;
+      /**
+       * Hostname
+       * @description Canonical archive hostname of its System
+       */
+      hostname: string;
+      /** Values */
+      values: {
+        [key: string]:
+          | components["schemas"]["Measured"]
+          | components["schemas"]["Missing"]
+          | components["schemas"]["TextValue"];
+      };
+    };
     /** SetTimeScale */
     SetTimeScale: {
       /**
@@ -264,6 +387,17 @@ export interface components {
        * Format: date
        */
       snapshot_date: string;
+    };
+    /** Sort */
+    Sort: {
+      /** Field */
+      field: string;
+      /**
+       * Direction
+       * @default asc
+       * @enum {string}
+       */
+      direction: "asc" | "desc";
     };
     /** Star */
     Star: {
@@ -311,6 +445,17 @@ export interface components {
       provenance:
         components["schemas"]["LiveProvenance"] | components["schemas"]["SnapshotProvenance"];
     };
+    /** TextValue */
+    TextValue: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      status: "text";
+      /** Value */
+      value: string;
+      reference: components["schemas"]["Reference"] | null;
+    };
     /**
      * ToolStep
      * @description One operation that actually ran, timed with a monotonic clock.
@@ -334,6 +479,7 @@ export interface components {
     TurnData: {
       system?: components["schemas"]["System"] | null;
       comparison?: components["schemas"]["Comparison"] | null;
+      sample?: components["schemas"]["Sample"] | null;
     };
     /** TurnRequest */
     TurnRequest: {

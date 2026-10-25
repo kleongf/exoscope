@@ -34,7 +34,7 @@ def test_turn_returns_validated_response(monkeypatch: pytest.MonkeyPatch) -> Non
         "reply_text": "",
         "reply_audio": None,
         "ui_commands": [],
-        "data": {"system": None, "comparison": None},
+        "data": {"system": None, "comparison": None, "sample": None},
         "error": "Agent unavailable",
         "warnings": [],
         "steps": [],

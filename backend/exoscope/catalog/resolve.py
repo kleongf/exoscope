@@ -21,7 +21,8 @@ def normalize(name: str) -> str:
 
 
 def _adql_norm(column: str) -> str:
-    return f"upper(replace(replace({column},' ',''),'-',''))"
+    # Strip the same characters normalize() drops, so "Barnard's star" matches BARNARDSSTAR.
+    return f"upper(replace(replace(replace({column},' ',''),'-',''),'''',''))"
 
 
 def _pick(name: str, hosts: list[str]) -> str:

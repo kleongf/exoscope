@@ -3,13 +3,14 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useExoStore } from "@/store/store";
+import { SampleWorkspace } from "@/features/catalog/SampleWorkspace";
 import { CompareWorkspace } from "./CompareWorkspace";
 
 function EmptyDrawer() {
   return (
     <div className="grid h-56 grid-cols-2 gap-3 p-3">
       <div className="grid place-items-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
-        No comparison yet. Try “Compare radius and irradiation.”
+        No comparison or Sample yet. Try “Compare radius and irradiation.”
       </div>
       <div className="grid place-items-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
         The table appears here.
@@ -22,8 +23,19 @@ function EmptyDrawer() {
 export function CompareDrawer({ children }: { children?: ReactNode }) {
   const open = useExoStore((s) => s.drawerOpen);
   const setOpen = useExoStore((s) => s.setDrawerOpen);
-  const hasComparison = useExoStore((s) => s.activeComparisonId !== null);
-  const content = children ?? (hasComparison ? <CompareWorkspace /> : <EmptyDrawer />);
+  const view = useExoStore((s) => {
+    if (s.drawerView === "sample" && s.activeSampleId !== null) return "sample";
+    return s.activeComparisonId !== null ? "comparison" : "empty";
+  });
+  const content =
+    children ??
+    (view === "sample" ? (
+      <SampleWorkspace />
+    ) : view === "comparison" ? (
+      <CompareWorkspace />
+    ) : (
+      <EmptyDrawer />
+    ));
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="border-t border-border bg-card">
       <CollapsibleTrigger asChild>
