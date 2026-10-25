@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { sendTurn, type TurnResponse } from "../../api/client";
 import { useExoStore } from "../../store/store";
+import { projectController, projectSnapshot } from "../project/persistence";
 import { TurnController } from "./turnController";
 vi.mock("../../api/client", () => ({ sendTurn: vi.fn() }));
 const reply: TurnResponse = {
@@ -12,6 +13,19 @@ describe("single turn controller", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useExoStore.setState(useExoStore.getInitialState());
+    useExoStore.setState({
+      currentProject: {
+        id: "a".repeat(32),
+        title: "Test",
+        version: 1,
+        revision: 0,
+        created_at: "2026-10-25",
+        updated_at: "2026-10-25",
+        state: projectSnapshot(),
+        reports: [],
+      },
+    });
+    vi.spyOn(projectController, "flush").mockResolvedValue();
   });
   it("sends a typed turn once, with current System context and no credentials", async () => {
     vi.mocked(sendTurn).mockResolvedValue(reply);
@@ -38,7 +52,9 @@ describe("single turn controller", () => {
     const controller = new TurnController();
     const pending = controller.submit({ audio: { data_base64: "AA==", mime_type: "audio/webm" } });
     await controller.submit({ text: "duplicate" });
-    expect(sendTurn).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(sendTurn).toHaveBeenCalledTimes(1);
+    });
     controller.dispose();
     expect(vi.mocked(sendTurn).mock.calls[0]?.[1].aborted).toBe(true);
     respond(reply);
@@ -56,6 +72,53 @@ describe("single turn controller", () => {
     await controller.submit({ text: "Open TRAPPIST-1" });
     expect(useExoStore.getState().error).toBeNull();
     expect(useExoStore.getState().replyText).toBe("Mock reply");
+    controller.dispose();
+  });
+  it("accepts the next question while the completed turn is still saving", async () => {
+    let finishSave: () => void = () => {
+      throw new Error("Save not pending");
+    };
+    const flush = vi
+      .spyOn(projectController, "flush")
+      .mockResolvedValueOnce()
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finishSave = resolve;
+          }),
+      );
+    let respond: (response: TurnResponse) => void = () => {
+      throw new Error("Response not pending");
+    };
+    vi.mocked(sendTurn)
+      .mockResolvedValueOnce(reply)
+      .mockImplementationOnce(
+        () =>
+          new Promise<TurnResponse>((resolve) => {
+            respond = resolve;
+          }),
+      );
+    const controller = new TurnController();
+    const first = controller.submit({ text: "First question" });
+    await vi.waitFor(() => {
+      expect(flush).toHaveBeenCalledTimes(2);
+    });
+    expect(useExoStore.getState().status).toBe("idle");
+    const second = controller.submit({ text: "Next question" });
+    // Completing the old save must not clear the newer request's duplicate guard.
+    finishSave();
+    await first;
+    await vi.waitFor(() => {
+      expect(sendTurn).toHaveBeenCalledTimes(2);
+    });
+    expect(vi.mocked(sendTurn).mock.calls[1]?.[0].text).toBe("Next question");
+    await controller.submit({ text: "Duplicate" });
+    expect(sendTurn).toHaveBeenCalledTimes(2);
+    respond({ ...reply, transcript: "Next question" });
+    await second;
+    expect(useExoStore.getState().turns).toHaveLength(2);
+    expect(useExoStore.getState().turns.at(-1)?.question).toBe("Next question");
+    expect(useExoStore.getState().status).toBe("idle");
     controller.dispose();
   });
 });

@@ -71,6 +71,7 @@ export async function exerciseLayout(page) {
   await page.unroute("**/api/turn");
   const reloads = [];
   await page.route("**/api/turn", async (route) => {
+    if (route.request().postDataJSON().project_action) return route.continue();
     reloads.push(route.request().postDataJSON());
     await route.fulfill({ json: fixtureReply });
   });

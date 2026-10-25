@@ -1,35 +1,22 @@
 import { create } from "zustand";
 import type {
-  Comparison,
+  Project,
+  ProjectState,
+  ProjectSummary,
+  ConversationTurn,
   ReplyAudio,
   System,
-  ToolStep,
   TurnResponse,
   UiCommand,
-  WebSearchResult,
 } from "../api/client";
 import { addSample, type SampleState } from "./samples";
+import { changeOrbitLayers, readSimulatedTime } from "./sceneActions";
+import type { Layers } from "@/features/scene/orbits/layers";
 
 export type TurnStatus = "idle" | "requesting" | "recording" | "processing";
 export type PlaybackStatus = "idle" | "playing" | "blocked" | "error";
-export interface ConversationTurn {
-  id: number;
-  question: string;
-  reply: string;
-  startedAt: number;
-  finishedAt: number | null;
-  steps: ToolStep[];
-  provenance: System["provenance"] | null;
-  error: string | null;
-  warnings: string[];
-  appliedCommands: number;
-  webSearch: WebSearchResult | null;
-  hasSpokenReply: boolean;
-}
-export interface SavedComparison {
-  id: number;
-  comparison: Comparison;
-}
+export type { ConversationTurn } from "../api/client";
+export type SavedComparison = ProjectState["comparisons"][number];
 export type ColorBy = Extract<UiCommand, { kind: "set_color_by" }>["property"];
 export interface SceneState {
   system: System | null;
@@ -44,6 +31,15 @@ export interface SceneState {
 }
 export const DEFAULT_DAYS_PER_SECOND = 0.5;
 export interface ExoState extends SceneState, SampleState {
+  currentProject: Project | null;
+  projects: ProjectSummary[];
+  projectStatus: "opening" | "saving" | "saved" | "unsaved" | "error";
+  projectError: string | null;
+  projectTransition: boolean;
+  sceneSettings: ProjectState["sceneSettings"];
+  /** Remount the scene clock when restoring, including recovery of the same Project. */
+  sceneRestoreVersion: number;
+
   loadedSystems: System[];
   /** Comparisons build up across the Project; the drawer shows the active one. */
   comparisons: SavedComparison[];
@@ -65,6 +61,8 @@ export interface ExoState extends SceneState, SampleState {
   openComparison: (id: number) => void;
   openSample: (id: number) => void;
   setPlaying: (playing: boolean) => void;
+  setOrbitLayers: (layers: Layers) => void;
+  setSimulatedJulianDate: (jd: number, manual?: boolean) => void;
   setDraft: (draft: string) => void;
   setStatus: (status: TurnStatus) => void;
   setPlayback: (playback: PlaybackStatus) => void;
@@ -129,6 +127,13 @@ function turnWebEvidence(response: TurnResponse) {
 
 /** UI state lives here; browser recorder/player resources live in lifecycle controllers. */
 export const useExoStore = create<ExoState>()((set) => ({
+  currentProject: null,
+  projects: [],
+  projectStatus: "opening",
+  projectError: null,
+  projectTransition: false,
+  sceneSettings: {},
+  sceneRestoreVersion: 0,
   system: null,
   focusedPlanetName: null,
   cameraFocus: null,
@@ -153,7 +158,7 @@ export const useExoStore = create<ExoState>()((set) => ({
   error: null,
   warnings: [],
   setDrawerOpen: (drawerOpen) => {
-    set({ drawerOpen });
+    set((state) => (state.projectTransition ? {} : { drawerOpen }));
   },
   selectPlanet: (focusedPlanetName) => {
     set((state) => ({
@@ -162,7 +167,13 @@ export const useExoStore = create<ExoState>()((set) => ({
     }));
   },
   setPlaying: (playing) => {
-    set({ playing });
+    set((state) => (state.projectTransition ? {} : { playing }));
+  },
+  setOrbitLayers: (layers) => {
+    set((state) => changeOrbitLayers(state, layers));
+  },
+  setSimulatedJulianDate: (jd, manual) => {
+    set((state) => readSimulatedTime(state, jd, manual));
   },
   selectPlanetIn: (hostname, name) => {
     set((state) => {
@@ -180,7 +191,7 @@ export const useExoStore = create<ExoState>()((set) => ({
     set({ activeSampleId: id, drawerOpen: true, drawerView: "sample" });
   },
   setDraft: (draft) => {
-    set({ draft });
+    set((state) => (state.projectTransition ? {} : { draft }));
   },
   setStatus: (status) => {
     set(

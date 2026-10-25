@@ -215,6 +215,123 @@
         "required": ["planet", "hostname", "x", "y", "excluded"],
         "title": "ComparisonRow"
       },
+      "ConversationTurn": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "reply": {
+            "type": "string",
+            "title": "Reply"
+          },
+          "startedAt": {
+            "type": "number",
+            "title": "Startedat"
+          },
+          "finishedAt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finishedat"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ToolStep"
+            },
+            "type": "array",
+            "title": "Steps"
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/LiveProvenance"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SnapshotProvenance"
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "mode",
+                  "mapping": {
+                    "live": "#/components/schemas/LiveProvenance",
+                    "snapshot": "#/components/schemas/SnapshotProvenance"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provenance"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "appliedCommands": {
+            "type": "integer",
+            "title": "Appliedcommands"
+          },
+          "webSearch": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WebSearchResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hasSpokenReply": {
+            "type": "boolean",
+            "title": "Hasspokenreply"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "question",
+          "reply",
+          "startedAt",
+          "finishedAt",
+          "steps",
+          "provenance",
+          "error",
+          "warnings",
+          "appliedCommands",
+          "webSearch",
+          "hasSpokenReply"
+        ],
+        "title": "ConversationTurn",
+        "description": "Complete durable chat record; absent fields indicate lost or malformed work."
+      },
       "Exclusion": {
         "properties": {
           "count": {
@@ -356,6 +473,7 @@
         "title": "Interpretation",
         "description": "How a vague word in the student's request was read as a concrete filter."
       },
+      "JsonValue": {},
       "LiveProvenance": {
         "properties": {
           "mode": {
@@ -733,6 +851,280 @@
         ],
         "title": "Planet"
       },
+      "Project": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "const": 1,
+            "title": "Version",
+            "default": 1
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{32}$",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Title",
+            "default": "Untitled Project"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Revision",
+            "default": 0
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ProjectState"
+          },
+          "reports": {
+            "items": {
+              "$ref": "#/components/schemas/ReportRecord"
+            },
+            "type": "array",
+            "title": "Reports"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Project"
+      },
+      "ProjectAction": {
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": ["bootstrap", "list", "create", "load", "save"],
+            "title": "Operation"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{32}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revision"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProjectState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["operation"],
+        "title": "ProjectAction"
+      },
+      "ProjectResult": {
+        "properties": {
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Project"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "projects": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectSummary"
+            },
+            "type": "array",
+            "title": "Projects"
+          }
+        },
+        "type": "object",
+        "title": "ProjectResult"
+      },
+      "ProjectState": {
+        "properties": {
+          "system": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/System"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "loadedSystems": {
+            "items": {
+              "$ref": "#/components/schemas/System"
+            },
+            "type": "array",
+            "title": "Loadedsystems"
+          },
+          "focusedPlanetName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Focusedplanetname"
+          },
+          "daysPerSecond": {
+            "type": "number",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Dayspersecond",
+            "default": 0.5
+          },
+          "drawerOpen": {
+            "type": "boolean",
+            "title": "Draweropen",
+            "default": false
+          },
+          "turns": {
+            "items": {
+              "$ref": "#/components/schemas/ConversationTurn"
+            },
+            "type": "array",
+            "title": "Turns"
+          },
+          "samples": {
+            "items": {
+              "$ref": "#/components/schemas/SavedSample"
+            },
+            "type": "array",
+            "title": "Samples"
+          },
+          "activeSampleId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activesampleid"
+          },
+          "drawerView": {
+            "type": "string",
+            "enum": ["comparison", "sample"],
+            "title": "Drawerview",
+            "default": "comparison"
+          },
+          "comparisons": {
+            "items": {
+              "$ref": "#/components/schemas/SavedComparison"
+            },
+            "type": "array",
+            "title": "Comparisons"
+          },
+          "activeComparisonId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activecomparisonid"
+          },
+          "sceneSettings": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "type": "object",
+            "title": "Scenesettings"
+          },
+          "draft": {
+            "type": "string",
+            "title": "Draft",
+            "default": ""
+          },
+          "transcript": {
+            "type": "string",
+            "title": "Transcript",
+            "default": ""
+          },
+          "replyText": {
+            "type": "string",
+            "title": "Replytext",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ProjectState",
+        "description": "Durable work only; microphone resources and generated audio are never saved."
+      },
+      "ProjectSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "title", "revision", "updated_at"],
+        "title": "ProjectSummary"
+      },
       "Reference": {
         "properties": {
           "label": {
@@ -771,6 +1163,38 @@
         "type": "object",
         "required": ["data_base64", "mime_type"],
         "title": "ReplyAudio"
+      },
+      "ReportRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{32}$",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "html": {
+            "type": "string",
+            "title": "Html"
+          },
+          "included": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Included"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["id", "title", "created_at", "html", "included"],
+        "title": "ReportRecord"
       },
       "Sample": {
         "properties": {
@@ -938,6 +1362,36 @@
         "type": "object",
         "required": ["name", "hostname", "values"],
         "title": "SamplePlanet"
+      },
+      "SavedComparison": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "comparison": {
+            "$ref": "#/components/schemas/Comparison"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["id", "comparison"],
+        "title": "SavedComparison"
+      },
+      "SavedSample": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "sample": {
+            "$ref": "#/components/schemas/Sample"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["id", "sample"],
+        "title": "SavedSample"
       },
       "SetColorBy": {
         "properties": {
@@ -1309,6 +1763,7 @@
             "title": "Elapsed Ms"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": ["id", "name", "status", "detail", "elapsed_ms"],
         "title": "ToolStep",
@@ -1397,6 +1852,28 @@
               }
             ],
             "title": "Current System"
+          },
+          "project_action": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProjectAction"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{32}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id"
           }
         },
         "additionalProperties": false,
@@ -1417,6 +1894,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/ReplyAudio"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "project_result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProjectResult"
               },
               {
                 "type": "null"

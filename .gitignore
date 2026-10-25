@@ -15,3 +15,6 @@ artifacts/
 
 # Agent worktrees
 .claude/worktrees/
+
+# Student Projects and immutable Reports
+.data/

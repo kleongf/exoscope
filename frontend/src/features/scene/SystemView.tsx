@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { System } from "@/api/client";
 import { Badge } from "@/components/ui/badge";
 import { useExoStore } from "@/store/store";
+import { restoreJulianDate, restoreOrbitLayers } from "@/features/project/scenePersistence";
 import { OrbitScene, toOrbitSystem } from "./orbits";
 import { PlanetPanel } from "./PlanetPanel";
 import { SystemEvidence } from "./SystemEvidence";
@@ -19,6 +20,10 @@ function ConnectedOrbitScene({ system }: { system: System }) {
   const select = useExoStore((state) => state.selectPlanet);
   const setPlaying = useExoStore((state) => state.setPlaying);
   const apply = useExoStore((state) => state.applyCommand);
+  const savedLayers = useExoStore((state) => state.sceneSettings.orbitLayers);
+  const layers = useMemo(() => restoreOrbitLayers(savedLayers), [savedLayers]);
+  const setLayers = useExoStore((state) => state.setOrbitLayers);
+  const readTime = useExoStore((state) => state.setSimulatedJulianDate);
   return (
     <OrbitScene
       system={orbitSystem}
@@ -29,6 +34,12 @@ function ConnectedOrbitScene({ system }: { system: System }) {
       daysPerSecond={daysPerSecond}
       showLabels={showLabels}
       colorBy={colorBy}
+      layers={layers}
+      onLayersChange={setLayers}
+      initialJulianDate={restoreJulianDate(
+        useExoStore.getState().sceneSettings.simulatedJulianDate,
+      )}
+      onTimeReadout={readTime}
       onPlayingChange={setPlaying}
       onSpeedChange={(days_per_second) => {
         apply({ kind: "set_time_scale", days_per_second });
@@ -46,6 +57,8 @@ function ConnectedOrbitScene({ system }: { system: System }) {
 /** One canonical System at a time, drawn with real orbits and visible honesty layers. */
 export function SystemView() {
   const system = useExoStore((state) => state.system);
+  const projectId = useExoStore((state) => state.currentProject?.id);
+  const restoreVersion = useExoStore((state) => state.sceneRestoreVersion);
   return (
     <section className="flex h-full min-h-0 flex-col" aria-labelledby="system-heading">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b bg-card px-4 py-3">
@@ -59,7 +72,10 @@ export function SystemView() {
       </header>
       <div className="relative min-h-96 flex-1 bg-[#05060a]" data-testid="system-view">
         {system ? (
-          <ConnectedOrbitScene system={system} />
+          <ConnectedOrbitScene
+            key={`${projectId ?? "preview"}:${system.hostname}:${String(restoreVersion)}`}
+            system={system}
+          />
         ) : (
           <div className="grid h-full min-h-72 place-content-center gap-2 p-6 text-center text-white">
             <p>Open a System to explore its planets.</p>

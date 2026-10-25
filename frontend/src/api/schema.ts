@@ -102,6 +102,37 @@ export interface components {
       excluded: ("missing_x" | "missing_y" | "missing_both" | "limit_only") | null;
     };
     /**
+     * ConversationTurn
+     * @description Complete durable chat record; absent fields indicate lost or malformed work.
+     */
+    ConversationTurn: {
+      /** Id */
+      id: number;
+      /** Question */
+      question: string;
+      /** Reply */
+      reply: string;
+      /** Startedat */
+      startedAt: number;
+      /** Finishedat */
+      finishedAt: number | null;
+      /** Steps */
+      steps: components["schemas"]["ToolStep"][];
+      /** Provenance */
+      provenance:
+        | (components["schemas"]["LiveProvenance"] | components["schemas"]["SnapshotProvenance"])
+        | null;
+      /** Error */
+      error: string | null;
+      /** Warnings */
+      warnings: string[];
+      /** Appliedcommands */
+      appliedCommands: number;
+      webSearch: components["schemas"]["WebSearchResult"] | null;
+      /** Hasspokenreply */
+      hasSpokenReply: boolean;
+    };
+    /**
      * Exclusion
      * @description Planets that pass every known condition but lack a value the search depends on.
      */
@@ -188,6 +219,7 @@ export interface components {
        */
       caveat?: string | null;
     };
+    JsonValue: unknown;
     /** LiveProvenance */
     LiveProvenance: {
       /**
@@ -287,6 +319,122 @@ export interface components {
       /** Argument Of Periastron */
       argument_of_periastron: components["schemas"]["Measured"] | components["schemas"]["Missing"];
     };
+    /** Project */
+    Project: {
+      /**
+       * Version
+       * @default 1
+       * @constant
+       */
+      version: 1;
+      /** Id */
+      id?: string;
+      /**
+       * Title
+       * @default Untitled Project
+       */
+      title: string;
+      /**
+       * Revision
+       * @default 0
+       */
+      revision: number;
+      /** Created At */
+      created_at?: string;
+      /** Updated At */
+      updated_at?: string;
+      state?: components["schemas"]["ProjectState"];
+      /** Reports */
+      reports?: components["schemas"]["ReportRecord"][];
+    };
+    /** ProjectAction */
+    ProjectAction: {
+      /**
+       * Operation
+       * @enum {string}
+       */
+      operation: "bootstrap" | "list" | "create" | "load" | "save";
+      /** Id */
+      id?: string | null;
+      /** Title */
+      title?: string | null;
+      /** Revision */
+      revision?: number | null;
+      state?: components["schemas"]["ProjectState"] | null;
+    };
+    /** ProjectResult */
+    ProjectResult: {
+      current?: components["schemas"]["Project"] | null;
+      /** Projects */
+      projects?: components["schemas"]["ProjectSummary"][];
+    };
+    /**
+     * ProjectState
+     * @description Durable work only; microphone resources and generated audio are never saved.
+     */
+    ProjectState: {
+      system?: components["schemas"]["System"] | null;
+      /** Loadedsystems */
+      loadedSystems?: components["schemas"]["System"][];
+      /** Focusedplanetname */
+      focusedPlanetName?: string | null;
+      /**
+       * Dayspersecond
+       * @default 0.5
+       */
+      daysPerSecond: number;
+      /**
+       * Draweropen
+       * @default false
+       */
+      drawerOpen: boolean;
+      /** Turns */
+      turns?: components["schemas"]["ConversationTurn"][];
+      /** Samples */
+      samples?: components["schemas"]["SavedSample"][];
+      /** Activesampleid */
+      activeSampleId?: number | null;
+      /**
+       * Drawerview
+       * @default comparison
+       * @enum {string}
+       */
+      drawerView: "comparison" | "sample";
+      /** Comparisons */
+      comparisons?: components["schemas"]["SavedComparison"][];
+      /** Activecomparisonid */
+      activeComparisonId?: number | null;
+      /** Scenesettings */
+      sceneSettings?: {
+        [key: string]: components["schemas"]["JsonValue"];
+      };
+      /**
+       * Draft
+       * @default
+       */
+      draft: string;
+      /**
+       * Transcript
+       * @default
+       */
+      transcript: string;
+      /**
+       * Replytext
+       * @default
+       */
+      replyText: string;
+    };
+    /** ProjectSummary */
+    ProjectSummary: {
+      /** Id */
+      id: string;
+      /** Title */
+      title: string;
+      /** Revision */
+      revision: number;
+      /** Updated At */
+      updated_at: string;
+    };
     /**
      * Reference
      * @description The publication a catalog value comes from.
@@ -303,6 +451,19 @@ export interface components {
       data_base64: string;
       /** Mime Type */
       mime_type: string;
+    };
+    /** ReportRecord */
+    ReportRecord: {
+      /** Id */
+      id: string;
+      /** Title */
+      title: string;
+      /** Created At */
+      created_at: string;
+      /** Html */
+      html: string;
+      /** Included */
+      included: string[];
     };
     /**
      * Sample
@@ -362,6 +523,18 @@ export interface components {
           | components["schemas"]["Missing"]
           | components["schemas"]["TextValue"];
       };
+    };
+    /** SavedComparison */
+    SavedComparison: {
+      /** Id */
+      id: number;
+      comparison: components["schemas"]["Comparison"];
+    };
+    /** SavedSample */
+    SavedSample: {
+      /** Id */
+      id: number;
+      sample: components["schemas"]["Sample"];
     };
     /**
      * SetColorBy
@@ -518,6 +691,9 @@ export interface components {
       audio?: components["schemas"]["AudioInput"] | null;
       /** Current System */
       current_system?: string | null;
+      project_action?: components["schemas"]["ProjectAction"] | null;
+      /** Project Id */
+      project_id?: string | null;
     };
     /** TurnResponse */
     TurnResponse: {
@@ -526,6 +702,7 @@ export interface components {
       /** Reply Text */
       reply_text: string;
       reply_audio?: components["schemas"]["ReplyAudio"] | null;
+      project_result?: components["schemas"]["ProjectResult"] | null;
       /** Ui Commands */
       ui_commands?: (
         | components["schemas"]["FocusPlanet"]

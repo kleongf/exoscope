@@ -1,5 +1,6 @@
 import { StrictMode, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
+import { projectController } from "./features/project/persistence";
 import { App } from "./App";
 import "./index.css";
 
@@ -17,5 +18,6 @@ if (import.meta.env.DEV && location.search.includes("preview=")) {
     render(m.devPreview(location.search) ?? <App />);
   });
 } else {
+  void projectController.start();
   render(<App />);
 }

@@ -6,13 +6,13 @@ import { InterpretationChip } from "./InterpretationChip";
 import { sampleTitle } from "./sampleView";
 
 /** The Project's Samples with their Interpretation chips; clicking one reopens its table. */
-export function SampleList() {
+export function SampleList({ compact = false }: { compact?: boolean }) {
   const samples = useExoStore((s) => s.samples);
   const active = useExoStore((s) => (s.drawerView === "sample" ? s.activeSampleId : null));
   const open = useExoStore((s) => s.openSample);
   return (
-    <section className="border-t px-3 py-3" aria-label="Samples">
-      <h3 className="mb-2 px-1 text-xs font-medium text-muted-foreground">Samples</h3>
+    <section className={compact ? "px-3 pb-3" : "border-t px-3 py-3"} aria-label="Samples">
+      {!compact && <h3 className="mb-2 px-1 text-xs font-medium text-muted-foreground">Samples</h3>}
       {samples.length === 0 ? (
         <p className="px-1 text-xs text-muted-foreground">None yet</p>
       ) : (

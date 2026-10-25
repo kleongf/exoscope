@@ -25,11 +25,20 @@ fi
 
 step "app: launch and smoke test (screenshot + console in artifacts/)"
 mkdir -p artifacts
+# Each smoke run uses its own durable Project storage, never student files.
+SMOKE_PROJECT_DIR=$(mktemp -d)
+export EXOSCOPE_PROJECT_DIR="$SMOKE_PROJECT_DIR"
 (cd backend && uv run uvicorn exoscope.app:app --port 8000 >"$ROOT/artifacts/backend.log" 2>&1) &
 BACK=$!
 (cd frontend && pnpm -s preview >"$ROOT/artifacts/frontend.log" 2>&1) &
 FRONT=$!
-cleanup() { kill "$BACK" "$FRONT" 2>/dev/null || true; pkill -P "$BACK" 2>/dev/null || true; pkill -P "$FRONT" 2>/dev/null || true; }
+cleanup() {
+  pkill -P "$BACK" 2>/dev/null || true
+  pkill -P "$FRONT" 2>/dev/null || true
+  kill "$BACK" "$FRONT" 2>/dev/null || true
+  wait "$BACK" "$FRONT" 2>/dev/null || true
+  rm -rf "$SMOKE_PROJECT_DIR"
+}
 trap cleanup EXIT
 ready=0
 for _ in $(seq 1 40); do

@@ -14,6 +14,11 @@ const statusLabels = {
   recording: "Recording… release to send",
   processing: "Processing your question…",
 };
+function projectUnavailable() {
+  const state = useExoStore.getState();
+  return !state.currentProject || state.projectTransition;
+}
+
 export function TurnPanel() {
   const state = useExoStore();
   const turns = useMemo(() => projectTurnController, []);
@@ -53,8 +58,9 @@ export function TurnPanel() {
       turns.dispose();
     };
   }, [capture, turns]);
+  const unavailable = projectUnavailable();
   const start = () => {
-    if (useExoStore.getState().status === "idle") void capture.start();
+    if (!unavailable && useExoStore.getState().status === "idle") void capture.start();
   };
   return (
     <aside
@@ -83,7 +89,7 @@ export function TurnPanel() {
           variant={state.status === "recording" ? "destructive" : "secondary"}
           className="w-full touch-none"
           data-testid="push-to-talk"
-          disabled={state.status === "processing"}
+          disabled={unavailable || state.status === "processing"}
           aria-label="Hold to talk"
           aria-pressed={state.status === "recording"}
           aria-describedby="voice-help"
@@ -128,7 +134,7 @@ export function TurnPanel() {
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            if (state.status !== "idle" || !state.draft.trim()) return;
+            if (unavailable || state.status !== "idle" || !state.draft.trim()) return;
             void turns.submit({ text: state.draft.trim() });
           }}
           className="flex gap-2"
@@ -136,6 +142,7 @@ export function TurnPanel() {
           <Input
             id="question"
             aria-label="Or type your question"
+            disabled={unavailable}
             maxLength={2000}
             value={state.draft}
             placeholder="Type a question…"
@@ -148,7 +155,7 @@ export function TurnPanel() {
             type="submit"
             size="icon"
             aria-label="Send question"
-            disabled={state.status !== "idle" || !state.draft.trim()}
+            disabled={unavailable || state.status !== "idle" || !state.draft.trim()}
           >
             <Send />
           </Button>

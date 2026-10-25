@@ -4,13 +4,15 @@ import { comparisonTitle } from "@/features/compare/adapt";
 import { useExoStore } from "@/store/store";
 
 /** The Project's comparisons; clicking one reopens its chart and table in the drawer. */
-export function ComparisonList() {
+export function ComparisonList({ compact = false }: { compact?: boolean }) {
   const comparisons = useExoStore((s) => s.comparisons);
   const active = useExoStore((s) => s.activeComparisonId);
   const open = useExoStore((s) => s.openComparison);
   return (
-    <section className="border-t px-3 py-3" aria-label="Comparisons">
-      <h3 className="mb-2 px-1 text-xs font-medium text-muted-foreground">Comparisons</h3>
+    <section className={compact ? "px-3 pb-3" : "border-t px-3 py-3"} aria-label="Comparisons">
+      {!compact && (
+        <h3 className="mb-2 px-1 text-xs font-medium text-muted-foreground">Comparisons</h3>
+      )}
       {comparisons.length === 0 ? (
         <p className="px-1 text-xs text-muted-foreground">None yet</p>
       ) : (
