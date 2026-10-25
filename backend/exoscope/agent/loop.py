@@ -1,5 +1,6 @@
 """Plain google-genai loop. Only typed catalog tools can supply archive data."""
 
+import json
 import os
 from collections.abc import Callable
 from time import monotonic
@@ -8,6 +9,7 @@ from google import genai
 from google.genai import types
 from pydantic import ValidationError
 
+from exoscope.agent import brief
 from exoscope.agent.model_config import gemma_model
 from exoscope.agent.models import ToolStep
 from exoscope.agent.result import AgentResult
@@ -97,7 +99,8 @@ def _contents(text: str, current_system: str | None, result: AgentResult) -> lis
             result.data.system = system
             if system.provenance.mode == "snapshot":
                 result.warnings.append("Live archive unavailable; using dated Snapshot data.")
-            context = f"Current canonical System data: {system.model_dump_json()}"
+            compact = json.dumps(brief.system(system), separators=(",", ":"), ensure_ascii=False)
+            context = f"Current canonical System data: {compact}"
     return [
         types.Content(role="user", parts=[types.Part(text=f"{INSTRUCTIONS}\n{context}\n{text}")])
     ]
@@ -165,7 +168,14 @@ def run_agent(text: str, current_system: str | None = None) -> AgentResult:
         with genai.Client(
             api_key=key,
             http_options=types.HttpOptions(
-                timeout=30_000, retry_options=types.HttpRetryOptions(attempts=1)
+                timeout=30_000,
+                # Gemma intermittently returns 500 INTERNAL; retry server errors, never 429s.
+                retry_options=types.HttpRetryOptions(
+                    attempts=3,
+                    initial_delay=0.5,
+                    max_delay=2,
+                    http_status_codes=[500, 502, 503, 504],
+                ),
             ),
         ) as client:
 

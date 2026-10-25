@@ -1,9 +1,11 @@
 """SDK-shaped responses exercise the manual tool boundary without a live provider."""
 
+import json
+
 import pytest
 from google.genai import types
 
-from exoscope.agent import loop, model_config, turn
+from exoscope.agent import brief, loop, model_config, turn
 from exoscope.agent.tools import load_system as load_system_tool
 from exoscope.catalog import CatalogError, CatalogUnavailableError, System, load_system
 from exoscope.catalog.tap import Row
@@ -224,7 +226,10 @@ def test_agent_receives_complete_canonical_snapshot_data(
 
     def generate(contents: list[types.Content]) -> types.GenerateContentResponse:
         text = (contents[0].parts or [])[0].text or ""
-        assert offline_system(name).model_dump_json() in text
+        system = offline_system(name)
+        # Gemma gets the compact brief (free-tier token budget), never the full JSON with links.
+        assert json.dumps(brief.system(system), separators=(",", ":"), ensure_ascii=False) in text
+        assert system.model_dump_json() not in text
         assert "Trappist One" in text and "TOI seven hundred" in text
         return answer(types.Part(text="These are dated Snapshot measurements."))
 

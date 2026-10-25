@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from exoscope.agent import brief
 from exoscope.agent.result import AgentResult
 from exoscope.agent.tools.base import Tool, ToolOutput
 from exoscope.catalog import load_system
@@ -19,7 +20,7 @@ def _run(arguments: LoadArguments, result: AgentResult) -> ToolOutput:
     result.ui_commands.append(LoadSystem(system=system))
     if system.provenance.mode == "snapshot":
         result.warn("Live archive unavailable; using dated Snapshot data.")
-    return ToolOutput({"system": system.model_dump(mode="json")}, f"Loaded {system.hostname}.")
+    return ToolOutput({"system": brief.system(system)}, f"Loaded {system.hostname}.")
 
 
 LOAD_SYSTEM = Tool(
