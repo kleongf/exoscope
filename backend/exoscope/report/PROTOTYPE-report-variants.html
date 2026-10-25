@@ -1,0 +1,377 @@
+<!doctype html>
+<!--
+  PROTOTYPE — throwaway. Issue #11 (Write Reports from a Project).
+
+  Question: "What should an exported ExoScope Report look like so a student or educator can
+  read, trust and reuse it — and so it lands as the final beat of the demo?"
+
+  Plan: three structurally different Report layouts in one self-contained file, switchable via
+  ?variant=A|B|C and the floating bar (← / → keys). Same content in every variant:
+    A — Scientific paper (abstract, methods, results/figures, references)
+    B — Poster (single page, big chart, three key findings, evidence sidebar)
+    C — Lab notebook (chronological steps, each with its evidence and timestamp)
+  Planet values are real (TRAPPIST-1 pscomppars Snapshot, 2026-10-25). Web sources, timings and
+  prose are PROTOTYPE sample data. Template-filled numbers vs model-written prose are marked.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRAPPIST-1: radius vs irradiation — ExoScope Report (PROTOTYPE)</title>
+<style>
+  :root {
+    --ink: #1b1f24; --muted: #5b6470; --rule: #d9dde3; --paper: #ffffff; --wash: #f5f6f8;
+    --accent: #1d4ed8; --accent-soft: #e8efff; --model: #7c3aed; --model-soft: #f4efff;
+    --live: #047857; --live-soft: #e7f6ef; --warn: #92400e; --warn-soft: #fdf3e2;
+    --serif: "Iowan Old Style", "Charter", Georgia, serif;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--wash); color: var(--ink); font-family: var(--sans); }
+  body { padding: 24px 16px 96px; }
+  a { color: var(--accent); }
+  .page { max-width: 1040px; margin: 0 auto; background: var(--paper); border: 1px solid var(--rule); }
+  [hidden] { display: none !important; }
+
+  /* Shared evidence marks */
+  .tpl { font-family: var(--mono); font-size: .92em; background: var(--accent-soft); border-bottom: 1px solid #b9cbf7;
+         padding: 0 .2em; border-radius: 2px; white-space: nowrap; }
+  .model { border-left: 3px solid var(--model); background: var(--model-soft); padding: .6em .9em; margin: .8em 0; }
+  .model::before { content: "Written by Gemma · not number-checked"; display: block; font: 600 .7rem/1.4 var(--sans);
+                   letter-spacing: .04em; text-transform: uppercase; color: var(--model); margin-bottom: .25em; }
+  .badge { display: inline-block; font: 600 .72rem/1.6 var(--sans); padding: 0 .5em; border-radius: 99px; border: 1px solid; }
+  .badge.live { color: var(--live); background: var(--live-soft); border-color: #a7dcc4; }
+  .badge.web { color: #0e7490; background: #e6f6fa; border-color: #a5dbe8; }
+  .badge.interp { color: var(--warn); background: var(--warn-soft); border-color: #f0d29c; }
+  .badge.sample { color: #9f1239; background: #fdecef; border-color: #f6b9c5; }
+  .legend { display: flex; flex-wrap: wrap; gap: .5em 1.4em; font-size: .78rem; color: var(--muted); }
+  .legend .model { display: inline; padding: 0 .4em; margin: 0; border-left-width: 3px; }
+  .legend .model::before { content: none; }
+  table { border-collapse: collapse; width: 100%; font-size: .85rem; }
+  th, td { text-align: left; padding: .4em .55em; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 600; color: var(--muted); font-size: .76rem; text-transform: uppercase; letter-spacing: .03em; }
+  .fig { margin: 0; }
+  .fig svg { width: 100%; height: auto; display: block; }
+  .fig figcaption { font-size: .8rem; color: var(--muted); margin-top: .4em; }
+  .snapshot { aspect-ratio: 16 / 9; background: #070a12; border-radius: 4px; position: relative; overflow: hidden; }
+  .snapshot span { position: absolute; left: 10px; bottom: 8px; font-size: .72rem; color: #9aa4b2; }
+  ol.log { padding-left: 1.4em; font-size: .84rem; }
+  ol.log li { margin: .25em 0; }
+  ol.log code { font-family: var(--mono); font-size: .82rem; }
+  .proto { color: #b91c1c; font: 600 .68rem/1 var(--sans); letter-spacing: .04em; text-transform: uppercase; }
+
+  /* ---------- Variant A: scientific paper ---------- */
+  .A .page { padding: 56px 72px; font-family: var(--serif); line-height: 1.55; }
+  .A h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 .3em; font-weight: 600; }
+  .A .byline { font-family: var(--sans); font-size: .82rem; color: var(--muted); margin-bottom: 1.2em; }
+  .A .abstract { font-size: .95rem; margin: 1.4em 0; padding: 0 2.5em; }
+  .A .abstract h2 { font-family: var(--sans); font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; text-align: center; }
+  .A h2.sec { font-family: var(--sans); font-size: 1.05rem; margin: 2em 0 .6em; border-bottom: 1px solid var(--rule); padding-bottom: .25em; }
+  .A .two { display: grid; grid-template-columns: 3fr 2fr; gap: 24px; align-items: start; }
+  .A table { font-family: var(--sans); }
+  .A .refs li { margin: .35em 0; font-size: .9rem; }
+
+  /* ---------- Variant B: poster ---------- */
+  .B .page { padding: 0; display: grid; grid-template-columns: 1fr 300px; grid-template-rows: auto 1fr; min-height: 760px; }
+  .B header { grid-column: 1 / -1; background: #0b1224; color: #f3f5f9; padding: 26px 32px; display: flex; justify-content: space-between; align-items: end; gap: 16px; }
+  .B header h1 { margin: 0; font-size: 2.2rem; letter-spacing: -.01em; }
+  .B header .sub { color: #aab3c5; font-size: .9rem; margin-top: .3em; }
+  .B main { padding: 24px 28px; }
+  .B .findings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 18px; }
+  .B .finding { border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; }
+  .B .finding .k { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .B .finding .v { font-size: 1.05rem; margin-top: .3em; line-height: 1.35; }
+  .B .finding .model { margin: .3em 0 0; padding: .3em .6em; font-size: .9rem; }
+  .B aside { background: var(--wash); border-left: 1px solid var(--rule); padding: 22px 20px; font-size: .82rem; }
+  .B aside h2 { font-size: .74rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 1.4em 0 .5em; }
+  .B aside h2:first-child { margin-top: 0; }
+  .B aside table { font-size: .72rem; table-layout: fixed; }
+  .B aside th:first-child, .B aside td:first-child { width: 2.2em; }
+  .B aside .tpl { white-space: normal; font-size: .95em; }
+  .B aside ul { padding-left: 1.1em; margin: 0; }
+  .B aside li { margin: .35em 0; }
+
+  /* ---------- Variant C: lab notebook ---------- */
+  .C .page { padding: 40px 48px; background-image: linear-gradient(transparent 31px, #eef1f6 32px); background-size: 100% 32px; }
+  .C h1 { font-family: var(--mono); font-size: 1.5rem; margin: 0; }
+  .C .meta { font-family: var(--mono); font-size: .8rem; color: var(--muted); margin: .4em 0 1.6em; }
+  .C .step { display: grid; grid-template-columns: 110px 1fr; gap: 18px; padding: 18px 0; border-top: 1px dashed #c7ccd4; background: var(--paper); }
+  .C .when { font-family: var(--mono); font-size: .8rem; color: var(--muted); }
+  .C .when b { display: block; font-size: 1.4rem; color: var(--ink); }
+  .C .ask { font-family: var(--mono); font-size: .95rem; margin: 0 0 .5em; }
+  .C .ask::before { content: "▸ student: "; color: var(--muted); }
+  .C .tool { font-family: var(--mono); font-size: .8rem; color: var(--muted); margin-bottom: .6em; }
+  .C .evidence { border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px; margin-top: .6em; background: #fbfcfd; }
+  .C .evidence h3 { margin: 0 0 .4em; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .C .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* ---------- Switcher (prototype only) ---------- */
+  .proto-switcher { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 50;
+    display: flex; align-items: center; gap: 4px; background: #111; color: #fff; border: 2px solid #ff3ea5;
+    border-radius: 99px; padding: 6px 8px; box-shadow: 0 6px 24px rgba(0,0,0,.25); font: 600 .85rem/1 var(--sans); }
+  .proto-switcher button { all: unset; cursor: pointer; padding: 6px 10px; border-radius: 99px; }
+  .proto-switcher button:hover { background: #333; }
+  .proto-switcher .label { padding: 0 8px; white-space: nowrap; }
+
+  @media (max-width: 760px) {
+    .A .page { padding: 28px 20px; } .A .two, .C .grid2 { grid-template-columns: 1fr; }
+    .B .page { grid-template-columns: 1fr; } .B .findings { grid-template-columns: 1fr; }
+    .C .page { padding: 24px 16px; } .C .step { grid-template-columns: 1fr; }
+  }
+  @media print {
+    @page { size: A4; margin: 14mm; }
+    html, body { background: #fff; padding: 0; }
+    .page { border: 0; max-width: none; }
+    .proto-switcher { display: none !important; }
+    .A .page { padding: 0; } .C .page { padding: 0; background: none; }
+    .B .page { min-height: 0; }
+    .step, figure, table, .finding { break-inside: avoid; }
+    .tpl, .model, .badge, .snapshot, .B header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ======================= Variant A: Scientific paper ======================= -->
+<section class="variant" data-variant="A" data-name="Scientific paper" hidden>
+<article class="page">
+  <div class="proto">Prototype · sample Report</div>
+  <h1>TRAPPIST-1: radius vs irradiation</h1>
+  <div class="byline">ExoScope Report · Project “Rocky worlds” · written 2026-10-25 16:05 UTC ·
+    <span class="badge live">Live · NASA Exoplanet Archive</span></div>
+  <div class="legend"><span><span class="tpl">1.116</span> number filled from saved archive data</span>
+    <span><span class="model">prose</span> written by Gemma</span></div>
+
+  <section class="abstract">
+    <h2>Summary</h2>
+    <div class="model">TRAPPIST-1’s seven planets are all close to Earth’s size but receive very different amounts of
+      starlight. The innermost planets get several times Earth’s irradiation; the outer ones far less. Size and
+      irradiation alone cannot tell us whether any of them holds liquid water.</div>
+  </section>
+
+  <h2 class="sec">1. Data and method</h2>
+  <p>Values come from the NASA Exoplanet Archive composite table <span class="tpl">pscomppars</span>, fetched live at
+    <span class="tpl">2026-10-25 15:55 UTC</span>. The comparison plots planet radius against stellar irradiation for
+    <span class="tpl">7</span> planets; <span class="tpl">0</span> were excluded for missing values. A related Sample used
+    the Interpretation <span class="badge interp">“small” → radius &lt; 2 R⊕</span>
+    (a size threshold chosen for this search, not a scientific category), matching
+    <span class="tpl">1,228</span> planets with <span class="tpl">37</span> excluded for missing values.</p>
+
+  <h2 class="sec">2. Results</h2>
+  <div class="two">
+    <figure class="fig"><div class="chart"></div>
+      <figcaption>Figure 1. Radius (R⊕) vs irradiation (S⊕, log scale), ±1σ error bars. Template-drawn from saved data.</figcaption></figure>
+    <figure class="fig"><div class="snapshot"><div class="orbits"></div><span>System view snapshot · captured at export</span></div>
+      <figcaption>Figure 2. System view at export. Orbits to scale; planet sizes ×40; positions extrapolated from transit epochs.</figcaption></figure>
+  </div>
+  <div class="datatable" style="margin-top:18px"></div>
+  <div class="model">Planet e receives about two-thirds of Earth’s irradiation and is slightly smaller than Earth, which
+    is why it is often discussed as a temperate world. Planets b and c receive far more energy than Earth.</div>
+
+  <h2 class="sec">3. Limitations</h2>
+  <div class="model">These values combine several publications and may not be mutually consistent. Equilibrium
+    temperature is not a measured surface temperature, and radius and irradiation do not establish an atmosphere,
+    oceans or habitability.</div>
+  <p style="font-size:.9rem">Template note: <span class="tpl">pscomppars</span> mixes values from different papers
+    (radius and irradiation: Agol et al. 2021; equilibrium temperature: Ducrot et al. 2020; orbital shape: Grimm et al. 2018).</p>
+
+  <h2 class="sec">References</h2>
+  <ol class="refs">
+    <li>Agol, E. et al. 2021, <i>Planetary Science Journal</i> 2, 1 — radius, irradiation, period. <a href="https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract">ADS</a></li>
+    <li>Ducrot, E. et al. 2020, <i>A&amp;A</i> 640, A112 — equilibrium temperature, transit epochs. <a href="https://ui.adsabs.harvard.edu/abs/2020A&A...640A.112D/abstract">ADS</a></li>
+    <li>Grimm, S. L. et al. 2018, <i>A&amp;A</i> 613, A68 — eccentricity, ω. <a href="https://ui.adsabs.harvard.edu/abs/2018A&A...613A..68G/abstract">ADS</a></li>
+  </ol>
+  <h2 class="sec">Web sources <span class="proto">prototype sample data</span></h2>
+  <ul class="refs websources"></ul>
+  <h2 class="sec">Appendix: tool-call log</h2>
+  <ol class="log"></ol>
+</article>
+</section>
+
+<!-- ======================= Variant B: Poster ======================= -->
+<section class="variant" data-variant="B" data-name="Poster" hidden>
+<article class="page">
+  <header>
+    <div><div class="proto" style="color:#ff8fb8">Prototype · sample Report</div>
+      <h1>TRAPPIST-1: radius vs irradiation</h1>
+      <div class="sub">Seven Earth-sized planets, very different amounts of starlight</div></div>
+    <div style="text-align:right;font-size:.8rem;color:#aab3c5">ExoScope · Project “Rocky worlds”<br>2026-10-25 16:05 UTC<br>
+      <span class="badge live" style="margin-top:6px">Live · NASA Exoplanet Archive</span></div>
+  </header>
+  <main>
+    <figure class="fig"><div class="chart big"></div>
+      <figcaption>Radius (R⊕) vs irradiation (S⊕, log scale), ±1σ. <span class="tpl">7</span> plotted · <span class="tpl">0</span> excluded.</figcaption></figure>
+    <div class="findings">
+      <div class="finding"><div class="k">Sizes</div>
+        <div class="v">From <span class="tpl">0.755 R⊕</span> (h) to <span class="tpl">1.129 R⊕</span> (g)</div></div>
+      <div class="finding"><div class="k">Starlight</div>
+        <div class="v">From <span class="tpl">0.144 S⊕</span> (h) to <span class="tpl">4.153 S⊕</span> (b); e gets <span class="tpl">0.646 ± 0.025 S⊕</span></div></div>
+      <div class="finding"><div class="k">What it doesn’t show</div>
+        <div class="model">Size and starlight can’t tell us whether any planet has liquid water.</div></div>
+    </div>
+    <div class="model" style="margin-top:18px">The inner planets b and c receive two to four times Earth’s irradiation; e and f fall
+      between Earth and Mars, while g and h receive less than Mars does.</div>
+  </main>
+  <aside>
+    <h2>Evidence</h2>
+    <div class="datatable compact"></div>
+    <h2>Interpretation</h2>
+    <span class="badge interp">“small” → radius &lt; 2 R⊕</span>
+    <p style="margin:.4em 0 0;color:var(--muted)">A size threshold chosen for the related Sample, not a scientific category.</p>
+    <h2>Web sources <span class="proto">sample</span></h2>
+    <ul class="websources"></ul>
+    <h2>Provenance</h2>
+    <p style="margin:0">pscomppars, fetched live 2026-10-25 15:55 UTC. Values combine Agol 2021, Ducrot 2020 and Grimm 2018 and may not be mutually consistent.</p>
+    <h2>Limitations</h2>
+    <div class="model" style="margin:0">Equilibrium temperature is not a measured surface temperature. Nothing here establishes habitability.</div>
+  </aside>
+</article>
+</section>
+
+<!-- ======================= Variant C: Lab notebook ======================= -->
+<section class="variant" data-variant="C" data-name="Lab notebook" hidden>
+<article class="page">
+  <div class="proto">Prototype · sample Report</div>
+  <h1>TRAPPIST-1: radius vs irradiation</h1>
+  <div class="meta">Project “Rocky worlds” · notebook export 2026-10-25 16:05 UTC · 4 steps ·
+    <span class="badge live">Live · NASA Exoplanet Archive</span></div>
+  <div class="legend" style="margin-bottom:8px"><span><span class="tpl">1.116</span> filled from saved archive data</span>
+    <span><span class="model">prose</span> written by Gemma</span></div>
+  <div class="steps"></div>
+  <div class="step"><div class="when"><b>⚑</b>Limits</div><div>
+    <div class="model" style="margin-top:0">Values combine several publications and may not be mutually consistent. Size and
+      irradiation do not establish an atmosphere, oceans or habitability.</div>
+  </div></div>
+</article>
+</section>
+
+<nav class="proto-switcher" aria-label="Prototype variant switcher">
+  <button type="button" data-step="-1" aria-label="Previous variant">←</button>
+  <span class="label"></span>
+  <button type="button" data-step="1" aria-label="Next variant">→</button>
+</nav>
+
+<script>
+/* ---- Real values: TRAPPIST-1, pscomppars Snapshot 2026-10-25 (Agol 2021 radius/insolation) ---- */
+const PLANETS = [
+  { n: "b", r: 1.116, rp: 0.014, rm: 0.012, s: 4.153, sp: 0.161, sm: 0.159, p: 1.510826, t: 397.6 },
+  { n: "c", r: 1.097, rp: 0.014, rm: 0.012, s: 2.214, sp: 0.086, sm: 0.085, p: 2.421937, t: 339.7 },
+  { n: "d", r: 0.788, rp: 0.011, rm: 0.010, s: 1.115, sp: 0.043, sm: 0.043, p: 4.049219, t: 286.2 },
+  { n: "e", r: 0.920, rp: 0.013, rm: 0.012, s: 0.646, sp: 0.025, sm: 0.025, p: 6.101013, t: 249.7 },
+  { n: "f", r: 1.045, rp: 0.013, rm: 0.012, s: 0.373, sp: 0.015, sm: 0.014, p: 9.20754,  t: 217.7 },
+  { n: "g", r: 1.129, rp: 0.015, rm: 0.013, s: 0.252, sp: 0.010, sm: 0.010, p: 12.352446, t: 197.3 },
+  { n: "h", r: 0.755, rp: 0.014, rm: 0.014, s: 0.144, sp: 0.006, sm: 0.006, p: 18.772866, t: 171.7 },
+];
+const A_AU = [0.01154, 0.0158, 0.02227, 0.02925, 0.03849, 0.04683, 0.06189];
+/* PROTOTYPE sample data — not retrieved by the app. */
+const WEB = [
+  { t: "Thermal emission from the Earth-sized exoplanet TRAPPIST-1 b using JWST", d: "nature.com", u: "https://www.nature.com/" },
+  { t: "First JWST thermal phase curves of temperate terrestrial exoplanets: no thick atmosphere around TRAPPIST-1 b and c", d: "iopscience.iop.org", u: "https://iopscience.iop.org/" },
+  { t: "TRAPPIST-1 b: a hot rock without a dense atmosphere", d: "mpg.de", u: "https://www.mpg.de/" },
+];
+const LOG = [
+  { at: "15:55:12", ask: "Open TRAPPIST-1", call: 'load_system("TRAPPIST-1")', res: "7 planets · Live · 2.7 s" },
+  { at: "15:57:40", ask: "Compare radius and irradiation", call: "compare(x=radius, y=insolation)", res: "7 plotted · 0 excluded · 0.1 s" },
+  { at: "16:01:03", ask: "Find small planets with periods under 10 days", call: 'search_catalog(radius < 2, period < 10; "small" → radius < 2 R⊕)', res: "1,228 matched · 37 excluded · Live · 1.3 s" },
+  { at: "16:03:22", ask: "Does any of these have liquid water?", call: 'web_search("JWST TRAPPIST-1 atmosphere liquid water")', res: "3 Web sources · 2.8 s" },
+  { at: "16:05:01", ask: "Write a report on the radius comparison", call: 'export_report(title, include=[comparison 1, sample 1, web sources])', res: "this Report" },
+];
+
+const pm = (v, p, m) => (Math.abs(p - m) < 1e-9 ? `${v} ± ${p}` : `${v} +${p}/−${m}`);
+
+function chartSVG(big) {
+  const W = 560, H = big ? 330 : 300, L = 56, R = 18, T = 16, B = 44;
+  const x0 = 0.7, x1 = 1.2, ly0 = Math.log10(0.1), ly1 = Math.log10(6);
+  const X = (r) => L + ((r - x0) / (x1 - x0)) * (W - L - R);
+  const Y = (s) => T + (1 - (Math.log10(s) - ly0) / (ly1 - ly0)) * (H - T - B);
+  let g = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Radius vs irradiation scatter, TRAPPIST-1">`;
+  // Earth reference
+  g += `<line x1="${L}" x2="${W - R}" y1="${Y(1)}" y2="${Y(1)}" stroke="#94a3b8" stroke-dasharray="4 4"/>`;
+  g += `<text x="${W - R - 4}" y="${Y(1) - 5}" font-size="11" text-anchor="end" fill="#64748b">Earth’s irradiation (1 S⊕)</text>`;
+  for (const s of [0.1, 0.3, 1, 3]) g += `<line x1="${L - 4}" x2="${L}" y1="${Y(s)}" y2="${Y(s)}" stroke="#94a3b8"/><text x="${L - 7}" y="${Y(s) + 4}" font-size="11" text-anchor="end" fill="#475569">${s}</text>`;
+  for (const r of [0.7, 0.8, 0.9, 1.0, 1.1, 1.2]) g += `<line x1="${X(r)}" x2="${X(r)}" y1="${H - B}" y2="${H - B + 4}" stroke="#94a3b8"/><text x="${X(r)}" y="${H - B + 17}" font-size="11" text-anchor="middle" fill="#475569">${r.toFixed(1)}</text>`;
+  g += `<rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="none" stroke="#cbd5e1"/>`;
+  g += `<text x="${(L + W - R) / 2}" y="${H - 6}" font-size="12" text-anchor="middle" fill="#1e293b">Planet radius (Earth radii)</text>`;
+  g += `<text transform="translate(14 ${(T + H - B) / 2}) rotate(-90)" font-size="12" text-anchor="middle" fill="#1e293b">Irradiation (Earth flux, log)</text>`;
+  for (const p of PLANETS) {
+    const cx = X(p.r), cy = Y(p.s);
+    g += `<line x1="${X(p.r - p.rm)}" x2="${X(p.r + p.rp)}" y1="${cy}" y2="${cy}" stroke="#1d4ed8"/>`;
+    g += `<line x1="${cx}" x2="${cx}" y1="${Y(p.s - p.sm)}" y2="${Y(p.s + p.sp)}" stroke="#1d4ed8"/>`;
+    g += `<circle cx="${cx}" cy="${cy}" r="${big ? 6 : 5}" fill="${p.n === "e" ? "#0ea5e9" : "#1d4ed8"}" stroke="#fff" stroke-width="1.5"/>`;
+    g += `<text x="${cx + 9}" y="${cy - 7}" font-size="${big ? 14 : 12}" font-weight="600" fill="#0f172a">${p.n}</text>`;
+  }
+  return g + "</svg>";
+}
+
+function orbitsSVG() {
+  let g = `<svg viewBox="0 0 320 180" style="width:100%;height:100%"><circle cx="160" cy="92" r="7" fill="#f59e0b"/>`;
+  A_AU.forEach((a, i) => {
+    const rx = 18 + (a / 0.0619) * 128, ry = rx * 0.38, ang = i * 1.7 + 0.6;
+    g += `<ellipse cx="160" cy="92" rx="${rx}" ry="${ry}" fill="none" stroke="${i === 3 ? "#38bdf8" : "#334155"}" stroke-width="${i === 3 ? 1.6 : 1}"/>`;
+    g += `<circle cx="${160 + rx * Math.cos(ang)}" cy="${92 + ry * Math.sin(ang)}" r="3.2" fill="#cbd5e1"/>`;
+  });
+  return g + "</svg>";
+}
+
+function dataTable(compact) {
+  const head = compact
+    ? "<tr><th></th><th>Radius R⊕</th><th>Irrad. S⊕</th></tr>"
+    : "<tr><th>Planet</th><th>Radius (R⊕)</th><th>Irradiation (S⊕)</th><th>Period (d)</th><th>Eq. temp (K)</th><th>Source papers</th></tr>";
+  const rows = PLANETS.map((p) => compact
+    ? `<tr><td>${p.n}</td><td><span class="tpl">${pm(p.r, p.rp, p.rm)}</span></td><td><span class="tpl">${pm(p.s, p.sp, p.sm)}</span></td></tr>`
+    : `<tr><td>TRAPPIST-1 ${p.n}</td><td><span class="tpl">${pm(p.r, p.rp, p.rm)}</span></td><td><span class="tpl">${pm(p.s, p.sp, p.sm)}</span></td><td><span class="tpl">${p.p}</span></td><td><span class="tpl">${p.t}</span></td><td>Agol 2021; T<sub>eq</sub> Ducrot 2020</td></tr>`).join("");
+  const foot = compact ? "" : `<p style="font-size:.78rem;color:var(--muted);margin:.4em 0 0">pscomppars · Live, fetched 2026-10-25 15:55 UTC · Snapshot fallback dated 2026-10-25 was not needed.</p>`;
+  return `<table>${head}${rows}</table>${foot}`;
+}
+
+const webList = () => WEB.map((w) => `<li><span class="badge web">Web</span> <a href="${w.u}">${w.t}</a> — ${w.d} · retrieved 16:03 UTC</li>`).join("");
+const logList = () => LOG.map((l) => `<li>${l.at} — “${l.ask}” → <code>${l.call}</code> — ${l.res}</li>`).join("");
+
+function notebookSteps() {
+  const ev = [
+    `<div class="evidence"><h3>Evidence</h3><div class="grid2"><div class="snapshot"><div class="orbits"></div><span>System view at 15:55</span></div>
+      <div style="font-size:.85rem"><span class="tpl">7</span> planets · semi-major axes <span class="tpl">0.01154–0.06189 AU</span><br>periods <span class="tpl">1.510826–18.772866 d</span><br><br><span class="badge live">Live · 15:55 UTC</span></div></div></div>`,
+    `<div class="evidence"><h3>Evidence</h3><div class="grid2"><figure class="fig"><div class="chart"></div></figure><div class="datatable compact"></div></div>
+      <div class="model">Planet e receives about two-thirds of Earth’s irradiation and is slightly smaller than Earth.</div></div>`,
+    `<div class="evidence"><h3>Evidence</h3><span class="badge interp">Interpretation · “small” → radius &lt; 2 R⊕</span> <span class="badge sample">Sample</span>
+      <p style="margin:.5em 0 0;font-size:.85rem"><span class="tpl">1,228</span> matched · <span class="tpl">37</span> excluded (radius missing <span class="tpl">22</span>, period missing <span class="tpl">18</span>) · Live · 16:01 UTC</p>
+      <p style="margin:.3em 0 0;font-size:.8rem;color:var(--muted)">Caveat: a size threshold chosen for this search, not a scientific category.</p></div>`,
+    `<div class="evidence"><h3>Evidence <span class="proto">sample web sources</span></h3><ul style="margin:0;padding-left:1.1em;font-size:.85rem">${webList()}</ul>
+      <div class="model">The catalog cannot answer this. JWST thermal-emission studies found no thick atmosphere on b or c; e, f and g have not been shown to have water.</div></div>`,
+  ];
+  return LOG.slice(0, 4).map((l, i) => `<div class="step"><div class="when"><b>${i + 1}</b>${l.at} UTC</div><div>
+    <p class="ask">${l.ask}</p><div class="tool">→ ${l.call} · ${l.res}</div>${ev[i]}</div></div>`).join("");
+}
+
+/* Fill shared slots */
+document.querySelector('[data-variant="C"] .steps').insertAdjacentHTML("beforeend", notebookSteps());
+document.querySelectorAll(".chart").forEach((el) => (el.innerHTML = chartSVG(el.classList.contains("big"))));
+document.querySelectorAll(".orbits").forEach((el) => (el.innerHTML = orbitsSVG()));
+document.querySelectorAll(".datatable").forEach((el) => (el.innerHTML = dataTable(el.classList.contains("compact"))));
+document.querySelectorAll(".websources").forEach((el) => (el.innerHTML = webList()));
+document.querySelectorAll("ol.log").forEach((el) => (el.innerHTML = logList()));
+
+/* ---- Prototype switcher ---- */
+const variants = [...document.querySelectorAll(".variant")];
+const keys = variants.map((v) => v.dataset.variant);
+function show(key) {
+  if (!keys.includes(key)) key = "A";
+  variants.forEach((v) => (v.hidden = v.dataset.variant !== key));
+  document.body.className = key;
+  const v = variants.find((x) => x.dataset.variant === key);
+  document.querySelector(".proto-switcher .label").textContent = `PROTOTYPE · ${key} (${v.dataset.name})`;
+  const url = new URL(location.href); url.searchParams.set("variant", key); history.replaceState(null, "", url);
+}
+function step(d) { const i = keys.indexOf(document.body.className); show(keys[(i + d + keys.length) % keys.length]); }
+document.querySelectorAll(".proto-switcher button").forEach((b) => b.addEventListener("click", () => step(+b.dataset.step)));
+document.addEventListener("keydown", (e) => {
+  const t = e.target;
+  if (t instanceof HTMLElement && (t.closest("input, textarea, select") || t.isContentEditable)) return;
+  if (e.key === "ArrowLeft") step(-1);
+  if (e.key === "ArrowRight") step(1);
+});
+show(new URLSearchParams(location.search).get("variant") || "A");
+</script>
+</body>
+</html>
