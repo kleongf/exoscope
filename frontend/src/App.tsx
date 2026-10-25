@@ -1,10 +1,19 @@
+import { useEffect, useRef } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CompareDrawer } from "@/features/compare/CompareDrawer";
 import { ProjectExplorer } from "@/features/project/ProjectExplorer";
+import { startProjects } from "@/features/project/projectController";
 import { SystemView } from "@/features/scene/SystemView";
 import { TurnPanel } from "@/features/voice/TurnPanel";
 
 export function App() {
+  const started = useRef(false);
+  useEffect(() => {
+    // Once per page load, even when StrictMode runs effects twice: never create two Projects.
+    if (started.current) return;
+    started.current = true;
+    void startProjects();
+  }, []);
   return (
     <TooltipProvider>
       <div

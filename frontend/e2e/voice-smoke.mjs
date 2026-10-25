@@ -29,7 +29,11 @@ export async function exerciseVoice(page) {
     assert.equal(url.origin, WEB_URL);
     assert.equal(url.search, "");
     const body = request.postDataJSON();
-    assert(Object.keys(body).every((key) => ["text", "audio", "current_system"].includes(key)));
+    assert(
+      Object.keys(body).every((key) =>
+        ["text", "audio", "current_system", "project_id"].includes(key),
+      ),
+    );
     requests.push(body);
     await new Promise((resolve) => {
       releaseResponse = resolve;

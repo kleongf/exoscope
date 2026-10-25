@@ -8,6 +8,7 @@ import { exerciseLayout } from "./layout-smoke.mjs";
 import { exerciseAr } from "./ar-smoke.mjs";
 import { exerciseWeb } from "./web-smoke.mjs";
 import { validateTurnFixtures } from "./validate-fixtures.mjs";
+import { exerciseProjects } from "./project-smoke.mjs";
 
 validateTurnFixtures();
 
@@ -33,6 +34,7 @@ try {
   await exerciseWeb(page);
   await page.screenshot({ path: `${outDir}smoke.png` });
   await exerciseAr(page, outDir);
+  await exerciseProjects(browser, outDir);
   const errors = logs.filter(
     (line) => line.startsWith("[error]") || line.startsWith("[pageerror]"),
   );
