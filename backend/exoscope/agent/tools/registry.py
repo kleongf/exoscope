@@ -6,10 +6,11 @@ from pydantic import BaseModel
 from exoscope.agent.tools.base import Tool
 from exoscope.agent.tools.compare import COMPARE
 from exoscope.agent.tools.load_system import LOAD_SYSTEM
+from exoscope.agent.tools.search_catalog import SEARCH_CATALOG
 
 TOOLS: dict[str, Tool[BaseModel]] = {
     tool.name: tool  # pyright: ignore[reportAssignmentType]
-    for tool in (LOAD_SYSTEM, COMPARE)
+    for tool in (LOAD_SYSTEM, COMPARE, SEARCH_CATALOG)
 }
 
 

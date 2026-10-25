@@ -32,11 +32,14 @@ function errorBars(values: Measured[]) {
   };
 }
 
+const MAX_LABELLED = 20;
+
 function trace(rows: PlottedRow[], selected: string | null): Data {
   const isSel = rows.map((r) => r.planet === selected);
   return {
     type: "scatter",
-    mode: "text+markers",
+    // Label points only when they stay legible; hover still names every point.
+    mode: rows.length > MAX_LABELLED ? "markers" : "text+markers",
     x: rows.map((r) => r.x.value),
     y: rows.map((r) => r.y.value),
     customdata: rows.map((r) => r.planet),

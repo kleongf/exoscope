@@ -31,3 +31,18 @@ class CatalogUnavailableError(CatalogError):
     def __init__(self, reason: str) -> None:
         super().__init__(reason)
         self.reason = reason
+
+
+class InvalidSearchError(CatalogError):
+    """A Sample search the catalog will not run: bad operator, value, sort or limit."""
+
+    code = "invalid_search"
+
+
+class UnknownFieldError(InvalidSearchError):
+    code = "unknown_field"
+
+    def __init__(self, name: str, allowed: list[str]) -> None:
+        super().__init__(f"{name!r} is not a searchable field. Allowed: {', '.join(allowed)}.")
+        self.name = name
+        self.allowed = allowed

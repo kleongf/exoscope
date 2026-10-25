@@ -96,3 +96,11 @@ def test_quote_characters_never_reach_adql() -> None:
         load_system("x'; drop table pscomppars --", tap=tap)
     assert tap.queries
     assert all(";" not in q and "--" not in q and "x'" not in q for q in tap.queries)
+
+
+def test_apostrophes_are_stripped_on_both_sides() -> None:
+    """Archive hostnames such as "Barnard's star" must resolve from the student's spelling."""
+    tap = live_tap()
+    with pytest.raises(UnknownSystemError):
+        load_system("Barnard's star", tap=tap)
+    assert any("BARNARDSSTAR" in q and "'''',''" in q for q in tap.queries)

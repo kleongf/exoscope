@@ -1,5 +1,6 @@
 """Turn raw pscomppars rows (live or Snapshot) into a typed System."""
 
+import html
 import math
 import re
 from collections.abc import Sequence
@@ -42,7 +43,8 @@ def parse_reference(reflink: str | None) -> Reference | None:
     label = _LABEL.search(reflink)
     href = _HREF.search(reflink)
     text = label.group(1).strip() if label else reflink.strip()
-    return Reference(label=text, url=href.group(1) if href else None)
+    url = html.unescape(href.group(1)) if href else None
+    return Reference(label=html.unescape(text), url=url)
 
 
 def _limit(flag: float | None) -> Literal["upper", "lower"] | None:

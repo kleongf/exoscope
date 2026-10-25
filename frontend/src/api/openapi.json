@@ -215,6 +215,75 @@
         "required": ["planet", "hostname", "x", "y", "excluded"],
         "title": "ComparisonRow"
       },
+      "Exclusion": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "by_field": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Field",
+            "description": "Excluded planets missing each field"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": ["count", "by_field", "reason"],
+        "title": "Exclusion",
+        "description": "Planets that pass every known condition but lack a value the search depends on."
+      },
+      "Filter": {
+        "properties": {
+          "field": {
+            "type": "string",
+            "title": "Field",
+            "description": "Allowlisted field name, e.g. radius or orbital_period"
+          },
+          "op": {
+            "type": "string",
+            "title": "Op",
+            "description": "One of < <= > >= = between is_null"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value",
+            "description": "Number to compare with (lower bound for between); text for ="
+          },
+          "upper": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upper",
+            "description": "Upper bound, only for between"
+          }
+        },
+        "type": "object",
+        "required": ["field", "op"],
+        "title": "Filter",
+        "description": "One explicit condition on an allowlisted field."
+      },
       "FocusPlanet": {
         "properties": {
           "kind": {
@@ -256,6 +325,36 @@
         "type": "object",
         "required": ["status"],
         "title": "Health"
+      },
+      "Interpretation": {
+        "properties": {
+          "term": {
+            "type": "string",
+            "title": "Term",
+            "description": "The student's word, e.g. small"
+          },
+          "as": {
+            "type": "string",
+            "title": "As",
+            "description": "How it was read, e.g. radius < 2 Earth radii"
+          },
+          "caveat": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caveat",
+            "description": "Required for loaded words such as Earth-like or habitable"
+          }
+        },
+        "type": "object",
+        "required": ["term", "as"],
+        "title": "Interpretation",
+        "description": "How a vague word in the student's request was read as a concrete filter."
       },
       "LiveProvenance": {
         "properties": {
@@ -673,6 +772,173 @@
         "required": ["data_base64", "mime_type"],
         "title": "ReplyAudio"
       },
+      "Sample": {
+        "properties": {
+          "filters": {
+            "items": {
+              "$ref": "#/components/schemas/Filter"
+            },
+            "type": "array",
+            "title": "Filters"
+          },
+          "interpretations": {
+            "items": {
+              "$ref": "#/components/schemas/Interpretation"
+            },
+            "type": "array",
+            "title": "Interpretations"
+          },
+          "sort": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Sort"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/SampleField"
+            },
+            "type": "array",
+            "title": "Fields"
+          },
+          "planets": {
+            "items": {
+              "$ref": "#/components/schemas/SamplePlanet"
+            },
+            "type": "array",
+            "title": "Planets"
+          },
+          "matched": {
+            "type": "integer",
+            "title": "Matched",
+            "description": "All planets matching the filters, before the limit"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          },
+          "excluded": {
+            "$ref": "#/components/schemas/Exclusion"
+          },
+          "provenance": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LiveProvenance"
+              },
+              {
+                "$ref": "#/components/schemas/SnapshotProvenance"
+              }
+            ],
+            "title": "Provenance",
+            "discriminator": {
+              "propertyName": "mode",
+              "mapping": {
+                "live": "#/components/schemas/LiveProvenance",
+                "snapshot": "#/components/schemas/SnapshotProvenance"
+              }
+            }
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "filters",
+          "interpretations",
+          "sort",
+          "limit",
+          "fields",
+          "planets",
+          "matched",
+          "truncated",
+          "excluded",
+          "provenance",
+          "notes"
+        ],
+        "title": "Sample",
+        "description": "A set of planets selected by explicit, visible filters. Missing is never treated as zero."
+      },
+      "SampleField": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          }
+        },
+        "type": "object",
+        "required": ["name", "label", "unit"],
+        "title": "SampleField"
+      },
+      "SamplePlanet": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Canonical archive pl_name; the planet's ID"
+          },
+          "hostname": {
+            "type": "string",
+            "title": "Hostname",
+            "description": "Canonical archive hostname of its System"
+          },
+          "values": {
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Measured"
+                },
+                {
+                  "$ref": "#/components/schemas/Missing"
+                },
+                {
+                  "$ref": "#/components/schemas/TextValue"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "status",
+                "mapping": {
+                  "measured": "#/components/schemas/Measured",
+                  "missing": "#/components/schemas/Missing",
+                  "text": "#/components/schemas/TextValue"
+                }
+              }
+            },
+            "type": "object",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": ["name", "hostname", "values"],
+        "title": "SamplePlanet"
+      },
       "SetTimeScale": {
         "properties": {
           "kind": {
@@ -713,6 +979,23 @@
         "type": "object",
         "required": ["source", "snapshot_date"],
         "title": "SnapshotProvenance"
+      },
+      "Sort": {
+        "properties": {
+          "field": {
+            "type": "string",
+            "title": "Field"
+          },
+          "direction": {
+            "type": "string",
+            "enum": ["asc", "desc"],
+            "title": "Direction",
+            "default": "asc"
+          }
+        },
+        "type": "object",
+        "required": ["field"],
+        "title": "Sort"
       },
       "Star": {
         "properties": {
@@ -937,6 +1220,33 @@
         "required": ["hostname", "provenance"],
         "title": "SystemProvenance"
       },
+      "TextValue": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "text",
+            "title": "Status",
+            "default": "text"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Reference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": ["value", "reference"],
+        "title": "TextValue"
+      },
       "ToolStep": {
         "properties": {
           "id": {
@@ -983,6 +1293,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/Comparison"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sample": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Sample"
               },
               {
                 "type": "null"
