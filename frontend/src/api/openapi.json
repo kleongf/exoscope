@@ -64,6 +64,22 @@
   },
   "components": {
     "schemas": {
+      "AudioInput": {
+        "properties": {
+          "data_base64": {
+            "type": "string",
+            "title": "Data Base64"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["data_base64", "mime_type"],
+        "title": "AudioInput"
+      },
       "FocusPlanet": {
         "properties": {
           "kind": {
@@ -72,14 +88,14 @@
             "title": "Kind",
             "default": "focus_planet"
           },
-          "planet_id": {
+          "name": {
             "type": "string",
-            "title": "Planet Id",
+            "title": "Name",
             "description": "Archive pl_name, e.g. 'TRAPPIST-1 e'."
           }
         },
         "type": "object",
-        "required": ["planet_id"],
+        "required": ["name"],
         "title": "FocusPlanet"
       },
       "HTTPValidationError": {
@@ -106,6 +122,422 @@
         "required": ["status"],
         "title": "Health"
       },
+      "LiveProvenance": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "const": "live",
+            "title": "Mode",
+            "default": "live"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "fetched_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fetched At"
+          }
+        },
+        "type": "object",
+        "required": ["source", "fetched_at"],
+        "title": "LiveProvenance"
+      },
+      "LoadSystem": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "load_system",
+            "title": "Kind",
+            "default": "load_system"
+          },
+          "system": {
+            "$ref": "#/components/schemas/System"
+          }
+        },
+        "type": "object",
+        "required": ["system"],
+        "title": "LoadSystem"
+      },
+      "Measured": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "measured",
+            "title": "Status",
+            "default": "measured"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "err_lo": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Err Lo",
+            "description": "Size of the lower uncertainty (positive)"
+          },
+          "err_hi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Err Hi",
+            "description": "Size of the upper uncertainty (positive)"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": ["upper", "lower"]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit",
+            "description": "Set when the value is a limit rather than a measurement"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Reference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": ["value", "unit", "err_lo", "err_hi", "limit", "reference"],
+        "title": "Measured"
+      },
+      "Missing": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "missing",
+            "title": "Status",
+            "default": "missing"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          }
+        },
+        "type": "object",
+        "required": ["unit"],
+        "title": "Missing"
+      },
+      "Planet": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Canonical archive pl_name; the planet's ID"
+          },
+          "letter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Letter"
+          },
+          "orbital_period": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Orbital Period",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "semi_major_axis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Semi Major Axis",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "radius": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Radius",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "mass": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Mass",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "mass_provenance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mass Provenance",
+            "description": "Archive pl_bmassprov, e.g. Mass or Msini"
+          },
+          "insolation": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Insolation",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "equilibrium_temperature": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Equilibrium Temperature",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "eccentricity": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Eccentricity",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "inclination": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Inclination",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "transit_midpoint": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Transit Midpoint",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "argument_of_periastron": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Argument Of Periastron",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "letter",
+          "orbital_period",
+          "semi_major_axis",
+          "radius",
+          "mass",
+          "mass_provenance",
+          "insolation",
+          "equilibrium_temperature",
+          "eccentricity",
+          "inclination",
+          "transit_midpoint",
+          "argument_of_periastron"
+        ],
+        "title": "Planet"
+      },
+      "Reference": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": ["label", "url"],
+        "title": "Reference",
+        "description": "The publication a catalog value comes from."
+      },
+      "ReplyAudio": {
+        "properties": {
+          "data_base64": {
+            "type": "string",
+            "title": "Data Base64"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["data_base64", "mime_type"],
+        "title": "ReplyAudio"
+      },
       "SetTimeScale": {
         "properties": {
           "kind": {
@@ -125,17 +557,309 @@
         "required": ["days_per_second"],
         "title": "SetTimeScale"
       },
-      "TurnRequest": {
+      "SnapshotProvenance": {
         "properties": {
-          "text": {
+          "mode": {
             "type": "string",
-            "maxLength": 2000,
-            "minLength": 1,
-            "title": "Text"
+            "const": "snapshot",
+            "title": "Mode",
+            "default": "snapshot"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "snapshot_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Snapshot Date"
           }
         },
         "type": "object",
-        "required": ["text"],
+        "required": ["source", "snapshot_date"],
+        "title": "SnapshotProvenance"
+      },
+      "Star": {
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "title": "Hostname"
+          },
+          "effective_temperature": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Effective Temperature",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "radius": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Radius",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "mass": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Mass",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "luminosity": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Luminosity",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "distance": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Distance",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "ra": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Ra",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "dec": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Dec",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          }
+        },
+        "type": "object",
+        "required": [
+          "hostname",
+          "effective_temperature",
+          "radius",
+          "mass",
+          "luminosity",
+          "distance",
+          "ra",
+          "dec"
+        ],
+        "title": "Star"
+      },
+      "System": {
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "title": "Hostname",
+            "description": "Canonical archive hostname; the System's ID"
+          },
+          "star": {
+            "$ref": "#/components/schemas/Star"
+          },
+          "planets": {
+            "items": {
+              "$ref": "#/components/schemas/Planet"
+            },
+            "type": "array",
+            "title": "Planets"
+          },
+          "provenance": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LiveProvenance"
+              },
+              {
+                "$ref": "#/components/schemas/SnapshotProvenance"
+              }
+            ],
+            "title": "Provenance",
+            "discriminator": {
+              "propertyName": "mode",
+              "mapping": {
+                "live": "#/components/schemas/LiveProvenance",
+                "snapshot": "#/components/schemas/SnapshotProvenance"
+              }
+            }
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": ["hostname", "star", "planets", "provenance", "notes"],
+        "title": "System",
+        "description": "One host star and its known planets."
+      },
+      "ToolStep": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["completed", "failed"],
+            "title": "Status"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "elapsed_ms": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Elapsed Ms"
+          }
+        },
+        "type": "object",
+        "required": ["id", "name", "status", "detail", "elapsed_ms"],
+        "title": "ToolStep",
+        "description": "One operation that actually ran, timed with a monotonic clock."
+      },
+      "TurnData": {
+        "properties": {
+          "system": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/System"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "TurnData"
+      },
+      "TurnRequest": {
+        "properties": {
+          "text": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          },
+          "audio": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AudioInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "current_system": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current System"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
         "title": "TurnRequest"
       },
       "TurnResponse": {
@@ -148,6 +872,16 @@
             "type": "string",
             "title": "Reply Text"
           },
+          "reply_audio": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReplyAudio"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "ui_commands": {
             "items": {
               "oneOf": [
@@ -156,22 +890,54 @@
                 },
                 {
                   "$ref": "#/components/schemas/SetTimeScale"
+                },
+                {
+                  "$ref": "#/components/schemas/LoadSystem"
                 }
               ],
               "discriminator": {
                 "propertyName": "kind",
                 "mapping": {
                   "focus_planet": "#/components/schemas/FocusPlanet",
+                  "load_system": "#/components/schemas/LoadSystem",
                   "set_time_scale": "#/components/schemas/SetTimeScale"
                 }
               }
             },
             "type": "array",
             "title": "Ui Commands"
+          },
+          "data": {
+            "$ref": "#/components/schemas/TurnData"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ToolStep"
+            },
+            "type": "array",
+            "title": "Steps"
           }
         },
         "type": "object",
-        "required": ["transcript", "reply_text", "ui_commands"],
+        "required": ["transcript", "reply_text"],
         "title": "TurnResponse"
       },
       "ValidationError": {

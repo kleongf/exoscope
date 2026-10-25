@@ -42,6 +42,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** AudioInput */
+    AudioInput: {
+      /** Data Base64 */
+      data_base64: string;
+      /** Mime Type */
+      mime_type: string;
+    };
     /** FocusPlanet */
     FocusPlanet: {
       /**
@@ -50,10 +57,10 @@ export interface components {
        */
       kind: "focus_planet";
       /**
-       * Planet Id
+       * Name
        * @description Archive pl_name, e.g. 'TRAPPIST-1 e'.
        */
-      planet_id: string;
+      name: string;
     };
     /** HTTPValidationError */
     HTTPValidationError: {
@@ -65,6 +72,122 @@ export interface components {
       /** Status */
       status: string;
     };
+    /** LiveProvenance */
+    LiveProvenance: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      mode: "live";
+      /** Source */
+      source: string;
+      /**
+       * Fetched At
+       * Format: date-time
+       */
+      fetched_at: string;
+    };
+    /** LoadSystem */
+    LoadSystem: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      kind: "load_system";
+      system: components["schemas"]["System"];
+    };
+    /** Measured */
+    Measured: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      status: "measured";
+      /** Value */
+      value: number;
+      /** Unit */
+      unit: string | null;
+      /**
+       * Err Lo
+       * @description Size of the lower uncertainty (positive)
+       */
+      err_lo: number | null;
+      /**
+       * Err Hi
+       * @description Size of the upper uncertainty (positive)
+       */
+      err_hi: number | null;
+      /**
+       * Limit
+       * @description Set when the value is a limit rather than a measurement
+       */
+      limit: ("upper" | "lower") | null;
+      reference: components["schemas"]["Reference"] | null;
+      /** Note */
+      note?: string | null;
+    };
+    /** Missing */
+    Missing: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      status: "missing";
+      /** Unit */
+      unit: string | null;
+    };
+    /** Planet */
+    Planet: {
+      /**
+       * Name
+       * @description Canonical archive pl_name; the planet's ID
+       */
+      name: string;
+      /** Letter */
+      letter: string | null;
+      /** Orbital Period */
+      orbital_period: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /** Semi Major Axis */
+      semi_major_axis: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /** Radius */
+      radius: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /** Mass */
+      mass: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /**
+       * Mass Provenance
+       * @description Archive pl_bmassprov, e.g. Mass or Msini
+       */
+      mass_provenance: string | null;
+      /** Insolation */
+      insolation: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /** Equilibrium Temperature */
+      equilibrium_temperature: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /** Eccentricity */
+      eccentricity: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /** Inclination */
+      inclination: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /** Transit Midpoint */
+      transit_midpoint: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /** Argument Of Periastron */
+      argument_of_periastron: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+    };
+    /**
+     * Reference
+     * @description The publication a catalog value comes from.
+     */
+    Reference: {
+      /** Label */
+      label: string;
+      /** Url */
+      url: string | null;
+    };
+    /** ReplyAudio */
+    ReplyAudio: {
+      /** Data Base64 */
+      data_base64: string;
+      /** Mime Type */
+      mime_type: string;
+    };
     /** SetTimeScale */
     SetTimeScale: {
       /**
@@ -75,10 +198,89 @@ export interface components {
       /** Days Per Second */
       days_per_second: number;
     };
+    /** SnapshotProvenance */
+    SnapshotProvenance: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      mode: "snapshot";
+      /** Source */
+      source: string;
+      /**
+       * Snapshot Date
+       * Format: date
+       */
+      snapshot_date: string;
+    };
+    /** Star */
+    Star: {
+      /** Hostname */
+      hostname: string;
+      /** Effective Temperature */
+      effective_temperature: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /** Radius */
+      radius: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /** Mass */
+      mass: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /** Luminosity */
+      luminosity: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /** Distance */
+      distance: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /** Ra */
+      ra: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /** Dec */
+      dec: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+    };
+    /**
+     * System
+     * @description One host star and its known planets.
+     */
+    System: {
+      /**
+       * Hostname
+       * @description Canonical archive hostname; the System's ID
+       */
+      hostname: string;
+      star: components["schemas"]["Star"];
+      /** Planets */
+      planets: components["schemas"]["Planet"][];
+      /** Provenance */
+      provenance:
+        components["schemas"]["LiveProvenance"] | components["schemas"]["SnapshotProvenance"];
+      /** Notes */
+      notes: string[];
+    };
+    /**
+     * ToolStep
+     * @description One operation that actually ran, timed with a monotonic clock.
+     */
+    ToolStep: {
+      /** Id */
+      id: string;
+      /** Name */
+      name: string;
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: "completed" | "failed";
+      /** Detail */
+      detail: string;
+      /** Elapsed Ms */
+      elapsed_ms: number;
+    };
+    /** TurnData */
+    TurnData: {
+      system?: components["schemas"]["System"] | null;
+    };
     /** TurnRequest */
     TurnRequest: {
       /** Text */
-      text: string;
+      text?: string | null;
+      audio?: components["schemas"]["AudioInput"] | null;
+      /** Current System */
+      current_system?: string | null;
     };
     /** TurnResponse */
     TurnResponse: {
@@ -86,8 +288,20 @@ export interface components {
       transcript: string;
       /** Reply Text */
       reply_text: string;
+      reply_audio?: components["schemas"]["ReplyAudio"] | null;
       /** Ui Commands */
-      ui_commands: (components["schemas"]["FocusPlanet"] | components["schemas"]["SetTimeScale"])[];
+      ui_commands?: (
+        | components["schemas"]["FocusPlanet"]
+        | components["schemas"]["SetTimeScale"]
+        | components["schemas"]["LoadSystem"]
+      )[];
+      data?: components["schemas"]["TurnData"];
+      /** Error */
+      error?: string | null;
+      /** Warnings */
+      warnings?: string[];
+      /** Steps */
+      steps?: components["schemas"]["ToolStep"][];
     };
     /** ValidationError */
     ValidationError: {

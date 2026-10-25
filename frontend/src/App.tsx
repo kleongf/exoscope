@@ -1,26 +1,24 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SamplePanel } from "@/features/catalog/SamplePanel";
 import { CompareDrawer } from "@/features/compare/CompareDrawer";
-import { PlanetPanel } from "@/features/scene/PlanetPanel";
+import { ProjectExplorer } from "@/features/project/ProjectExplorer";
 import { SystemView } from "@/features/scene/SystemView";
-import { ConversationBar } from "@/features/voice/ConversationBar";
+import { TurnPanel } from "@/features/voice/TurnPanel";
 
-/** The research workbench: System view centre, Sample left, planet right, chart drawer below. */
 export function App() {
   return (
     <TooltipProvider>
-      <div className="grid h-screen grid-rows-[1fr_auto] bg-background text-foreground">
-        <div className="grid min-h-0 grid-cols-[18rem_1fr_19rem]">
-          <SamplePanel />
-          <main className="flex min-h-0 min-w-0 flex-col border-x border-border">
-            <div className="relative min-h-0 flex-1 bg-[#05060a]">
-              <SystemView />
-            </div>
-            <CompareDrawer />
-          </main>
-          <PlanetPanel />
-        </div>
-        <ConversationBar />
+      <div
+        className="grid min-h-dvh grid-cols-1 bg-background text-foreground lg:h-dvh lg:min-h-0 lg:grid-cols-[13rem_minmax(0,1fr)_22rem] xl:grid-cols-[15rem_minmax(0,1fr)_25rem]"
+        data-testid="workbench"
+      >
+        <ProjectExplorer />
+        <main className="flex min-h-[32rem] min-w-0 flex-col border-y lg:min-h-0 lg:border-x lg:border-y-0">
+          <div className="min-h-0 flex-1">
+            <SystemView />
+          </div>
+          <CompareDrawer />
+        </main>
+        <TurnPanel />
       </div>
     </TooltipProvider>
   );
