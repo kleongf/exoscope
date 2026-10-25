@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTYPE · Project and Report model</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --line: #262b36; --text: #e6e8ee; --muted: #9aa3b2;
+    --accent: #7cc4ff; --warn: #f2c94c; --bad: #ff7a7a; --good: #6fd39b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, "Segoe UI", Inter, sans-serif; }
+  main { max-width: 1240px; margin: 0 auto; padding: 24px 20px 64px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  h3 { font-size: 14px; margin: 0 0 6px; }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); margin-left: 6px; vertical-align: 1px; }
+  .tag.live { color: var(--good); border-color: #2f5b44; }
+  .tag.snap { color: var(--warn); border-color: #5e5121; }
+  .tag.bad { color: var(--bad); border-color: #6b2f2f; }
+  .tag.acc { color: var(--accent); border-color: #2a4b66; }
+  .intro { color: var(--muted); max-width: 900px; margin: 6px 0 18px; }
+  .question { border-left: 3px solid var(--accent); padding: 8px 14px; background: var(--panel); margin: 12px 0 20px; font-size: 15px; }
+  .grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 18px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  button { background: #1f2430; color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { border-color: var(--accent); color: var(--accent); }
+  button:disabled { opacity: .4; cursor: default; }
+  .group { margin-bottom: 12px; }
+  .group > .label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  input[type=text] { background: #0f1218; color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 6px 9px; font: inherit; width: 280px; }
+  .callout { border: 1px solid #2a4b66; background: #12202c; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; }
+  .callout.err { border-color: #6b2f2f; background: #2a1414; }
+  .callout ul { margin: 4px 0 0 18px; padding: 0; }
+  .item { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; }
+  .item.changed { border-color: var(--warn); }
+  .item .meta { color: var(--muted); font-size: 12px; }
+  .report { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+  .report.changed { border-color: var(--warn); }
+  .report.broken { border-color: var(--bad); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .doc { background: #0f1218; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 12.5px; }
+  .doc .sec { margin-bottom: 6px; }
+  .doc .sec b { color: var(--accent); font-weight: 600; }
+  .doc .problem { color: var(--bad); }
+  .doc .note { color: var(--warn); }
+  table { border-collapse: collapse; font-size: 12px; margin-top: 4px; }
+  td, th { border-bottom: 1px solid var(--line); padding: 2px 8px 2px 0; text-align: left; }
+  th { color: var(--muted); font-weight: 500; }
+  .ex { color: var(--muted); }
+  pre { background: #0b0d11; border: 1px solid var(--line); border-radius: 6px; padding: 10px; font-size: 11.5px; max-height: 340px; overflow: auto; white-space: pre-wrap; word-break: break-all; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tabs button.on { border-color: var(--accent); color: var(--accent); background: #12202c; }
+  .steps ol { margin: 8px 0 0 20px; padding: 0; }
+  .steps li { margin-bottom: 6px; }
+  .steps li.done { color: var(--muted); }
+  .steps li.done button { opacity: .5; }
+  .steps li.next button { border-color: var(--accent); color: var(--accent); }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; font-size: 13px; }
+  .kv div:nth-child(odd) { color: var(--muted); }
+  .pending { border: 1px solid var(--warn); background: #2a2410; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; }
+  .muted { color: var(--muted); }
+  .choice { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .choice button { border: 0; border-radius: 0; }
+  .choice button.on { background: #12202c; color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>PROTOTYPE · Project and Report model <span class="tag">throwaway</span></h1>
+  <div class="question"><b>Question:</b> What does a Project hold, and what does a Report capture, so Reports never change after they're written, even as the Project keeps building up?</div>
+  <p class="intro">
+    Click buttons to build up a Project the way a student would: open Systems, compare, search, cite Web sources, write Reports.
+    The key choice is switchable: new Reports either <b>copy</b> their data when written (a frozen snapshot) or <b>reference</b> Project items by ID.
+    Each Report shows "as written" next to "as it renders now", so you can see when a later change leaks into it.
+    TRAPPIST-1 and TOI-700 values come from the 2026-10-25 Snapshots. Search counts are illustrative, except 1,228 matched / 37 excluded, which were measured live.
+    Byte sizes are estimates: a System is about 19 KB, measured from the agent context.
+  </p>
+
+  <div class="grid">
+    <div>
+      <div class="panel" id="tour">
+        <h2>Guided walkthroughs</h2>
+        <div class="tabs" id="tabs"></div>
+        <div class="steps" id="steps"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Free play</h2>
+        <div class="group"><div class="label">New Reports</div>
+          <div class="choice" id="policy">
+            <button data-policy="copy">Copy data when written</button>
+            <button data-policy="reference">Reference Project items</button>
+          </div>
+        </div>
+        <div class="group"><div class="label">Systems</div><div class="row">
+          <button data-act='{"type":"OPEN_SYSTEM","hostname":"TRAPPIST-1","mode":"live"}'>Open TRAPPIST-1 (live)</button>
+          <button data-act='{"type":"OPEN_SYSTEM","hostname":"TRAPPIST-1","mode":"snapshot"}'>Open TRAPPIST-1 (NASA down → Snapshot)</button>
+          <button data-act='{"type":"OPEN_SYSTEM","hostname":"TOI-700","mode":"live"}'>Open TOI-700 (live)</button>
+        </div></div>
+        <div class="group"><div class="label">Comparisons</div><div class="row">
+          <button data-act='{"type":"COMPARE","x":"radius","y":"insolation"}'>Compare radius and irradiation</button>
+          <button data-act='{"type":"COMPARE","x":"radius","y":"mass"}'>Compare radius and mass</button>
+          <button data-act='{"type":"REDO_COMPARISON"}'>Redo latest comparison with fresh data</button>
+          <button data-act='{"type":"RENAME_LATEST","kind":"comparison","title":"Rocky or not? (renamed)"}'>Rename latest comparison</button>
+          <button data-act='{"type":"DELETE_LATEST","kind":"comparison"}'>Delete latest comparison</button>
+        </div></div>
+        <div class="group"><div class="label">Samples</div><div class="row">
+          <button data-act='{"type":"SEARCH","term":"small","threshold":2}'>Find small planets, periods under 10 days</button>
+          <button data-act='{"type":"EDIT_INTERPRETATION","term":"small","threshold":1.5}'>Edit "small" chip → radius &lt; 1.5 R⊕</button>
+        </div></div>
+        <div class="group"><div class="label">Web sources</div><div class="row">
+          <button data-act='{"type":"CITE_WEB_SOURCE","source":"jwst-b"}'>Cite: JWST finds no thick atmosphere on TRAPPIST-1 b</button>
+          <button data-act='{"type":"CITE_WEB_SOURCE","source":"cornell-e"}'>Cite: TRAPPIST-1 e could hold water</button>
+          <button data-act='{"type":"DELETE_LATEST","kind":"webSource"}'>Delete latest Web source</button>
+        </div></div>
+        <div class="group"><div class="label">Reports</div><div class="row">
+          <input type="text" id="req" value="a report on the radius comparison">
+          <button class="primary" id="write">Write Report</button>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <button data-req="a report on the radius comparison">“…the radius comparison”</button>
+          <button data-req="a report on TRAPPIST-1">“…on TRAPPIST-1”</button>
+          <button data-req="a report on the small planets search">“…the small planets search”</button>
+          <button data-req="a report on everything">“…everything”</button>
+        </div></div>
+        <div class="group"><div class="label">Projects and files</div><div class="row">
+          <button data-act='{"type":"NEW_PROJECT","name":"Hot Jupiters"}'>New Project</button>
+          <button data-act='{"type":"SWITCH_PROJECT"}'>Switch Project</button>
+          <button data-act='{"type":"SAVE"}'>Save Project to disk</button>
+          <button data-act='{"type":"RELOAD"}'>Restart backend and reload</button>
+          <button data-act='{"type":"LOAD_CORRUPT"}'>Load a corrupt Project file</button>
+        </div></div>
+        <div class="row"><button id="reset">Reset everything</button></div>
+      </div>
+    </div>
+
+    <div>
+      <div id="state"></div>
+    </div>
+  </div>
+</main>
+
+<!-- ===================== Pure module: no DOM, liftable into the real code ===================== -->
+<script>
+const ProjectModel = (() => {
+  const START = Date.parse("2026-10-25T15:00:00Z");
+  const SNAPSHOT_DATE = "2026-10-25";
+  const PROPS = {
+    radius: { label: "Radius", unit: "R⊕" },
+    insolation: { label: "Insolation", unit: "S⊕" },
+    mass: { label: "Mass", unit: "M⊕" },
+    period: { label: "Orbital period", unit: "d" },
+  };
+  // Values from backend/exoscope/catalog/snapshots/*.json (2026-10-25).
+  const ARCHIVE = {
+    "TRAPPIST-1": { ref: { radius: "Agol et al. 2021", insolation: "Agol et al. 2021", mass: "Agol et al. 2021", period: "Agol et al. 2021" }, planets: {
+      "TRAPPIST-1 b": { radius: 1.116, insolation: 4.153, mass: 1.374, period: 1.510826 },
+      "TRAPPIST-1 c": { radius: 1.097, insolation: 2.214, mass: 1.308, period: 2.421937 },
+      "TRAPPIST-1 d": { radius: 0.788, insolation: 1.115, mass: 0.388, period: 4.049219 },
+      "TRAPPIST-1 e": { radius: 0.92,  insolation: 0.646, mass: 0.692, period: 6.101013 },
+      "TRAPPIST-1 f": { radius: 1.045, insolation: 0.373, mass: 1.039, period: 9.20754 },
+      "TRAPPIST-1 g": { radius: 1.129, insolation: 0.252, mass: 1.321, period: 12.352446 },
+      "TRAPPIST-1 h": { radius: 0.755, insolation: 0.144, mass: 0.326, period: 18.772866 } } },
+    "TOI-700": { ref: { radius: "Pass et al. 2026", insolation: "Gilbert et al. 2023", mass: "Calculated Value (M-R relation)", period: "Pass et al. 2026" }, planets: {
+      "TOI-700 b": { radius: 0.963, insolation: 4.98, mass: 0.849, period: 9.97722 },
+      "TOI-700 c": { radius: 2.535, insolation: 2.64, mass: 6.96,  period: 16.0511039 },
+      "TOI-700 d": { radius: 1.145, insolation: 0.85, mass: 1.58,  period: 37.423457 },
+      "TOI-700 e": { radius: 0.919, insolation: 1.27, mass: 0.718, period: 27.810124 } } },
+  };
+  const WEB = {
+    "jwst-b": { title: "JWST thermal phase curves reveal no thick atmosphere around TRAPPIST-1 b and c", url: "https://www.nature.com/articles/s41586-025-trappist1bc", about: "TRAPPIST-1" },
+    "cornell-e": { title: "TRAPPIST-1 e could hold liquid water under some atmospheres", url: "https://news.cornell.edu/stories/2025/trappist-1e", about: "TRAPPIST-1" },
+  };
+  // Estimated real sizes in bytes, for the file-size panel.
+  const EST = { system: 19000, comparison: 4500, sample: 30000, webSource: 400, reportRef: 600 };
+  const KINDS = ["system", "sample", "comparison", "webSource", "report"];
+  const LIST = { system: "systems", sample: "samples", comparison: "comparisons", webSource: "webSources", report: "reports" };
+
+  const clone = (x) => JSON.parse(JSON.stringify(x));
+  const iso = (t) => new Date(t).toISOString().replace(".000", "");
+  const hhmm = (t) => new Date(t).toISOString().slice(11, 16);
+
+  function emptyProject(id, name, now) {
+    return { format: "exoscope.project", version: 1, id, name, createdAt: iso(now), currentSystem: null, seq: 0,
+             systems: [], samples: [], comparisons: [], webSources: [], reports: [] };
+  }
+  function initialState() {
+    return { now: START, policy: "copy", projects: { "p-1": emptyProject("p-1", "TRAPPIST-1 class project", START) },
+             current: "p-1", disk: {}, pending: null, changes: ["Started an empty Project."], error: null, lastChanged: [] };
+  }
+  const nextId = (p, prefix) => { p.seq += 1; return `${prefix}-${p.seq}`; };
+  const provenance = (mode, now) => mode === "live"
+    ? { mode: "live", fetched_at: iso(now) } : { mode: "snapshot", snapshot_date: SNAPSHOT_DATE };
+  const provText = (pv) => pv.mode === "live" ? `Live · fetched ${pv.fetched_at.slice(11, 16)}` : `Cached · Snapshot ${pv.snapshot_date}`;
+  const findAny = (p, id) => { for (const k of KINDS) { const it = p[LIST[k]].find((x) => x.id === id); if (it) return it; } return null; };
+  const latest = (p, kind) => p[LIST[kind]][p[LIST[kind]].length - 1] || null;
+  const citedBy = (p, id) => p.reports.filter((r) => r.includes.some((i) => i.id === id)).map((r) => r.id);
+
+  function systemValues(hostname, revised) {
+    const a = clone(ARCHIVE[hostname]);
+    if (revised && hostname === "TRAPPIST-1") a.planets["TRAPPIST-1 e"].radius = 0.910; // simulated archive revision
+    return a;
+  }
+
+  // ---------- request → included items ----------
+  function resolveRequest(p, request) {
+    const t = request.toLowerCase();
+    const props = Object.keys(PROPS).filter((k) => t.includes(k) || (k === "insolation" && t.includes("irradiation")));
+    const hosts = p.systems.map((s) => s.hostname).filter((h) => t.includes(h.toLowerCase()));
+    if (/everything|all of it|whole project/.test(t)) {
+      return { status: "ok", ids: [...p.systems, ...p.samples, ...p.comparisons, ...p.webSources].map((x) => x.id),
+               why: "“everything”: every System, Sample, comparison and Web source in this Project." };
+    }
+    if (/search|sample|small planets/.test(t)) {
+      if (!p.samples.length) return { status: "none", why: "This Project has no Sample to report on." };
+      if (p.samples.length > 1) return { status: "ambiguous", kind: "sample", candidates: p.samples.map((s) => s.id) };
+      return { status: "ok", ids: [p.samples[0].id], why: "the only Sample in this Project." };
+    }
+    if (/compar/.test(t) || props.length) {
+      const cands = p.comparisons.filter((c) => props.every((k) => c.x === k || c.y === k) && (!hosts.length || c.systems.some((h) => hosts.includes(h))));
+      if (!cands.length) return { status: "none", why: `No comparison in this Project matches ${props.join(" and ") || "that request"}.` };
+      if (cands.length > 1) return { status: "ambiguous", kind: "comparison", candidates: cands.map((c) => c.id) };
+      return { status: "ok", ids: withContext(p, [cands[0].id]), why: `${cands[0].title}, plus its System and the Web sources cited about it.` };
+    }
+    if (hosts.length) {
+      const ids = p.systems.filter((s) => hosts.includes(s.hostname)).map((s) => s.id)
+        .concat(p.comparisons.filter((c) => c.systems.some((h) => hosts.includes(h))).map((c) => c.id))
+        .concat(p.webSources.filter((w) => hosts.includes(w.about)).map((w) => w.id));
+      return { status: "ok", ids, why: `everything about ${hosts.join(", ")}.` };
+    }
+    return { status: "none", why: "Couldn't tell what to include. Gemma would ask." };
+  }
+  function withContext(p, ids) {
+    const out = new Set(ids);
+    for (const id of ids) {
+      const c = p.comparisons.find((x) => x.id === id);
+      if (!c) continue;
+      p.systems.filter((s) => c.systems.includes(s.hostname)).forEach((s) => out.add(s.id));
+      p.webSources.filter((w) => c.systems.includes(w.about)).forEach((w) => out.add(w.id));
+    }
+    return [...out];
+  }
+
+  // ---------- rendering a Report (template fills every value) ----------
+  function renderItem(it) {
+    if (it.kind === "system") return { title: `System: ${it.hostname}`, lines: [`${Object.keys(it.planets).length} planets · ${provText(it.provenance)}`] };
+    if (it.kind === "comparison") return { title: it.title, table: it.rows.map((r) => [r.planet, r.x, r.y, r.excluded]), axes: [PROPS[it.x], PROPS[it.y]],
+      lines: [`${it.rows.filter((r) => !r.excluded).length} plotted · ${it.rows.filter((r) => r.excluded).length} excluded · ${it.provenance.map(provText).join(", ")}`, `Sources: ${it.refs.join("; ")}`] };
+    if (it.kind === "sample") return { title: `Sample: ${it.title}`, lines: [
+      `Interpretation: “${it.interpretations[0].term}” read as ${it.interpretations[0].as}`, `${it.matched.toLocaleString()} matched · ${it.excluded} excluded · ${provText(it.provenance)}`] };
+    if (it.kind === "webSource") return { title: `Web source: ${it.title}`, lines: [`${it.domain} · retrieved ${it.retrievedAt.slice(11, 16)}`] };
+    return { title: it.id, lines: [] };
+  }
+  function renderReport(p, r) {
+    const sections = []; const problems = []; const notes = [];
+    for (const inc of r.includes) {
+      if (r.policy === "copy") { sections.push(renderItem(r.frozen[inc.id])); continue; }
+      const it = findAny(p, inc.id);
+      if (!it) { problems.push(`${inc.kind} ${inc.id} (“${inc.title}”) was deleted; this Report can no longer show it.`); continue; }
+      if (it.rev !== inc.rev) notes.push(`${it.id} changed after this Report was written (revision ${inc.rev} → ${it.rev}).`);
+      sections.push(renderItem(it));
+    }
+    return { sections, problems, notes, fingerprint: JSON.stringify(sections) };
+  }
+  function reportStatus(p, r) {
+    const now = renderReport(p, r);
+    if (now.problems.length) return "broken";
+    return now.fingerprint === r.writtenFingerprint ? "unchanged" : "changed";
+  }
+
+  // ---------- sizes ----------
+  function bytes(p) { return new TextEncoder().encode(JSON.stringify(p)).length; }
+  function estimate(p) {
+    let total = p.systems.length * EST.system + p.comparisons.length * EST.comparison + p.samples.length * EST.sample + p.webSources.length * EST.webSource;
+    for (const r of p.reports) {
+      total += EST.reportRef;
+      if (r.policy === "copy") for (const inc of r.includes) total += EST[inc.kind] || 0;
+    }
+    return total;
+  }
+
+  // ---------- the reducer ----------
+  function reduce(prev, action) {
+    const s = clone(prev);
+    s.now += 60_000; s.changes = []; s.error = null; s.lastChanged = [];
+    const p = s.projects[s.current];
+    const say = (m) => s.changes.push(m);
+    const fail = (m) => { s.error = m; return s; };
+
+    switch (action.type) {
+      case "SET_POLICY":
+        s.policy = action.policy; say(`New Reports will ${action.policy === "copy" ? "copy their data when written" : "reference Project items by ID"}. Existing Reports keep the policy they were written with.`); return s;
+
+      case "OPEN_SYSTEM": {
+        const a = systemValues(action.hostname, false);
+        const existing = p.systems.find((x) => x.hostname === action.hostname);
+        if (existing) {
+          existing.planets = a.planets; existing.refs = a.ref; existing.provenance = provenance(action.mode, s.now); existing.rev += 1;
+          s.lastChanged.push(existing.id); say(`Reopened ${action.hostname}: updated ${existing.id} in place (revision ${existing.rev}), ${provText(existing.provenance)}.`);
+        } else {
+          const it = { id: nextId(p, "sys"), kind: "system", rev: 1, hostname: action.hostname, planets: a.planets, refs: a.ref, provenance: provenance(action.mode, s.now), openedAt: iso(s.now) };
+          p.systems.push(it); s.lastChanged.push(it.id); say(`Opened ${action.hostname} as ${it.id} · ${provText(it.provenance)}. Earlier items stay in the Project.`);
+        }
+        p.currentSystem = action.hostname; return s;
+      }
+
+      case "COMPARE": {
+        if (!p.currentSystem) return fail("No System is open. Open one before comparing.");
+        const sys = p.systems.find((x) => x.hostname === p.currentSystem);
+        const it = { id: nextId(p, "cmp"), kind: "comparison", rev: 1, title: `${sys.hostname}: ${PROPS[action.x].label.toLowerCase()} vs ${PROPS[action.y].label.toLowerCase()}`,
+          x: action.x, y: action.y, systems: [sys.hostname], madeAt: iso(s.now),
+          rows: Object.entries(sys.planets).map(([name, v]) => ({ planet: name, x: v[action.x] ?? null, y: v[action.y] ?? null, excluded: (v[action.x] == null || v[action.y] == null) ? "missing value" : null })),
+          refs: [...new Set([sys.refs[action.x], sys.refs[action.y]])], provenance: [clone(sys.provenance)] };
+        p.comparisons.push(it); s.lastChanged.push(it.id); say(`Made comparison ${it.id}: “${it.title}”. Comparisons build up; the earlier ones are kept.`); return s;
+      }
+
+      case "REDO_COMPARISON": {
+        const c = latest(p, "comparison"); if (!c) return fail("No comparison to redo.");
+        const host = c.systems[0]; const a = systemValues(host, true);
+        c.rows = Object.entries(a.planets).map(([name, v]) => ({ planet: name, x: v[c.x], y: v[c.y], excluded: null }));
+        c.provenance = [provenance("live", s.now)]; c.rev += 1; c.madeAt = iso(s.now);
+        s.lastChanged.push(c.id);
+        say(`Redid ${c.id} with fresh live data. Simulated archive revision: TRAPPIST-1 e radius 0.920 → 0.910 R⊕. Updated in place (revision ${c.rev}).`);
+        const cites = citedBy(p, c.id); if (cites.length) say(`${cites.join(", ")} cited this comparison: see how each Report reacts.`);
+        return s;
+      }
+
+      case "SEARCH": {
+        const it = { id: nextId(p, "smp"), kind: "sample", rev: 1, title: "small planets with periods under 10 days",
+          filters: [{ field: "radius", op: "<", value: action.threshold }, { field: "period", op: "<", value: 10 }],
+          interpretations: [{ term: action.term, as: `radius < ${action.threshold} R⊕` }], matched: 1228, excluded: 37, provenance: provenance("live", s.now), ranAt: iso(s.now) };
+        p.samples.push(it); s.lastChanged.push(it.id); say(`Ran a live search → Sample ${it.id}: 1,228 matched, 37 excluded. Interpretation “small” = radius < ${action.threshold} R⊕.`); return s;
+      }
+
+      case "EDIT_INTERPRETATION": {
+        const smp = latest(p, "sample"); if (!smp) return fail("No Sample to edit.");
+        smp.interpretations = [{ term: action.term, as: `radius < ${action.threshold} R⊕` }]; smp.filters[0].value = action.threshold;
+        smp.matched = 689; smp.excluded = 37; smp.provenance = provenance("live", s.now); smp.rev += 1; s.lastChanged.push(smp.id);
+        say(`Edited the “small” chip to radius < ${action.threshold} R⊕ and re-ran ${smp.id} in place (revision ${smp.rev}): 689 matched (illustrative).`);
+        const cites = citedBy(p, smp.id); if (cites.length) say(`${cites.join(", ")} used this Sample.`);
+        return s;
+      }
+
+      case "CITE_WEB_SOURCE": {
+        const w = WEB[action.source];
+        const it = { id: nextId(p, "web"), kind: "webSource", rev: 1, title: w.title, url: w.url, domain: new URL(w.url).hostname.replace("www.", ""), about: w.about, retrievedAt: iso(s.now) };
+        p.webSources.push(it); s.lastChanged.push(it.id); say(`Cited Web source ${it.id} (${it.domain}). It can be cited in Reports but never plotted.`); return s;
+      }
+
+      case "RENAME_LATEST": {
+        const it = latest(p, action.kind); if (!it) return fail(`No ${action.kind} to rename.`);
+        const old = it.title; it.title = action.title; it.rev += 1; s.lastChanged.push(it.id); say(`Renamed ${it.id}: “${old}” → “${it.title}”.`); return s;
+      }
+
+      case "DELETE_LATEST": {
+        const it = latest(p, action.kind); if (!it) return fail(`No ${action.kind} to delete.`);
+        p[LIST[action.kind]] = p[LIST[action.kind]].filter((x) => x.id !== it.id);
+        say(`Deleted ${it.id} (“${it.title}”).`);
+        const cites = citedBy(p, it.id); if (cites.length) say(`⚠ ${cites.join(", ")} cited it. Copy Reports keep their copy; Reference Reports now show it as deleted.`);
+        return s;
+      }
+
+      case "WRITE_REPORT":
+      case "CHOOSE": {
+        let ids; let request = action.request; let why;
+        if (action.type === "CHOOSE") {
+          if (!s.pending) return fail("Nothing to choose.");
+          request = s.pending.request;
+          ids = action.id === "ALL" ? s.pending.candidates : [action.id];
+          ids = s.pending.kind === "comparison" ? withContext(p, ids) : ids;
+          why = action.id === "ALL" ? "the student said “both”." : `the student picked ${action.id}.`;
+          s.pending = null;
+        } else {
+          const res = resolveRequest(p, request);
+          if (res.status === "none") return fail(`Report not written: ${res.why}`);
+          if (res.status === "ambiguous") {
+            s.pending = { request, kind: res.kind, candidates: res.candidates };
+            say(`“${request}” matches ${res.candidates.length} ${res.kind === "comparison" ? "comparisons" : "Samples"}. Gemma asks which one; nothing is written yet.`);
+            return s;
+          }
+          ids = res.ids; why = res.why;
+        }
+        const items = ids.map((id) => findAny(p, id)).filter(Boolean);
+        const r = { id: nextId(p, "rep"), kind: "report", title: request.replace(/^a report on /i, "").replace(/^./, (c) => c.toUpperCase()),
+          request, writtenAt: iso(s.now), policy: s.policy,
+          includes: items.map((it) => ({ kind: it.kind, id: it.id, rev: it.rev, title: it.title || it.hostname })), frozen: null, writtenFingerprint: "" };
+        if (s.policy === "copy") r.frozen = Object.fromEntries(items.map((it) => [it.id, clone(it)]));
+        p.reports.push(r);
+        r.writtenFingerprint = renderReport(p, r).fingerprint;
+        s.lastChanged.push(r.id);
+        say(`Wrote Report ${r.id} (${s.policy}) from “${request}”: included ${items.map((i) => i.id).join(", ")}. Why: ${why}`);
+        return s;
+      }
+
+      case "CANCEL_CHOICE": s.pending = null; say("Cancelled; no Report written."); return s;
+
+      case "NEW_PROJECT": {
+        const id = `p-${Object.keys(s.projects).length + 1}`;
+        s.projects[id] = emptyProject(id, action.name, s.now); s.current = id; s.pending = null;
+        say(`Created and switched to Project ${id} “${action.name}”. It starts empty; the other Project is untouched.`); return s;
+      }
+      case "SWITCH_PROJECT": {
+        const ids = Object.keys(s.projects); if (ids.length < 2) return fail("Only one Project exists. Create another first.");
+        s.current = ids[(ids.indexOf(s.current) + 1) % ids.length]; s.pending = null;
+        say(`Switched to ${s.current} “${s.projects[s.current].name}”. Report requests only see this Project's items.`); return s;
+      }
+      case "SAVE": {
+        s.disk[p.id] = JSON.stringify(p, null, 2); say(`Saved ${p.id} to projects/${p.id}.json (${bytes(p).toLocaleString()} bytes in this prototype, ~${Math.round(estimate(p) / 1000)} KB estimated real).`); return s;
+      }
+      case "RELOAD": {
+        const restored = {}; let n = 0;
+        for (const [id, txt] of Object.entries(s.disk)) { restored[id] = parseProject(txt); n++; }
+        if (!n) return fail("Nothing saved yet. Everything in memory was lost on restart.");
+        const unsaved = Object.keys(s.projects).filter((id) => !s.disk[id] || s.disk[id] !== JSON.stringify(s.projects[id], null, 2));
+        s.projects = restored; if (!s.projects[s.current]) s.current = Object.keys(restored)[0]; s.pending = null;
+        say(`Restarted and reloaded ${n} Project file(s).`);
+        say(unsaved.length ? `⚠ Unsaved changes lost in: ${unsaved.join(", ")}. Should every turn auto-save?` : "Round-trip identical: nothing was lost.");
+        return s;
+      }
+      case "LOAD_CORRUPT": {
+        try { parseProject('{"format":"exoscope.project","version":1,"id":"p-9","systems":[{"id":"sys-1"'); }
+        catch (e) { return fail(`Could not load projects/p-9.json: ${e.message}. The current Project is unchanged (not replaced by an empty one).`); }
+        return s;
+      }
+      default: return fail(`Unknown action ${action.type}`);
+    }
+  }
+
+  function parseProject(text) {
+    let p;
+    try { p = JSON.parse(text); } catch { throw new Error("the file is not valid JSON"); }
+    if (p.format !== "exoscope.project" || p.version !== 1) throw new Error("unknown file format or version");
+    for (const k of KINDS) if (!Array.isArray(p[LIST[k]])) throw new Error(`missing ${LIST[k]}`);
+    return p;
+  }
+
+  return { initialState, reduce, resolveRequest, renderReport, reportStatus, bytes, estimate, provText, PROPS, hhmm };
+})();
+</script>
+
+<!-- ===================== Page shell: renders state, wires buttons ===================== -->
+<script>
+const M = ProjectModel;
+let state = M.initialState();
+let tourKey = null, tourStep = 0;
+
+function dispatch(action) {
+  state = M.reduce(state, action);
+  render();
+}
+
+const WALKTHROUGHS = {
+  happy: { title: "Happy path", text: "Open a System, compare two properties, write a Report on that comparison. Watch the Report resolve to the comparison plus its System, and get stamped with its policy.",
+    steps: [["Open TRAPPIST-1 (live)", { type: "OPEN_SYSTEM", hostname: "TRAPPIST-1", mode: "live" }],
+            ["Compare radius and irradiation", { type: "COMPARE", x: "radius", y: "insolation" }],
+            ["Cite the JWST Web source", { type: "CITE_WEB_SOURCE", source: "jwst-b" }],
+            ["Write “a report on the radius comparison”", { type: "WRITE_REPORT", request: "a report on the radius comparison" }],
+            ["Save Project to disk", { type: "SAVE" }]] },
+  redo: { title: "Redo after Report (copy vs reference)", text: "Write one Report under Copy and one under Reference, then redo the comparison with fresher archive data. The Copy Report stays exactly as written. The Reference Report silently changes, which breaks the “never changes after it's written” rule.",
+    steps: [["Open TRAPPIST-1 (live)", { type: "OPEN_SYSTEM", hostname: "TRAPPIST-1", mode: "live" }],
+            ["Compare radius and irradiation", { type: "COMPARE", x: "radius", y: "insolation" }],
+            ["New Reports: copy", { type: "SET_POLICY", policy: "copy" }],
+            ["Write Report A on the radius comparison", { type: "WRITE_REPORT", request: "a report on the radius comparison" }],
+            ["New Reports: reference", { type: "SET_POLICY", policy: "reference" }],
+            ["Write Report B on the same comparison", { type: "WRITE_REPORT", request: "a report on the radius comparison" }],
+            ["Redo the comparison with fresh data (e's radius revised)", { type: "REDO_COMPARISON" }]] },
+  deleteWeb: { title: "Delete a cited Web source", text: "A Report cites a Web source, then the student deletes it from the Project. Should deletion even be allowed while a Report cites it?",
+    steps: [["Open TRAPPIST-1 (live)", { type: "OPEN_SYSTEM", hostname: "TRAPPIST-1", mode: "live" }],
+            ["Compare radius and irradiation", { type: "COMPARE", x: "radius", y: "insolation" }],
+            ["Cite the JWST Web source", { type: "CITE_WEB_SOURCE", source: "jwst-b" }],
+            ["New Reports: reference", { type: "SET_POLICY", policy: "reference" }],
+            ["Write a Reference Report on TRAPPIST-1", { type: "WRITE_REPORT", request: "a report on TRAPPIST-1" }],
+            ["New Reports: copy", { type: "SET_POLICY", policy: "copy" }],
+            ["Write a Copy Report on TRAPPIST-1", { type: "WRITE_REPORT", request: "a report on TRAPPIST-1" }],
+            ["Delete the Web source", { type: "DELETE_LATEST", kind: "webSource" }]] },
+  ambiguous: { title: "Ambiguous “radius comparison”", text: "Two comparisons both involve radius. The request can't pick one, so nothing is written until the student chooses.",
+    steps: [["Open TRAPPIST-1 (live)", { type: "OPEN_SYSTEM", hostname: "TRAPPIST-1", mode: "live" }],
+            ["Compare radius and irradiation", { type: "COMPARE", x: "radius", y: "insolation" }],
+            ["Compare radius and mass", { type: "COMPARE", x: "radius", y: "mass" }],
+            ["Write “a report on the radius comparison”", { type: "WRITE_REPORT", request: "a report on the radius comparison" }],
+            ["Student: “the irradiation one” (pick cmp-2)", { type: "CHOOSE", id: "cmp-2" }]] },
+  interp: { title: "Edit an Interpretation after a Report", text: "A Report used the “small = radius < 2 R⊕” Sample. The student then tightens the chip to < 1.5 R⊕, which re-runs the Sample in place.",
+    steps: [["New Reports: reference", { type: "SET_POLICY", policy: "reference" }],
+            ["Find small planets, periods under 10 days", { type: "SEARCH", term: "small", threshold: 2 }],
+            ["Write “a report on the small planets search”", { type: "WRITE_REPORT", request: "a report on the small planets search" }],
+            ["Edit “small” → radius < 1.5 R⊕", { type: "EDIT_INTERPRETATION", term: "small", threshold: 1.5 }]] },
+  roundtrip: { title: "Save → restart → reload", text: "Build up a Project, save it, change something without saving, then restart. Saved state round-trips exactly; the unsaved change is lost, which raises whether every turn should auto-save.",
+    steps: [["Open TRAPPIST-1 (live)", { type: "OPEN_SYSTEM", hostname: "TRAPPIST-1", mode: "live" }],
+            ["Compare radius and irradiation", { type: "COMPARE", x: "radius", y: "insolation" }],
+            ["Write a Report on the radius comparison", { type: "WRITE_REPORT", request: "a report on the radius comparison" }],
+            ["Save Project to disk", { type: "SAVE" }],
+            ["Cite a Web source (not saved)", { type: "CITE_WEB_SOURCE", source: "cornell-e" }],
+            ["Restart backend and reload", { type: "RELOAD" }],
+            ["Load a corrupt Project file", { type: "LOAD_CORRUPT" }]] },
+  switching: { title: "Switch Projects mid-way", text: "Start a second Project while the first has work in it. Report requests only see the current Project's items.",
+    steps: [["Open TRAPPIST-1 (live)", { type: "OPEN_SYSTEM", hostname: "TRAPPIST-1", mode: "live" }],
+            ["Compare radius and irradiation", { type: "COMPARE", x: "radius", y: "insolation" }],
+            ["New Project “Hot Jupiters”", { type: "NEW_PROJECT", name: "Hot Jupiters" }],
+            ["Write “a report on the radius comparison” (in the new Project)", { type: "WRITE_REPORT", request: "a report on the radius comparison" }],
+            ["Switch back", { type: "SWITCH_PROJECT" }],
+            ["Write it again in the first Project", { type: "WRITE_REPORT", request: "a report on the radius comparison" }]] },
+};
+
+function startTour(key) { tourKey = key; tourStep = 0; state = M.initialState(); render(); }
+function runStep(i) {
+  const step = WALKTHROUGHS[tourKey].steps[i];
+  if (i !== tourStep) return;
+  tourStep += 1; dispatch(step[1]);
+}
+
+const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const fmt = (v) => v == null ? '<span class="ex">missing</span>' : String(v);
+
+function renderDoc(rendered) {
+  let h = "";
+  for (const sec of rendered.sections) {
+    h += `<div class="sec"><b>${esc(sec.title)}</b>`;
+    for (const l of sec.lines) h += `<div>${esc(l)}</div>`;
+    if (sec.table) {
+      h += `<table><tr><th>Planet</th><th>${esc(sec.axes[0].label)} (${esc(sec.axes[0].unit)})</th><th>${esc(sec.axes[1].label)} (${esc(sec.axes[1].unit)})</th></tr>`;
+      for (const [n, x, y] of sec.table) h += `<tr><td>${esc(n)}</td><td>${fmt(x)}</td><td>${fmt(y)}</td></tr>`;
+      h += "</table>";
+    }
+    h += "</div>";
+  }
+  for (const n of rendered.notes) h += `<div class="note">↻ ${esc(n)}</div>`;
+  for (const pr of rendered.problems) h += `<div class="problem">✗ ${esc(pr)}</div>`;
+  return h || '<span class="muted">empty</span>';
+}
+
+function render() {
+  // tabs + steps
+  document.getElementById("tabs").innerHTML = Object.entries(WALKTHROUGHS).map(([k, w]) =>
+    `<button data-tour="${k}" class="${k === tourKey ? "on" : ""}">${esc(w.title)}</button>`).join("");
+  const stepsEl = document.getElementById("steps");
+  if (!tourKey) stepsEl.innerHTML = '<p class="muted">Pick a walkthrough. Each one resets to an empty Project first.</p>';
+  else {
+    const w = WALKTHROUGHS[tourKey];
+    stepsEl.innerHTML = `<p>${esc(w.text)}</p><ol>${w.steps.map(([label], i) =>
+      `<li class="${i < tourStep ? "done" : i === tourStep ? "next" : ""}"><button data-step="${i}" ${i !== tourStep ? "disabled" : ""}>${esc(label)}</button></li>`).join("")}</ol>` +
+      (tourStep >= w.steps.length ? '<p class="muted">Walkthrough complete. Keep poking with free play, or pick another tab.</p>' : "");
+  }
+  document.querySelectorAll("#policy button").forEach((b) => b.classList.toggle("on", b.dataset.policy === state.policy));
+
+  // state panel
+  const p = state.projects[state.current];
+  let h = "";
+  h += state.error ? `<div class="callout err"><b>Not done:</b> ${esc(state.error)}</div>` : "";
+  if (state.changes.length) h += `<div class="callout"><b>What just changed</b><ul>${state.changes.map((c) => `<li>${esc(c)}</li>`).join("")}</ul></div>`;
+  if (state.pending) {
+    h += `<div class="pending"><b>Gemma asks:</b> “${esc(state.pending.request)}” matches several items. Which one?<div class="row" style="margin-top:8px">` +
+      state.pending.candidates.map((id) => { const it = p.comparisons.find((c) => c.id === id) || p.samples.find((c) => c.id === id);
+        return `<button data-act='${JSON.stringify({ type: "CHOOSE", id })}'>${esc(id)}: ${esc(it.title)}</button>`; }).join("") +
+      `<button data-act='{"type":"CHOOSE","id":"ALL"}'>Both</button><button data-act='{"type":"CANCEL_CHOICE"}'>Cancel</button></div></div>`;
+  }
+
+  h += `<div class="panel"><h2>Project</h2><div class="kv">
+    <div>Current Project</div><div>${esc(p.id)} · “${esc(p.name)}” <span class="tag">${Object.keys(state.projects).length} Project(s)</span></div>
+    <div>Current System</div><div>${esc(p.currentSystem || "none")}</div>
+    <div>New Reports</div><div>${state.policy === "copy" ? "copy their data when written" : "reference Project items by ID"}</div>
+    <div>File size</div><div>${M.bytes(p).toLocaleString()} bytes in this prototype · ~${Math.round(M.estimate(p) / 1000).toLocaleString()} KB estimated real</div>
+    <div>Saved on disk</div><div>${Object.keys(state.disk).map((k) => `projects/${k}.json`).join(", ") || "nothing yet"}</div>
+  </div></div>`;
+
+  const groups = [["Systems opened", "systems"], ["Samples", "samples"], ["Comparisons", "comparisons"], ["Web sources", "webSources"]];
+  h += `<div class="panel"><h2>Project explorer</h2>`;
+  for (const [label, key] of groups) {
+    h += `<div class="group"><div class="label">${label}</div>`;
+    if (!p[key].length) h += '<div class="muted">None yet</div>';
+    for (const it of p[key]) {
+      const changed = state.lastChanged.includes(it.id);
+      const pv = it.provenance ? (Array.isArray(it.provenance) ? it.provenance[0] : it.provenance) : null;
+      const extra = it.kind === "sample" ? ` · chip “${esc(it.interpretations[0].term)}” = ${esc(it.interpretations[0].as)}` : it.kind === "webSource" ? ` · ${esc(it.domain)}` : "";
+      h += `<div class="item ${changed ? "changed" : ""}"><b>${esc(it.id)}</b> ${esc(it.title || it.hostname)}${pv ? `<span class="tag ${pv.mode === "live" ? "live" : "snap"}">${esc(M.provText(pv))}</span>` : ""}
+        <div class="meta">revision ${it.rev}${extra}${changed ? " · <b style='color:var(--warn)'>just changed</b>" : ""}</div></div>`;
+    }
+    h += "</div>";
+  }
+  h += "</div>";
+
+  h += `<div class="panel"><h2>Reports</h2>`;
+  if (!p.reports.length) h += '<div class="muted">None yet. Write one from a request.</div>';
+  for (const r of p.reports) {
+    const status = M.reportStatus(p, r);
+    const now = M.renderReport(p, r);
+    const written = JSON.parse(r.writtenFingerprint);
+    const badge = status === "unchanged" ? '<span class="tag live">unchanged since written</span>' : status === "changed" ? '<span class="tag bad">CHANGED since written</span>' : '<span class="tag bad">BROKEN: cites a deleted item</span>';
+    h += `<div class="report ${status === "unchanged" ? "" : status}"><h3>${esc(r.id)} · ${esc(r.title)} <span class="tag acc">${r.policy}</span>${badge}</h3>
+      <div class="meta muted">Written ${esc(r.writtenAt.slice(11, 16))} from “${esc(r.request)}” · includes ${r.includes.map((i) => `${i.id} (rev ${i.rev})`).join(", ")}</div>
+      <div class="cols" style="margin-top:8px"><div><div class="muted" style="font-size:12px">As written</div><div class="doc">${renderDoc({ sections: written, notes: [], problems: [] })}</div></div>
+      <div><div class="muted" style="font-size:12px">As it renders now</div><div class="doc">${renderDoc(now)}</div></div></div></div>`;
+  }
+  h += "</div>";
+
+  h += `<div class="panel"><h2>Project file (what gets saved)</h2><pre>${esc(JSON.stringify(p, null, 2))}</pre></div>`;
+  document.getElementById("state").innerHTML = h;
+}
+
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.tour) return startTour(b.dataset.tour);
+  if (b.dataset.step) return runStep(Number(b.dataset.step));
+  if (b.dataset.policy) return dispatch({ type: "SET_POLICY", policy: b.dataset.policy });
+  if (b.dataset.act) return dispatch(JSON.parse(b.dataset.act));
+  if (b.dataset.req) { document.getElementById("req").value = b.dataset.req; return dispatch({ type: "WRITE_REPORT", request: b.dataset.req }); }
+  if (b.id === "write") return dispatch({ type: "WRITE_REPORT", request: document.getElementById("req").value });
+  if (b.id === "reset") { tourKey = null; tourStep = 0; state = M.initialState(); render(); }
+});
+render();
+</script>
+</body>
+</html>
