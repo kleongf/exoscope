@@ -25,6 +25,7 @@
     "lucide-react": "^1.61.0",
     "openapi-fetch": "^0.17.0",
     "plotly.js": "^4.1.2",
+    "plotly.js-basic-dist-min": "^4.1.2",
     "radix-ui": "^1.8.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
