@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { formatJd } from "./format";
 import { LAYER_ROWS, SPEEDS, type Layers } from "./layers";
-import type { SizeFactors } from "./layout";
+import { caveatParts, type SizeFactors } from "./layout";
 
 export function LayerPanel({
   layers,
@@ -88,20 +88,9 @@ export function TimeControls(props: TimeControlsProps) {
   );
 }
 
-function sizeText(f: SizeFactors): string {
-  return f.planet === 1
-    ? "True sizes"
-    : `Planet sizes ×${String(f.planet)}, star ×${String(f.star)}`;
-}
-
 /** Always visible: what the view is not. */
 export function CaveatBadge({ sizes, provenance }: { sizes: SizeFactors; provenance: string }) {
-  const parts = [
-    "System is edge-on from Earth",
-    "Positions extrapolated from transit epochs",
-    sizeText(sizes),
-    "Not an N-body simulation",
-  ];
+  const parts = caveatParts(sizes);
   return (
     <div className="flex flex-wrap justify-end gap-1" data-testid="caveat-badge">
       {parts.map((p) => (

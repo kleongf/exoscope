@@ -52,3 +52,20 @@ export function planetRadiusScene(p: OrbitPlanet, scale: number, f: SizeFactors)
 export function starRadiusScene(system: OrbitSystem, scale: number, f: SizeFactors): number {
   return (system.star.radius.value ?? 0.1) * AU_PER_RSUN * scale * f.star;
 }
+
+/** The badge's size wording; shared with the AR model so both say the same thing. */
+export function sizeText(f: SizeFactors): string {
+  return f.planet === 1
+    ? "True sizes"
+    : `Planet sizes ×${String(f.planet)}, star ×${String(f.star)}`;
+}
+
+/** Everything the System view is not, in badge order (provenance is added by the caller). */
+export function caveatParts(f: SizeFactors): string[] {
+  return [
+    "System is edge-on from Earth",
+    "Positions extrapolated from transit epochs",
+    sizeText(f),
+    "Not an N-body simulation",
+  ];
+}

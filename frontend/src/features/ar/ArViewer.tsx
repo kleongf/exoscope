@@ -3,7 +3,6 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { arUnavailableReason } from "./arSupport";
-import { planetGlb } from "./planetModel";
 
 type ViewerState =
   | { kind: "building" }
@@ -28,8 +27,14 @@ function configure(viewer: ModelViewerElement, src: string, alt: string) {
   viewer.append(slot);
 }
 
-/** Builds the planet's model and shows it in <model-viewer>, which hands off to the phone's AR. */
-export function ArViewer({ color, lines }: { color: string; lines: string[] }) {
+interface ArViewerProps {
+  /** Builds the GLB; keep it stable (useCallback) so the model isn't rebuilt every render. */
+  build: () => Promise<Blob>;
+  alt: string;
+}
+
+/** Builds a model and shows it in <model-viewer>, which hands off to the phone's AR. */
+export function ArViewer({ build, alt }: ArViewerProps) {
   const host = useRef<HTMLDivElement>(null);
   const viewer = useRef<ModelViewerElement | null>(null);
   const [state, setState] = useState<ViewerState>({ kind: "building" });
@@ -40,12 +45,12 @@ export function ArViewer({ color, lines }: { color: string; lines: string[] }) {
     const fail = (message: string) => {
       if (!cancelled) setState({ kind: "failed", message });
     };
-    void Promise.all([planetGlb(color, lines), import("@google/model-viewer")])
+    void Promise.all([build(), import("@google/model-viewer")])
       .then(([blob]) => {
         if (cancelled || !host.current) return;
         url = URL.createObjectURL(blob);
         const element = document.createElement("model-viewer");
-        configure(element, url, `Schematic model of ${lines[0] ?? "the planet"}`);
+        configure(element, url, alt);
         element.addEventListener("load", () => {
           if (!cancelled) setState({ kind: "ready", arSupported: element.canActivateAR });
         });
@@ -68,7 +73,7 @@ export function ArViewer({ color, lines }: { color: string; lines: string[] }) {
       viewer.current = null;
       if (url) URL.revokeObjectURL(url);
     };
-  }, [color, lines]);
+  }, [build, alt]);
 
   return (
     <div className="flex flex-col gap-3">
