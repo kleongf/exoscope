@@ -1,7 +1,14 @@
 """What a Project keeps from each turn: work builds up and is never replaced."""
 
 from exoscope.project import Project, StepRecord, new_project, record_report, record_turn
-from tests.project_fakes import T0, at, radius_comparison, small_planets, snapshot_system
+from tests.project_fakes import (
+    T0,
+    at,
+    radius_comparison,
+    small_planets,
+    snapshot_system,
+    web_search,
+)
 
 
 def fresh() -> Project:
@@ -102,3 +109,16 @@ def test_a_report_keeps_only_its_metadata() -> None:
     assert p.reports == [report]
     assert (report.includes, report.file, report.written_at) == (included, "rep-5.html", at(3))
     assert p.updated_at == at(3)
+
+
+def test_web_sources_are_kept_with_their_turn_and_listed_once() -> None:
+    p = fresh()
+    first = web_search("https://a.org/1", "https://b.org/2")
+    record_turn(p, "Liquid water?", "Sources say...", now=at(1), web_search=first)
+    record_turn(p, "And e?", "...", now=at(2), web_search=web_search("https://a.org/1"))
+
+    assert p.turns[0].web_search == first
+    assert [(w.url, w.turn_id) for w in p.web_sources] == [
+        ("https://a.org/1", p.turns[0].id),
+        ("https://b.org/2", p.turns[0].id),
+    ]

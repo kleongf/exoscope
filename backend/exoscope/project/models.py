@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from exoscope.catalog import Sample, System
 from exoscope.compare import Comparison
+from exoscope.websearch.models import WebSearchResult
 
 
 class StepRecord(BaseModel):
@@ -29,6 +30,9 @@ class TurnRecord(BaseModel):
     reply_text: str
     error: str | None = None
     steps: list[StepRecord] = Field(default_factory=list[StepRecord])
+    web_search: WebSearchResult | None = Field(
+        default=None, description="The turn's web search, so its cited answer can be shown again"
+    )
 
 
 class SystemItem(BaseModel):
@@ -53,10 +57,10 @@ class SampleItem(BaseModel):
 
 
 class WebSourceItem(BaseModel):
-    """A cited Web source. Recorded once web search (#10) reports its sources in TurnData."""
+    """A Web source cited in the Project, listed once even if several turns cite it."""
 
     id: str
-    turn_id: str
+    turn_id: str = Field(description="The turn that first cited it")
     title: str
     url: str
     domain: str

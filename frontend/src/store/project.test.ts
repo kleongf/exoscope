@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { Comparison, Project, Sample, System, TurnResponse } from "../api/client";
+import type {
+  Comparison,
+  Project,
+  Sample,
+  System,
+  TurnResponse,
+  WebSearchResult,
+} from "../api/client";
 import { useExoStore } from "./store";
 
 const missing = { status: "missing", unit: null } as const;
@@ -42,6 +49,21 @@ const sample: Sample = {
   notes: [],
 };
 const at = "2026-10-25T15:00:00Z";
+const webSearch: WebSearchResult = {
+  status: "ok",
+  query: "TRAPPIST-1 water",
+  grounded_text: "",
+  sources: [
+    {
+      id: "s0",
+      kind: "web_source",
+      title: "Page",
+      url: "https://a.org/1",
+      retrieved_at: at,
+      domain: "a.org",
+    },
+  ],
+};
 const empty: Project = {
   format: "exoscope.project",
   version: 1,
@@ -63,6 +85,7 @@ const built: Project = {
       transcript: "Open TRAPPIST-1",
       reply_text: "Loaded.",
       steps: [{ name: "load_system", status: "completed", detail: "Loaded.", elapsed_ms: 900 }],
+      web_search: webSearch,
     },
   ],
   systems: [
@@ -89,6 +112,7 @@ describe("Projects", () => {
     expect(s.turns.map((t) => [t.question, t.reply, t.steps[0]?.name])).toEqual([
       ["Open TRAPPIST-1", "Loaded.", "load_system"],
     ]);
+    expect(s.turns[0]?.webSearch).toEqual(webSearch);
     expect(s.drawerOpen).toBe(false);
   });
 

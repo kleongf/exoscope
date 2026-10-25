@@ -8,7 +8,7 @@ from exoscope.agent import turn
 from exoscope.agent.models import ToolStep, TurnData, TurnRequest
 from exoscope.agent.result import AgentResult
 from exoscope.project import Project, ProjectStore
-from tests.project_fakes import T0, snapshot_system
+from tests.project_fakes import T0, snapshot_system, web_search
 
 
 @pytest.fixture(autouse=True)
@@ -18,7 +18,8 @@ def quiet(monkeypatch: pytest.MonkeyPatch) -> None:
         step = ToolStep(
             id="1", name="load_system", status="completed", detail="7 planets", elapsed_ms=900
         )
-        return AgentResult(reply_text="Loaded.", data=TurnData(system=system), steps=[step])
+        data = TurnData(system=system, web_search=web_search("https://a.org/1"))
+        return AgentResult(reply_text="Loaded.", data=data, steps=[step])
 
     def silent(_: str) -> None:
         raise turn.voice.VoiceError("Voice off in tests.")
@@ -38,6 +39,7 @@ def test_turn_is_recorded_and_saved(tmp_path: Path) -> None:
     assert [s.system.hostname for s in saved.systems] == ["TRAPPIST-1"]
     assert saved.turns[0].transcript == "Open TRAPPIST-1"
     assert [s.name for s in saved.turns[0].steps] == ["load_system"]
+    assert [w.url for w in saved.web_sources] == ["https://a.org/1"]
 
 
 def test_the_projects_current_system_is_used_when_the_request_names_none(

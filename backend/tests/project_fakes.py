@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 from exoscope.catalog import Filter, Interpretation, Sample, System, load_system, search_catalog
 from exoscope.compare import Comparison, compare
+from exoscope.websearch.models import WebSearchResult, WebSource
 from tests.catalog_fakes import unavailable
 from tests.test_search_catalog import offline
 from tests.test_search_catalog import unavailable as search_unavailable
@@ -30,3 +31,11 @@ def small_planets() -> Sample:
         tap=search_unavailable,
         population=offline,
     )
+
+
+def web_search(*urls: str) -> WebSearchResult:
+    sources = [
+        WebSource(id=f"s{i}", title=f"Page {i}", url=url, retrieved_at=T0, domain="example.org")
+        for i, url in enumerate(urls)
+    ]
+    return WebSearchResult(status="ok", query="TRAPPIST-1 water", sources=sources)

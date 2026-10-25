@@ -13,7 +13,9 @@ from exoscope.project.models import (
     StepRecord,
     SystemItem,
     TurnRecord,
+    WebSourceItem,
 )
+from exoscope.websearch.models import WebSearchResult
 
 
 def new_project(project_id: str, name: str, now: datetime) -> Project:
@@ -37,6 +39,7 @@ def record_turn(  # noqa: PLR0913 — one keyword per kind of result a turn can 
     system: System | None = None,
     comparison: Comparison | None = None,
     sample: Sample | None = None,
+    web_search: WebSearchResult | None = None,
 ) -> TurnRecord:
     turn = TurnRecord(
         id=_next_id(project, "turn"),
@@ -45,8 +48,11 @@ def record_turn(  # noqa: PLR0913 — one keyword per kind of result a turn can 
         reply_text=reply_text,
         error=error,
         steps=list(steps),
+        web_search=web_search,
     )
     project.turns.append(turn)
+    if web_search is not None:
+        _cite(project, web_search, turn.id)
     if system is not None:
         _open_system(project, system, turn.id, now)
     if comparison is not None:
@@ -59,6 +65,23 @@ def record_turn(  # noqa: PLR0913 — one keyword per kind of result a turn can 
         project.samples.append(item)
     project.updated_at = now
     return turn
+
+
+def _cite(project: Project, web_search: WebSearchResult, turn_id: str) -> None:
+    known = {w.url for w in project.web_sources}
+    for source in web_search.sources:
+        if source.url in known:
+            continue
+        known.add(source.url)
+        item = WebSourceItem(
+            id=_next_id(project, "web"),
+            turn_id=turn_id,
+            title=source.title,
+            url=source.url,
+            domain=source.domain,
+            retrieved_at=source.retrieved_at,
+        )
+        project.web_sources.append(item)
 
 
 def _open_system(project: Project, system: System, turn_id: str, now: datetime) -> None:

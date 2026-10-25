@@ -78,6 +78,7 @@ def save_to_project(response: TurnResponse, project: Project, projects: ProjectS
         system=response.data.system,
         comparison=response.data.comparison,
         sample=response.data.sample,
+        web_search=response.data.web_search,
     )
     try:
         projects.save(project)

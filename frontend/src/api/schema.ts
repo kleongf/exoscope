@@ -38,6 +38,41 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/projects": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Projects */
+    get: operations["list_projects_projects_get"];
+    put?: never;
+    /** Create Project */
+    post: operations["create_project_projects_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/projects/{project_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Load Project */
+    get: operations["load_project_projects__project_id__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -81,6 +116,19 @@ export interface components {
       provenance: components["schemas"]["SystemProvenance"][];
       /** Notes */
       notes: string[];
+    };
+    /** ComparisonItem */
+    ComparisonItem: {
+      /** Id */
+      id: string;
+      /** Turn Id */
+      turn_id: string;
+      /**
+       * Made At
+       * Format: date-time
+       */
+      made_at: string;
+      comparison: components["schemas"]["Comparison"];
     };
     /** ComparisonRow */
     ComparisonRow: {
@@ -252,6 +300,11 @@ export interface components {
       /** Unit */
       unit: string | null;
     };
+    /** NewProject */
+    NewProject: {
+      /** Name */
+      name?: string | null;
+    };
     /** Planet */
     Planet: {
       /**
@@ -287,6 +340,74 @@ export interface components {
       /** Argument Of Periastron */
       argument_of_periastron: components["schemas"]["Measured"] | components["schemas"]["Missing"];
     };
+    /** Project */
+    Project: {
+      /**
+       * Format
+       * @default exoscope.project
+       * @constant
+       */
+      format: "exoscope.project";
+      /**
+       * Version
+       * @default 1
+       * @constant
+       */
+      version: 1;
+      /** Id */
+      id: string;
+      /** Name */
+      name: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /**
+       * Current System
+       * @description Hostname shown in the System view
+       */
+      current_system?: string | null;
+      /**
+       * Next Seq
+       * @description Next number for turn and item IDs
+       * @default 1
+       */
+      next_seq: number;
+      /** Turns */
+      turns?: components["schemas"]["TurnRecord"][];
+      /** Systems */
+      systems?: components["schemas"]["SystemItem"][];
+      /** Samples */
+      samples?: components["schemas"]["SampleItem"][];
+      /** Comparisons */
+      comparisons?: components["schemas"]["ComparisonItem"][];
+      /** Web Sources */
+      web_sources?: components["schemas"]["WebSourceItem"][];
+      /** Reports */
+      reports?: components["schemas"]["ReportRecord"][];
+    };
+    /**
+     * ProjectSummary
+     * @description One row in the Project switcher. A file that can't be read is listed with its error.
+     */
+    ProjectSummary: {
+      /** Id */
+      id: string;
+      /** Name */
+      name: string;
+      /** Updated At */
+      updated_at: string | null;
+      /** Item Count */
+      item_count: number | null;
+      /** Error */
+      error?: string | null;
+    };
     /**
      * Reference
      * @description The publication a catalog value comes from.
@@ -303,6 +424,33 @@ export interface components {
       data_base64: string;
       /** Mime Type */
       mime_type: string;
+    };
+    /** ReportRecord */
+    ReportRecord: {
+      /** Id */
+      id: string;
+      /** Title */
+      title: string;
+      /**
+       * Request
+       * @description What the student asked for, e.g. 'a report on ...'
+       */
+      request: string;
+      /**
+       * Written At
+       * Format: date-time
+       */
+      written_at: string;
+      /**
+       * Includes
+       * @description IDs of the Project items the Report covers
+       */
+      includes: string[];
+      /**
+       * File
+       * @description The Report's HTML file name, rendered once and never edited
+       */
+      file: string;
     };
     /**
      * Sample
@@ -342,6 +490,19 @@ export interface components {
       label: string;
       /** Unit */
       unit: string | null;
+    };
+    /** SampleItem */
+    SampleItem: {
+      /** Id */
+      id: string;
+      /** Turn Id */
+      turn_id: string;
+      /**
+       * Ran At
+       * Format: date-time
+       */
+      ran_at: string;
+      sample: components["schemas"]["Sample"];
     };
     /** SamplePlanet */
     SamplePlanet: {
@@ -448,6 +609,23 @@ export interface components {
       dec: components["schemas"]["Measured"] | components["schemas"]["Missing"];
     };
     /**
+     * StepRecord
+     * @description One operation that ran during a turn, as shown in the chat and a Report's tool-call log.
+     */
+    StepRecord: {
+      /** Name */
+      name: string;
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: "completed" | "failed";
+      /** Detail */
+      detail: string;
+      /** Elapsed Ms */
+      elapsed_ms: number;
+    };
+    /**
      * System
      * @description One host star and its known planets.
      */
@@ -465,6 +643,22 @@ export interface components {
         components["schemas"]["LiveProvenance"] | components["schemas"]["SnapshotProvenance"];
       /** Notes */
       notes: string[];
+    };
+    /** SystemItem */
+    SystemItem: {
+      /** Id */
+      id: string;
+      /**
+       * Turn Id
+       * @description The turn that last opened this System
+       */
+      turn_id: string;
+      /**
+       * Opened At
+       * Format: date-time
+       */
+      opened_at: string;
+      system: components["schemas"]["System"];
     };
     /** SystemProvenance */
     SystemProvenance: {
@@ -511,6 +705,26 @@ export interface components {
       sample?: components["schemas"]["Sample"] | null;
       web_search?: components["schemas"]["WebSearchResult"] | null;
     };
+    /** TurnRecord */
+    TurnRecord: {
+      /** Id */
+      id: string;
+      /**
+       * At
+       * Format: date-time
+       */
+      at: string;
+      /** Transcript */
+      transcript: string;
+      /** Reply Text */
+      reply_text: string;
+      /** Error */
+      error?: string | null;
+      /** Steps */
+      steps?: components["schemas"]["StepRecord"][];
+      /** @description The turn's web search, so its cited answer can be shown again */
+      web_search?: components["schemas"]["WebSearchResult"] | null;
+    };
     /** TurnRequest */
     TurnRequest: {
       /** Text */
@@ -518,6 +732,11 @@ export interface components {
       audio?: components["schemas"]["AudioInput"] | null;
       /** Current System */
       current_system?: string | null;
+      /**
+       * Project Id
+       * @description The Project this turn is saved to
+       */
+      project_id?: string | null;
     };
     /** TurnResponse */
     TurnResponse: {
@@ -541,6 +760,8 @@ export interface components {
       warnings?: string[];
       /** Steps */
       steps?: components["schemas"]["ToolStep"][];
+      /** @description The Project after this turn was saved; None if not saved */
+      project?: components["schemas"]["Project"] | null;
     };
     /** ValidationError */
     ValidationError: {
@@ -600,6 +821,30 @@ export interface components {
       /** Domain */
       domain: string;
     };
+    /**
+     * WebSourceItem
+     * @description A Web source cited in the Project, listed once even if several turns cite it.
+     */
+    WebSourceItem: {
+      /** Id */
+      id: string;
+      /**
+       * Turn Id
+       * @description The turn that first cited it
+       */
+      turn_id: string;
+      /** Title */
+      title: string;
+      /** Url */
+      url: string;
+      /** Domain */
+      domain: string;
+      /**
+       * Retrieved At
+       * Format: date-time
+       */
+      retrieved_at: string;
+    };
     /** WebSupport */
     WebSupport: {
       /** Text */
@@ -657,6 +902,104 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["TurnResponse"];
         };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_projects_projects_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProjectSummary"][];
+        };
+      };
+    };
+  };
+  create_project_projects_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["NewProject"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Project"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  load_project_projects__project_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        project_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Project"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Validation Error */
       422: {

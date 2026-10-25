@@ -35,6 +35,8 @@ export function restoreProject(project: Project): Partial<ExoState> {
       error: turn.error ?? null,
       warnings: [],
       appliedCommands: 0,
+      webSearch: turn.web_search ?? null,
+      hasSpokenReply: false,
     };
   });
   return {
