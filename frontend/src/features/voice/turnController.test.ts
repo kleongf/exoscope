@@ -74,4 +74,47 @@ describe("single turn controller", () => {
     expect(useExoStore.getState().replyText).toBe("Mock reply");
     controller.dispose();
   });
+  it("accepts the next question while the completed turn is still saving", async () => {
+    let finishSave!: () => void;
+    const flush = vi
+      .spyOn(projectController, "flush")
+      .mockResolvedValueOnce()
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finishSave = resolve;
+          }),
+      );
+    let respond!: (response: TurnResponse) => void;
+    vi.mocked(sendTurn)
+      .mockResolvedValueOnce(reply)
+      .mockImplementationOnce(
+        () =>
+          new Promise<TurnResponse>((resolve) => {
+            respond = resolve;
+          }),
+      );
+    const controller = new TurnController();
+    const first = controller.submit({ text: "First question" });
+    await vi.waitFor(() => {
+      expect(flush).toHaveBeenCalledTimes(2);
+    });
+    expect(useExoStore.getState().status).toBe("idle");
+    const second = controller.submit({ text: "Next question" });
+    // Completing the old save must not clear the newer request's duplicate guard.
+    finishSave();
+    await first;
+    await vi.waitFor(() => {
+      expect(sendTurn).toHaveBeenCalledTimes(2);
+    });
+    expect(vi.mocked(sendTurn).mock.calls[1]?.[0].text).toBe("Next question");
+    await controller.submit({ text: "Duplicate" });
+    expect(sendTurn).toHaveBeenCalledTimes(2);
+    respond({ ...reply, transcript: "Next question" });
+    await second;
+    expect(useExoStore.getState().turns).toHaveLength(2);
+    expect(useExoStore.getState().turns.at(-1)?.question).toBe("Next question");
+    expect(useExoStore.getState().status).toBe("idle");
+    controller.dispose();
+  });
 });

@@ -24,6 +24,8 @@ export class TurnController {
         request.signal,
       );
       if (this.request === request) {
+        // Chat becomes Ready in acceptTurn; saves are serialized by ProjectController.
+        this.request = undefined;
         useExoStore.getState().acceptTurn(response);
         await flushCurrentProject();
       }

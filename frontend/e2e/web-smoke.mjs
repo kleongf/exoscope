@@ -20,8 +20,25 @@ export async function exerciseWeb(page) {
   const requests = [];
   let nextReply = waterReply;
   let release;
+  let releaseSave;
+  const saveGate = new Promise((resolve) => {
+    releaseSave = resolve;
+  });
+  let heldSave = false;
   await page.route("**/api/turn", async (route) => {
-    if (route.request().postDataJSON().project_action) return route.continue();
+    const action = route.request().postDataJSON().project_action;
+    if (action) {
+      if (
+        !heldSave &&
+        action.operation === "save" &&
+        action.state.turns.at(-1)?.question === waterReply.transcript &&
+        action.state.turns.at(-1)?.finishedAt !== null
+      ) {
+        heldSave = true;
+        await saveGate;
+      }
+      return route.continue();
+    }
     assert.equal(route.request().method(), "POST");
     requests.push(route.request().postDataJSON());
     const started = performance.now();
@@ -133,7 +150,11 @@ export async function exerciseWeb(page) {
     fullPage: true,
   });
 
-  const radius = await submit(radiusReply);
+  assert(heldSave, "The completed Web source turn must still be saving");
+  const radiusPending = submit(radiusReply);
+  await page.getByTestId("turn-status").filter({ hasText: "Processing" }).waitFor();
+  releaseSave();
+  const radius = await radiusPending;
   assert.equal(await radius.getByTestId("web-evidence").count(), 0);
   assert.equal(await radius.getByRole("list", { name: "Tool steps" }).count(), 0);
   assert.equal(await evidence.count(), 1);

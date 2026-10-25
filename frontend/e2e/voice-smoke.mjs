@@ -16,8 +16,16 @@ export async function exerciseVoice(page) {
   const requests = [];
   let releaseResponse;
   let failure = false;
+  let releaseBootstrap;
+  const bootstrapGate = new Promise((resolve) => {
+    releaseBootstrap = resolve;
+  });
   await page.route("**/api/turn", async (route) => {
-    if (route.request().postDataJSON().project_action) return route.continue();
+    const action = route.request().postDataJSON().project_action;
+    if (action) {
+      if (action.operation === "bootstrap") await bootstrapGate;
+      return route.continue();
+    }
     const request = route.request();
     assert.equal(request.method(), "POST");
     const headers = request.headers();
@@ -70,6 +78,10 @@ export async function exerciseVoice(page) {
   });
   await page.goto(`${WEB_URL}/`);
   const talk = page.getByTestId("push-to-talk");
+  assert(await talk.isDisabled(), "Voice must wait for the saved Project to open");
+  assert(await page.getByLabel("Or type your question").isDisabled());
+  releaseBootstrap();
+  await page.getByTestId("project-save-status").filter({ hasText: "Project saved" }).waitFor();
   // Release before permission resolves: late grant must stop tracks, never record or send.
   await page.evaluate(() => {
     window.voiceFixture.delayPermission = true;
