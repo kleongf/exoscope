@@ -6,6 +6,7 @@ import type {
   ToolStep,
   TurnResponse,
   UiCommand,
+  WebSearchResult,
 } from "../api/client";
 import { addSample, type SampleState } from "./samples";
 
@@ -22,6 +23,8 @@ export interface ConversationTurn {
   error: string | null;
   warnings: string[];
   appliedCommands: number;
+  webSearch: WebSearchResult | null;
+  hasSpokenReply: boolean;
 }
 export interface SavedComparison {
   id: number;
@@ -99,6 +102,13 @@ function finishTurn(turns: ConversationTurn[], update: Partial<ConversationTurn>
       ? { ...turn, ...update, finishedAt: Date.now() }
       : turn,
   );
+}
+
+function turnWebEvidence(response: TurnResponse) {
+  return {
+    webSearch: response.data?.web_search ?? null,
+    hasSpokenReply: Boolean(response.reply_audio),
+  };
 }
 
 /** UI state lives here; browser recorder/player resources live in lifecycle controllers. */
@@ -181,6 +191,8 @@ export const useExoStore = create<ExoState>()((set) => ({
           error: null,
           warnings: [],
           appliedCommands: 0,
+          webSearch: null,
+          hasSpokenReply: false,
         },
       ],
     }));
@@ -212,6 +224,7 @@ export const useExoStore = create<ExoState>()((set) => ({
           error: response.error ?? null,
           warnings: response.warnings ?? [],
           appliedCommands: commands.length,
+          ...turnWebEvidence(response),
         }),
       };
     });
