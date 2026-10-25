@@ -1,5 +1,12 @@
 import { create } from "zustand";
-import type { ReplyAudio, System, ToolStep, TurnResponse, UiCommand } from "../api/client";
+import type {
+  Comparison,
+  ReplyAudio,
+  System,
+  ToolStep,
+  TurnResponse,
+  UiCommand,
+} from "../api/client";
 
 export type TurnStatus = "idle" | "requesting" | "recording" | "processing";
 export type PlaybackStatus = "idle" | "playing" | "blocked" | "error";
@@ -15,6 +22,10 @@ export interface ConversationTurn {
   warnings: string[];
   appliedCommands: number;
 }
+export interface SavedComparison {
+  id: number;
+  comparison: Comparison;
+}
 interface SceneState {
   system: System | null;
   focusedPlanetName: string | null;
@@ -22,6 +33,9 @@ interface SceneState {
 }
 export interface ExoState extends SceneState {
   loadedSystems: System[];
+  /** Comparisons build up across the Project; the drawer shows the active one. */
+  comparisons: SavedComparison[];
+  activeComparisonId: number | null;
   drawerOpen: boolean;
   turns: ConversationTurn[];
   draft: string;
@@ -34,6 +48,9 @@ export interface ExoState extends SceneState {
   warnings: string[];
   setDrawerOpen: (open: boolean) => void;
   selectPlanet: (name: string | null) => void;
+  /** Select a planet from a chart or table, switching to its System when already loaded. */
+  selectPlanetIn: (hostname: string, name: string) => void;
+  openComparison: (id: number) => void;
   setDraft: (draft: string) => void;
   setStatus: (status: TurnStatus) => void;
   setPlayback: (playback: PlaybackStatus) => void;
@@ -57,6 +74,19 @@ function remember(systems: System[], system: System | null) {
   if (!system) return systems;
   return [...systems.filter((item) => item.hostname !== system.hostname), system];
 }
+type ComparisonState = Pick<ExoState, "comparisons" | "activeComparisonId" | "drawerOpen">;
+/** A new comparison joins the Project, becomes active and opens the drawer. */
+function addComparison(state: ComparisonState, response: TurnResponse): ComparisonState {
+  const comparison = response.data?.comparison;
+  const { comparisons, activeComparisonId, drawerOpen } = state;
+  if (!comparison) return { comparisons, activeComparisonId, drawerOpen };
+  const id = (state.comparisons.at(-1)?.id ?? 0) + 1;
+  return {
+    comparisons: [...state.comparisons, { id, comparison }],
+    activeComparisonId: id,
+    drawerOpen: true,
+  };
+}
 function finishTurn(turns: ConversationTurn[], update: Partial<ConversationTurn>) {
   return turns.map((turn, index) =>
     index === turns.length - 1 && turn.finishedAt === null
@@ -71,6 +101,8 @@ export const useExoStore = create<ExoState>()((set) => ({
   focusedPlanetName: null,
   daysPerSecond: 1,
   loadedSystems: [],
+  comparisons: [],
+  activeComparisonId: null,
   drawerOpen: false,
   turns: [],
   draft: "",
@@ -86,6 +118,18 @@ export const useExoStore = create<ExoState>()((set) => ({
   },
   selectPlanet: (focusedPlanetName) => {
     set({ focusedPlanetName });
+  },
+  selectPlanetIn: (hostname, name) => {
+    set((state) => {
+      const system =
+        state.system?.hostname === hostname
+          ? state.system
+          : (state.loadedSystems.find((item) => item.hostname === hostname) ?? state.system);
+      return { system, focusedPlanetName: name };
+    });
+  },
+  openComparison: (id) => {
+    set({ activeComparisonId: id, drawerOpen: true });
   },
   setDraft: (draft) => {
     set({ draft });
@@ -136,6 +180,7 @@ export const useExoStore = create<ExoState>()((set) => ({
       const loaded = commands.filter((command) => command.kind === "load_system");
       return {
         ...scene,
+        ...addComparison(state, response),
         loadedSystems: loaded.reduce(
           (systems, command) => remember(systems, command.system),
           state.loadedSystems,

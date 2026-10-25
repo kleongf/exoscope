@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useExoStore } from "@/store/store";
 import { projectTurnController } from "@/features/voice/turnController";
+import { ComparisonList } from "./ComparisonList";
 
 /** Current Project shell; persistence and Reports belong to a later ticket. */
 export function ProjectExplorer() {
@@ -46,7 +47,12 @@ export function ProjectExplorer() {
             ))
           )}
         </section>
-        {["Samples", "Comparisons", "Web sources", "Reports"].map((label) => (
+        <section className="border-t px-4 py-3">
+          <h3 className="text-xs font-medium text-muted-foreground">Samples</h3>
+          <p className="mt-1 text-xs text-muted-foreground">None yet</p>
+        </section>
+        <ComparisonList />
+        {["Web sources", "Reports"].map((label) => (
           <section key={label} className="border-t px-4 py-3">
             <h3 className="text-xs font-medium text-muted-foreground">{label}</h3>
             <p className="mt-1 text-xs text-muted-foreground">None yet</p>

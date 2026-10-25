@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useExoStore } from "@/store/store";
+import { CompareWorkspace } from "./CompareWorkspace";
 
 function EmptyDrawer() {
   return (
@@ -17,10 +18,12 @@ function EmptyDrawer() {
   );
 }
 
-/** Bottom drawer under the System view: comparison chart and table (placeholders when empty). */
+/** Bottom drawer under the System view: the active comparison (placeholders when empty). */
 export function CompareDrawer({ children }: { children?: ReactNode }) {
   const open = useExoStore((s) => s.drawerOpen);
   const setOpen = useExoStore((s) => s.setDrawerOpen);
+  const hasComparison = useExoStore((s) => s.activeComparisonId !== null);
+  const content = children ?? (hasComparison ? <CompareWorkspace /> : <EmptyDrawer />);
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="border-t border-border bg-card">
       <CollapsibleTrigger asChild>
@@ -31,7 +34,7 @@ export function CompareDrawer({ children }: { children?: ReactNode }) {
           />
         </Button>
       </CollapsibleTrigger>
-      <CollapsibleContent>{children ?? <EmptyDrawer />}</CollapsibleContent>
+      <CollapsibleContent>{content}</CollapsibleContent>
     </Collapsible>
   );
 }

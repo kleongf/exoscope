@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -29,17 +30,30 @@ function ValueCell({ value }: { value: ValueView }) {
   );
 }
 
+const SELECTED =
+  "data-[state=selected]:bg-sky-500/20 data-[state=selected]:shadow-[inset_3px_0_0_#38bdf8] data-[state=selected]:opacity-100";
+
 function Row({ row, selected, onSelectPlanet }: { row: ComparisonRowView } & LinkedSelection) {
+  const ref = useRef<HTMLTableRowElement>(null);
+  const isSelected = row.planet === selected;
+  useEffect(() => {
+    // Keep the selected planet visible when it was chosen in the chart or the System view.
+    if (isSelected) ref.current?.scrollIntoView({ block: "nearest" });
+  }, [isSelected]);
   return (
     <TableRow
-      data-state={row.planet === selected ? "selected" : undefined}
+      ref={ref}
+      data-state={isSelected ? "selected" : undefined}
+      aria-selected={isSelected}
       data-planet={row.planet}
-      className={row.excluded ? "cursor-pointer opacity-60" : "cursor-pointer"}
+      className={`cursor-pointer ${SELECTED} ${row.excluded ? "opacity-60" : ""}`}
       onClick={() => {
         onSelectPlanet(row.planet);
       }}
     >
-      <TableCell className="font-medium">{row.planet}</TableCell>
+      <TableCell className={isSelected ? "font-semibold text-sky-300" : "font-medium"}>
+        {row.planet}
+      </TableCell>
       <ValueCell value={row.x} />
       <ValueCell value={row.y} />
       <TableCell className="text-xs text-muted-foreground">

@@ -80,6 +80,141 @@
         "required": ["data_base64", "mime_type"],
         "title": "AudioInput"
       },
+      "Axis": {
+        "properties": {
+          "property": {
+            "type": "string",
+            "enum": [
+              "orbital_period",
+              "semi_major_axis",
+              "radius",
+              "mass",
+              "insolation",
+              "equilibrium_temperature",
+              "eccentricity"
+            ],
+            "title": "Property"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          }
+        },
+        "type": "object",
+        "required": ["property", "label", "unit"],
+        "title": "Axis"
+      },
+      "Comparison": {
+        "properties": {
+          "x": {
+            "$ref": "#/components/schemas/Axis"
+          },
+          "y": {
+            "$ref": "#/components/schemas/Axis"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "provenance": {
+            "items": {
+              "$ref": "#/components/schemas/SystemProvenance"
+            },
+            "type": "array",
+            "title": "Provenance",
+            "description": "Where each System's values came from"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": ["x", "y", "rows", "provenance", "notes"],
+        "title": "Comparison"
+      },
+      "ComparisonRow": {
+        "properties": {
+          "planet": {
+            "type": "string",
+            "title": "Planet",
+            "description": "Canonical archive pl_name; links chart, table and scene"
+          },
+          "hostname": {
+            "type": "string",
+            "title": "Hostname"
+          },
+          "x": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "X",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "y": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Measured"
+              },
+              {
+                "$ref": "#/components/schemas/Missing"
+              }
+            ],
+            "title": "Y",
+            "discriminator": {
+              "propertyName": "status",
+              "mapping": {
+                "measured": "#/components/schemas/Measured",
+                "missing": "#/components/schemas/Missing"
+              }
+            }
+          },
+          "excluded": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": ["missing_x", "missing_y", "missing_both", "limit_only"]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excluded",
+            "description": "Why the planet is not plotted; None when it is plotted"
+          }
+        },
+        "type": "object",
+        "required": ["planet", "hostname", "x", "y", "excluded"],
+        "title": "ComparisonRow"
+      },
       "FocusPlanet": {
         "properties": {
           "kind": {
@@ -773,6 +908,35 @@
         "title": "System",
         "description": "One host star and its known planets."
       },
+      "SystemProvenance": {
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "title": "Hostname"
+          },
+          "provenance": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LiveProvenance"
+              },
+              {
+                "$ref": "#/components/schemas/SnapshotProvenance"
+              }
+            ],
+            "title": "Provenance",
+            "discriminator": {
+              "propertyName": "mode",
+              "mapping": {
+                "live": "#/components/schemas/LiveProvenance",
+                "snapshot": "#/components/schemas/SnapshotProvenance"
+              }
+            }
+          }
+        },
+        "type": "object",
+        "required": ["hostname", "provenance"],
+        "title": "SystemProvenance"
+      },
       "ToolStep": {
         "properties": {
           "id": {
@@ -809,6 +973,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/System"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "comparison": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Comparison"
               },
               {
                 "type": "null"

@@ -49,6 +49,58 @@ export interface components {
       /** Mime Type */
       mime_type: string;
     };
+    /** Axis */
+    Axis: {
+      /**
+       * Property
+       * @enum {string}
+       */
+      property:
+        | "orbital_period"
+        | "semi_major_axis"
+        | "radius"
+        | "mass"
+        | "insolation"
+        | "equilibrium_temperature"
+        | "eccentricity";
+      /** Label */
+      label: string;
+      /** Unit */
+      unit: string | null;
+    };
+    /** Comparison */
+    Comparison: {
+      x: components["schemas"]["Axis"];
+      y: components["schemas"]["Axis"];
+      /** Rows */
+      rows: components["schemas"]["ComparisonRow"][];
+      /**
+       * Provenance
+       * @description Where each System's values came from
+       */
+      provenance: components["schemas"]["SystemProvenance"][];
+      /** Notes */
+      notes: string[];
+    };
+    /** ComparisonRow */
+    ComparisonRow: {
+      /**
+       * Planet
+       * @description Canonical archive pl_name; links chart, table and scene
+       */
+      planet: string;
+      /** Hostname */
+      hostname: string;
+      /** X */
+      x: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /** Y */
+      y: components["schemas"]["Measured"] | components["schemas"]["Missing"];
+      /**
+       * Excluded
+       * @description Why the planet is not plotted; None when it is plotted
+       */
+      excluded: ("missing_x" | "missing_y" | "missing_both" | "limit_only") | null;
+    };
     /** FocusPlanet */
     FocusPlanet: {
       /**
@@ -251,6 +303,14 @@ export interface components {
       /** Notes */
       notes: string[];
     };
+    /** SystemProvenance */
+    SystemProvenance: {
+      /** Hostname */
+      hostname: string;
+      /** Provenance */
+      provenance:
+        components["schemas"]["LiveProvenance"] | components["schemas"]["SnapshotProvenance"];
+    };
     /**
      * ToolStep
      * @description One operation that actually ran, timed with a monotonic clock.
@@ -273,6 +333,7 @@ export interface components {
     /** TurnData */
     TurnData: {
       system?: components["schemas"]["System"] | null;
+      comparison?: components["schemas"]["Comparison"] | null;
     };
     /** TurnRequest */
     TurnRequest: {

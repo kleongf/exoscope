@@ -4,11 +4,12 @@ from google.genai import types
 from pydantic import BaseModel
 
 from exoscope.agent.tools.base import Tool
+from exoscope.agent.tools.compare import COMPARE
 from exoscope.agent.tools.load_system import LOAD_SYSTEM
 
 TOOLS: dict[str, Tool[BaseModel]] = {
     tool.name: tool  # pyright: ignore[reportAssignmentType]
-    for tool in (LOAD_SYSTEM,)
+    for tool in (LOAD_SYSTEM, COMPARE)
 }
 
 

@@ -10,6 +10,7 @@ export type UiCommand = NonNullable<TurnResponse["ui_commands"]>[number];
 export type System = components["schemas"]["System"];
 export type Planet = System["planets"][number];
 export type Quantity = Planet["radius"];
+export type Comparison = components["schemas"]["Comparison"];
 export type ToolStep = NonNullable<TurnResponse["steps"]>[number];
 export type AudioInput = NonNullable<TurnRequest["audio"]>;
 export type ReplyAudio = NonNullable<TurnResponse["reply_audio"]>;

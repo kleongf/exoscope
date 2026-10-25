@@ -5,6 +5,7 @@ from typing import Literal, Self
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from exoscope.catalog import System
+from exoscope.compare import Comparison
 from exoscope.scene.commands import UiCommand
 from exoscope.voice.models import AudioInput, ReplyAudio
 
@@ -26,6 +27,7 @@ class TurnRequest(BaseModel):
 
 class TurnData(BaseModel):
     system: System | None = None
+    comparison: Comparison | None = None
 
 
 class ToolStep(BaseModel):
