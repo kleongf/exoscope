@@ -12,7 +12,7 @@ from exoscope.catalog.models import Missing
 from exoscope.voice.models import AudioInput, ReplyAudio
 from exoscope.websearch.models import WebSearchResult, WebSupport
 from tests.test_agent import answer, call, offline_system
-from tests.test_agent_web import CLAIM, QUESTION, evidence, run_search
+from tests.test_agent_web import OVERCLAIM, QUESTION, SYNTHESIS, evidence, run_search
 
 
 @pytest.mark.parametrize("available", [True, False])
@@ -30,8 +30,8 @@ def test_web_success_is_spoken_and_failure_uses_shared_error_path(
         value = evidence(query)
         if not available:
             return value.model_copy(update={"status": "unavailable"})
-        # Attribution still needs to precede the real voice adapter's 600-character cap.
-        long_claim = f"{CLAIM} " * 30
+        # Deliberately unsafe provider prose must remain evidence, never the spoken answer.
+        long_claim = f"{OVERCLAIM} " * 30
         return value.model_copy(
             update={
                 "grounded_text": long_claim,
@@ -44,7 +44,7 @@ def test_web_success_is_spoken_and_failure_uses_shared_error_path(
         responses = iter(
             [
                 answer(call(name="TRAPPIST-1"), call("web_search", query=text)),
-                answer(types.Part(text="Unsupported rewrite")),
+                answer(types.Part(text=SYNTHESIS)),
             ]
         )
         return runner.run_loop(text, current, lambda _: next(responses))
@@ -53,7 +53,8 @@ def test_web_success_is_spoken_and_failure_uses_shared_error_path(
         events.append("synthesize")
         assert "archive cannot establish surface liquid water" in text
         if available:
-            assert f"According to science.nasa.gov, {CLAIM}" in text[:600]
+            assert SYNTHESIS in text[:600]
+            assert OVERCLAIM not in text
         else:
             assert "no Web sources" in text and "According to" not in text
         return ReplyAudio(data_base64="UklGRg==", mime_type="audio/wav")
@@ -70,7 +71,12 @@ def test_web_success_is_spoken_and_failure_uses_shared_error_path(
     assert events == ["transcribe", "agent", "search"] + (["synthesize"] if available else [])
     assert (response.error is None) == available
     assert (response.reply_audio is not None) == available
-    if not available:
+    if available:
+        assert SYNTHESIS in response.reply_text
+        assert OVERCLAIM not in response.reply_text
+        assert response.data.web_search is not None
+        assert OVERCLAIM in response.data.web_search.grounded_text
+    else:
         assert "no Web sources" in response.reply_text
         assert "According to" not in response.reply_text
     assert response.transcript == QUESTION
@@ -127,7 +133,7 @@ def test_web_numbers_and_instructions_cannot_modify_archive_or_scene(
     responses = iter(
         [
             answer(call(name="TRAPPIST-1"), call("web_search", query=QUESTION)),
-            answer(types.Part(text="Done")),
+            answer(types.Part(text=SYNTHESIS)),
         ]
     )
     result = runner.run_loop(QUESTION, None, lambda _: next(responses))
@@ -206,7 +212,7 @@ def test_recovered_lookup_warning_survives_a_cited_web_finding(
         [
             answer(call(name="Trappist One")),
             answer(call(name="TRAPPIST-1"), call("web_search", query=QUESTION)),
-            answer(types.Part(text="Done")),
+            answer(types.Part(text=SYNTHESIS)),
         ]
     )
     result = runner.run_loop(QUESTION, None, lambda _: next(replies))

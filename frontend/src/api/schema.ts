@@ -480,6 +480,7 @@ export interface components {
       system?: components["schemas"]["System"] | null;
       comparison?: components["schemas"]["Comparison"] | null;
       sample?: components["schemas"]["Sample"] | null;
+      web_search?: components["schemas"]["WebSearchResult"] | null;
     };
     /** TurnRequest */
     TurnRequest: {
@@ -522,6 +523,58 @@ export interface components {
       input?: unknown;
       /** Context */
       ctx?: Record<string, never>;
+    };
+    /** WebSearchResult */
+    WebSearchResult: {
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: "ok" | "unavailable";
+      /** Query */
+      query: string;
+      /**
+       * Grounded Text
+       * @default
+       */
+      grounded_text: string;
+      /** Sources */
+      sources?: components["schemas"]["WebSource"][];
+      /** Supports */
+      supports?: components["schemas"]["WebSupport"][];
+      /** Search Suggestions Html */
+      search_suggestions_html?: string | null;
+      /** Error */
+      error?: string | null;
+    };
+    /** WebSource */
+    WebSource: {
+      /** Id */
+      id: string;
+      /**
+       * Kind
+       * @default web_source
+       * @constant
+       */
+      kind: "web_source";
+      /** Title */
+      title: string;
+      /** Url */
+      url: string;
+      /**
+       * Retrieved At
+       * Format: date-time
+       */
+      retrieved_at: string;
+      /** Domain */
+      domain: string;
+    };
+    /** WebSupport */
+    WebSupport: {
+      /** Text */
+      text: string;
+      /** Source Ids */
+      source_ids?: string[];
     };
   };
   responses: never;

@@ -14,26 +14,35 @@ from exoscope.agent.tools.base import ToolError
 from exoscope.agent.tools.web_search import WEB_SEARCH
 from exoscope.agent.web_policy import CURRENT_WEB_POLICY
 from exoscope.voice.models import ReplyAudio
+from exoscope.websearch.models import WebSearchResult
 from tests.test_agent import answer, call, offline_system
-from tests.test_agent_web import CLAIM, QUESTION, evidence
+from tests.test_agent_web import OVERCLAIM, QUESTION, SYNTHESIS, evidence
 
 
-def test_production_turn_scopes_web_policy_and_cites_original_text(
+def test_production_turn_speaks_gemma_synthesis_not_overclaiming_grok(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("GEMINI_API_KEY", "dummy-gemini-key")
     monkeypatch.setattr(loop, "load_system", offline_system)
-    monkeypatch.setattr("exoscope.agent.tools.web_search.search_web", evidence)
+    provider = evidence(QUESTION)
+    provider.grounded_text = OVERCLAIM
+    provider.supports[0].text = OVERCLAIM
+
+    def search(_: str) -> WebSearchResult:
+        return provider
+
+    monkeypatch.setattr("exoscope.agent.tools.web_search.search_web", search)
     client = MagicMock()
     generate = client.return_value.__enter__.return_value.models.generate_content
     generate.side_effect = [
         answer(call("web_search", query=QUESTION)),
-        answer(types.Part(text="An unsupported model rewrite.")),
+        answer(types.Part(text=SYNTHESIS)),
     ]
     monkeypatch.setattr(loop.genai, "Client", client)
 
     def synthesize(text: str) -> ReplyAudio:
-        assert f"According to science.nasa.gov, {CLAIM}" in text
+        assert SYNTHESIS in text
+        assert OVERCLAIM not in text
         return ReplyAudio(data_base64="UklGRg==", mime_type="audio/wav")
 
     monkeypatch.setattr(turn.voice, "synthesize", synthesize)
@@ -41,7 +50,16 @@ def test_production_turn_scopes_web_policy_and_cites_original_text(
     assert response.error is None and response.reply_audio is not None
     assert response.data.web_search is not None and response.data.web_search.status == "ok"
     assert response.steps[0].name == "web_search" and response.steps[0].status == "completed"
-    assert "unsupported model rewrite" not in response.reply_text
+    assert SYNTHESIS in response.reply_text
+    assert OVERCLAIM not in response.reply_text
+    assert response.data.web_search == provider
+    contents = generate.call_args.kwargs["contents"]
+    instructions = contents[0].parts[0].text
+    assert "FROM THE SOURCES" in instructions
+    assert "explicitly state uncertainty and caveats" in instructions
+    assert "not verbatim page quotations" in instructions
+    tool_response = contents[-1].parts[0].function_response.response
+    assert tool_response["web_search"]["grounded_text"] == OVERCLAIM
     assert CURRENT_WEB_POLICY.get() is None
 
 

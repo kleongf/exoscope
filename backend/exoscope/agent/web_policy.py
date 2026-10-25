@@ -172,8 +172,13 @@ def archive_finding(system: System | None, question: str) -> str:
     return f"NASA Exoplanet Archive ({stamp}): {' '.join(summaries)}"
 
 
-def web_finding(result: WebSearchResult, question: str, system: System | None = None) -> str:
-    """Speak original supported text, never transfer grounding onto a model rewrite."""
+def web_finding(
+    result: WebSearchResult,
+    question: str,
+    system: System | None = None,
+    synthesis: str | None = None,
+) -> str:
+    """Keep Gemma's synthesis distinct from unchanged provider citation evidence."""
     limitation = (
         ARCHIVE_LIMITATION
         if re.search(r"\b(water|liquid|ocean|oceans)\b", question, re.I)
@@ -181,20 +186,12 @@ def web_finding(result: WebSearchResult, question: str, system: System | None = 
     )
     archive = archive_finding(system, question)
     if result.status != "ok":
-        return (
-            f"{limitation} {UNAVAILABLE} Archive measurements remain unchanged. {archive}".strip()
+        finding = UNAVAILABLE
+    elif synthesis and synthesis.strip():
+        finding = synthesis.strip()
+    else:
+        finding = (
+            "Gemma could not synthesize a reply from the Web sources. "
+            "Original provider support remains available for inspection; it is not a final answer."
         )
-    sources = {source.id: source for source in result.sources}
-    support = next(
-        support
-        for support in result.supports
-        if support.text.strip()
-        and support.text in result.grounded_text
-        and support.source_ids
-        and set(support.source_ids) <= sources.keys()
-    )
-    source = sources[support.source_ids[0]]
-    # Domain is concise even for long page titles and fits before the TTS cutoff.
-    attribution = " ".join((source.domain or source.title).split())[:120]
-    # Speak attribution first so even multi-field comparisons retain it in short TTS.
-    return f"{limitation} According to {attribution}, {support.text.strip()} {archive}".strip()
+    return f"{limitation} {finding} {archive}".strip()

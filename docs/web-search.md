@@ -4,11 +4,11 @@
 
 ## Registry integration
 
-`agent/tools/web_search.py` defines the strict `WebArguments` model and `WEB_SEARCH` Tool, registered once beside `LOAD_SYSTEM` in `agent/tools/registry.py`. Its handler returns `ToolOutput(payload, detail)` on success and raises `ToolError` for policy refusals or unavailable evidence. The generic `agent/loop.py` is unchanged from main's registry prefactor.
+`agent/tools/web_search.py` defines the strict `WebArguments` model and `WEB_SEARCH` Tool, registered once beside `LOAD_SYSTEM`, `COMPARE` and `SEARCH_CATALOG` in `agent/tools/registry.py`. Its handler returns `ToolOutput(payload, detail)` on success and raises `ToolError` for policy refusals or unavailable evidence. The generic `agent/loop.py` is unchanged from main (`a9a99f0`), including compare, Sample search and AR.
 
-`agent/runner.py` is the turn entry point used by `/turn`: it scopes the original question's Web policy with a `ContextVar`, resets it after every turn, and composes original cited text with canonical archive findings. Failed validation still consumes the Web attempt through the generic loop's step history. Unrecovered Web errors retain the common tool error and skip speech synthesis; archive evidence and successful commands remain available. This supersedes the historical spoken fallback observation below.
+`agent/runner.py` is the turn entry point used by `/turn`: it scopes the original question's Web policy with a `ContextVar`, resets it after every turn, and retains Gemma's final synthesis alongside canonical archive findings. It adds source-synthesis instructions without changing the generic loop. The final `reply_text` and TTS use Gemma's answer, never a backend substitution of Grok support prose. Failed validation still consumes the Web attempt through the generic loop's step history. Unrecovered Web errors retain the common tool error and skip speech synthesis; archive evidence and successful commands remain available. This supersedes the historical spoken fallback observation below.
 
-`websearch/service.py` keeps the provider boundary: `SearchProvider.search(query)` returns the shared `WebSearchResult`; `get_provider()` selects the configured provider at call time. xAI is the only implementation and remains the default. No Tavily dependency, key selection, or request path is added.
+`websearch/service.py` keeps the provider boundary: `SearchProvider.search(query)` returns the shared `WebSearchResult`; `get_provider()` selects the configured provider at call time. xAI is the only implementation and remains the default. Tavily was dropped; the small injectable interface remains for testing only.
 
 ## Request and evidence boundaries
 
@@ -20,9 +20,17 @@
 - Retrieved source lists can include URLs that were not cited beside a claim. Those IDs remain distinct from the IDs attached to support text and must not be presented as backing every claim.
 - Missing credentials, timeout, rejected/incomplete responses, malformed JSON, and absent usable citations return an honest unavailable result without invented or previous-turn evidence. Provider exception bodies and credentials are not exposed.
 
-The backend blocks Web search for archive-only measurements and System metadata, including radius and planet-count questions. Missing archive values remain missing. External causal questions and mixed questions can still request Web evidence. Mixed findings combine requested measured canonical quantities and archive provenance with cited external text; attribution appears early in the short spoken finding.
+The backend blocks Web search for archive-only measurements and System metadata, including radius and planet-count questions. Missing archive values remain missing. External causal questions and mixed questions can still request Web evidence. Mixed findings combine requested measured canonical quantities and archive provenance with Gemma's source-attributed synthesis. The prompt asks for attribution early in the short spoken finding.
 
 Only the canonical catalog supplies System values and commands. Web evidence travels separately in `data.web_search` and never supplies chart, table, or System-view numbers. The original search answer and citation associations stay attached to their conversation turn, while the Project retains previously gathered sources. A failed current search has no citations of its own.
+
+## Gemma synthesis versus provider support
+
+Gemma receives the returned source titles, URLs and provider-associated context through the custom tool result. It is instructed to write FROM THE SOURCES, distinguish observations from conditional models, state uncertainty, and never treat a habitable-zone orbit as proof of an atmosphere, surface water or habitability. The runner retains that final answer rather than repeating `WebSupport.text`. A deterministic archive limitation and requested canonical measurements accompany it; this is not a semantic verifier of Gemma's prose.
+
+The original `data.web_search.grounded_text`, sources and supports remain unchanged for inspection in the UI under **Original Grok result · provider support** and **Provider citation associations**. The reply is labelled **Gemma synthesis · with archive context**. Original provider annotations apply only to Grok's text, never to Gemma's rewrite, and do not establish that a scientific claim is true. A retrieved-only URL is not evidence for every sentence. The adapter does not fetch full page bodies: Gemma must acknowledge insufficient material rather than imply it independently read pages or invent their contents.
+
+If Gemma fails after a successful search (exception, missing/empty final answer or tool-call exhaustion), the turn reports synthesis unavailable and keeps the original provider evidence and successful commands. No provider prose is promoted into a fallback answer, and the unresolved error suppresses TTS. A failed search likewise keeps archive findings without borrowing historical citations.
 
 ## Live provider observation — 2026-10-25
 
@@ -40,8 +48,8 @@ See [service smoke evidence](service-smoke.md), [voice integration](voice.md), a
 
 ## Integrated verification
 
-Full `./scripts/verify` passed after rebasing onto the agent registry prefactor (`8603afb`): 322 backend tests, 42 frontend tests, generated API, formatting/lint/strict types, production build, five backend-validated browser fixtures, and combined voice/layout/Web-source browser smoke. The screenshot and console were inspected with zero console errors. Provider and model calls in browser verification are explicitly mocked.
+Full `./scripts/verify` passed after rebasing onto main (`a9a99f0`, compare #8, Sample search #9 and AR #21): 370 backend tests, 60 frontend tests, generated API, formatting/lint/strict types, production build, five backend-validated browser fixtures, and combined voice/layout/Web-source/AR browser smoke. The screenshot and console were inspected with zero console errors. Provider and model calls in browser verification are explicitly mocked.
 
-Focused backend coverage also exercises the production `/turn` entry point, concurrent turn policy isolation, policy cleanup, and substitution at the provider boundary.
+Focused backend coverage exercises the production `/turn` entry point with deliberately overclaiming Grok prose and a distinct cautious Gemma final: both reply and TTS retain the Gemma synthesis while original provider evidence stays unchanged. It also covers failed/empty/exhausted synthesis without TTS or provider fallback, compare and Web tools in one turn, concurrent turn policy isolation, policy cleanup, and substitution at the provider boundary.
 
-The browser flow checks per-turn source associations, numeric citations, unique anchors, retrieved-only labels, retained history and accumulated Project sources, no stale evidence on a failed current turn, spoken attribution, archive-only questions, and unchanged archive/System values. Source and transcript UI use the preserved vendored shadcn controls; the canonical catalog implementation and Snapshots are unchanged.
+The browser flow checks per-turn source associations, numeric citations, unique anchors, retrieved-only labels, retained history and accumulated Project sources, no stale evidence on a failed current turn, distinct synthesis/provider labels and overclaim separation, spoken attribution, archive-only questions, and unchanged archive/System values. Source and transcript UI use the preserved vendored shadcn controls; the canonical catalog implementation and Snapshots are unchanged.

@@ -14,6 +14,11 @@ from tests.test_agent import answer, call, offline_system
 
 QUESTION = "Does any of these have liquid water?"
 CLAIM = "Surface liquid water has not been established on TRAPPIST-1 e."
+OVERCLAIM = "Yes, TRAPPIST-1 e could have liquid water."
+SYNTHESIS = (
+    "According to science.nasa.gov, liquid water remains unconfirmed on TRAPPIST-1 e; "
+    "a habitable-zone orbit alone does not establish an atmosphere or surface conditions."
+)
 
 
 def evidence(query: str) -> WebSearchResult:
@@ -42,7 +47,7 @@ def run_search(
     responses = iter(
         [
             answer(*(calls or (call("web_search", query=question),))),
-            answer(types.Part(text="A model rewrite claims certain water and invents a citation.")),
+            answer(types.Part(text=SYNTHESIS)),
         ]
     )
     return runner.run_loop(question, "TRAPPIST-1", lambda _: next(responses))
@@ -51,7 +56,12 @@ def run_search(
 def test_custom_declaration_does_not_mix_builtin_search() -> None:
     tool = loop.declaration()
     declarations = tool.function_declarations or []
-    assert {item.name for item in declarations} == {"load_system", "web_search"}
+    assert {item.name for item in declarations} == {
+        "load_system",
+        "compare",
+        "search_catalog",
+        "web_search",
+    }
     assert tool.google_search is None
     web = next(item for item in declarations if item.name == "web_search")
     assert web.parameters_json_schema is not None
@@ -60,7 +70,7 @@ def test_custom_declaration_does_not_mix_builtin_search() -> None:
     assert web.parameters_json_schema["properties"]["query"]["maxLength"] == 1000
 
 
-def test_liquid_water_loads_first_then_cites_original_support(
+def test_liquid_water_loads_first_then_retains_gemma_synthesis(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     events: list[str] = []
@@ -81,15 +91,15 @@ def test_liquid_water_loads_first_then_cites_original_support(
     responses = iter(
         [
             answer(call(name="TRAPPIST-1"), call("web_search", query=QUESTION)),
-            answer(types.Part(text="Invented water certainty and numbers.")),
+            answer(types.Part(text=SYNTHESIS)),
         ]
     )
     result = runner.run_loop(QUESTION, None, lambda _: next(responses))
     assert events == ["archive", "search"]
     assert result.error is None
     assert "archive cannot establish surface liquid water" in result.reply_text
-    assert f"According to science.nasa.gov, {CLAIM}" in result.reply_text[:600]
-    assert "Invented" not in result.reply_text
+    assert SYNTHESIS in result.reply_text[:600]
+    assert result.reply_text.endswith(SYNTHESIS)
     assert result.data.web_search is not None
     assert result.data.web_search.grounded_text == CLAIM
     assert result.data.web_search.supports == [WebSupport(text=CLAIM, source_ids=["web-1"])]
@@ -166,7 +176,8 @@ def test_duplicates_consume_one_attempt_including_batches(
     result = runner.run_loop(QUESTION, "TRAPPIST-1", lambda _: next(responses))
     assert queries == [QUESTION]
     assert result.data.web_search is not None and result.data.web_search.status == "ok"
-    assert "According to science.nasa.gov" in result.reply_text
+    assert "Gemma could not synthesize" in result.reply_text
+    assert "According to" not in result.reply_text
     assert [step.status for step in result.steps] == ["completed", "failed"]
     assert "already used" in result.steps[1].detail
 

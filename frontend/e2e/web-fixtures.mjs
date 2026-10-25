@@ -18,9 +18,9 @@ export const webResult = {
   status: "ok",
   query: "TRAPPIST-1 e liquid water evidence",
   grounded_text:
-    "MOCK literature result: liquid water is not established. A hypothetical 987.65 Earth radii value is Web source text only.",
+    "MOCK Grok overclaim: Yes, TRAPPIST-1 e could have liquid water. A hypothetical 987.65 Earth radii value is Web source text only.",
   sources: [cited, retrieved],
-  supports: [{ text: "Liquid water is not established.", source_ids: [cited.id] }],
+  supports: [{ text: "Yes, TRAPPIST-1 e could have liquid water.", source_ids: [cited.id] }],
   search_suggestions_html: null,
   error: null,
 };
@@ -35,7 +35,7 @@ export const waterReply = {
   ...baseReply,
   transcript: webQuestion,
   reply_text:
-    "The archive does not establish liquid water. According to the Mock liquid-water evidence page, liquid water is not established.",
+    "The archive cannot establish surface liquid water. According to science.nasa.gov, water remains unconfirmed; a habitable-zone orbit alone does not establish an atmosphere or surface conditions.",
   data: { system: null, web_search: webResult },
 };
 export const followUpReply = {

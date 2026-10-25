@@ -1308,6 +1308,16 @@
                 "type": "null"
               }
             ]
+          },
+          "web_search": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WebSearchResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -1469,6 +1479,115 @@
         "type": "object",
         "required": ["loc", "msg", "type"],
         "title": "ValidationError"
+      },
+      "WebSearchResult": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok", "unavailable"],
+            "title": "Status"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "grounded_text": {
+            "type": "string",
+            "title": "Grounded Text",
+            "default": ""
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/WebSource"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "supports": {
+            "items": {
+              "$ref": "#/components/schemas/WebSupport"
+            },
+            "type": "array",
+            "title": "Supports"
+          },
+          "search_suggestions_html": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Suggestions Html"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": ["status", "query"],
+        "title": "WebSearchResult"
+      },
+      "WebSource": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "const": "web_source",
+            "title": "Kind",
+            "default": "web_source"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Retrieved At"
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          }
+        },
+        "type": "object",
+        "required": ["id", "title", "url", "retrieved_at", "domain"],
+        "title": "WebSource"
+      },
+      "WebSupport": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "source_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Source Ids"
+          }
+        },
+        "type": "object",
+        "required": ["text"],
+        "title": "WebSupport"
       }
     }
   }
