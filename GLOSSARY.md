@@ -4,12 +4,12 @@ A voice-operated exoplanet research workbench for students and educators: invest
 
 ## Language
 
-**Investigation**:
-The top-level unit of work, framed by one research question. It holds the Samples, Analyses, Artifacts, scene state and Evidence gathered while answering that question, and may span several Systems.
-_Avoid_: Session, project, workspace
+**Project**:
+A container for organising a student's work. It holds the Samples, comparisons, scene state, evidence and Reports gathered over time, and may span several Systems; evidence and comparisons build up rather than being replaced. A Project needs no research question.
+_Avoid_: Investigation, session, workspace
 
 **Report**:
-A point-in-time export of an Investigation. It can be regenerated many times and is never edited directly.
+A document written from a Project's contents. A Project can hold many Reports.
 _Avoid_: Research brief, summary, writeup
 
 **System**:
@@ -31,7 +31,7 @@ An explicit, stated reading of a vague word in a student's request as a concrete
 _Avoid_: Assumption, mapping, default
 
 **Live result**:
-Data fetched from the NASA archive during the current Investigation, stamped with its fetch time.
+Data fetched from the NASA archive during the current Project, stamped with its fetch time.
 _Avoid_: Real-time data
 
 **Web source**:

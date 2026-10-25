@@ -4,13 +4,13 @@ The document every agent works from. Vocabulary is defined in [GLOSSARY.md](../G
 
 ## What we are building
 
-A voice-operated exoplanet research workbench. A student speaks (or types) a question; Gemma calls typed tools against **live** NASA Exoplanet Archive data; the **System view** (3D) and a linked chart update; at the end the student exports a **Report** of the **Investigation** with its evidence.
+A voice-operated exoplanet research workbench. A student speaks (or types) a question; Gemma calls typed tools against **live** NASA Exoplanet Archive data; the **System view** (3D) and a linked chart update; everything the student builds up is kept in a **Project**, from which they can write any number of **Reports** with their evidence.
 
 Hackathon: **about 4 hours, 2 people.** Tracks: Space/Cursor/Grok, Gemma, Open-source. The demo matters more than completeness.
 
 ## Who it is for
 
-Students running an evidence-based Investigation, with educators as the secondary user. Not researchers.
+Students organising evidence-based work in Projects, with educators as the secondary user. Not researchers.
 
 ## What "good" looks like — the demo (build backwards from this)
 
@@ -19,7 +19,7 @@ Students running an evidence-based Investigation, with educators as the secondar
 3. **"Compare radius and irradiation."** — one Plotly scatter + table; clicking a point focuses that planet.
 4. **"Does any of these have liquid water?"** — the web-search beat: Gemma answers from archive fields, uses `web_search` because the archive cannot answer, and cites Web sources aloud. Rehearse twice; judged by citations being present.
 5. **"Find small planets with periods under 10 days."** — live Sample search; Gemma states its Interpretation of "small" and it shows as an editable chip. Clicking a Sample point in another System loads that System live (~1.1 s) and focuses the planet.
-6. **"Make a report."** — one self-contained HTML Report.
+6. **"Write a report on the radius comparison."** — one self-contained HTML Report covering that part of the Project, listed in the Project explorer.
 
 Backup demo System if TRAPPIST-1 misbehaves: TOI-700 (not Kepler-186 — its eccentricities are placeholders).
 
@@ -31,6 +31,13 @@ Backup demo System if TRAPPIST-1 misbehaves: TOI-700 (not Kepler-186 — its ecc
 - Orbits: Keplerian ellipses at true relative scale, phase from transit epochs; default camera looks down on the orbital plane. Persistent badge: "View rotated: system is edge-on from Earth · Positions extrapolated from transit epochs · Planet sizes ×N · Not an N-body simulation."
 - Push-to-talk voice (Grok STT/TTS) plus an always-visible text box; transcript always shown.
 - Runs on localhost for the demo.
+- Layout (chosen from the `prototype/turn-ui` prototype, variant A): Project explorer on the left, System view in the centre with the chart drawer beneath it, chat on the right. The selected planet's properties (values, units, source-paper tooltips) appear in a floating card in the top-right corner of the System view, closed when nothing is selected. Each chat answer shows its tool steps inline with timings while the turn runs, a Live/Cached badge, and on failure "Nothing in the view was changed."
+
+**Projects**
+- A Project organises work; it needs no research question. A student can have several Projects and switch between them; "New Project" starts an empty one.
+- Each Project is saved by the backend as one JSON file and survives a restart.
+- Evidence, Systems opened, Samples, comparisons, Web sources and Reports build up across the Project; opening a new System only changes the System view.
+- The left panel is the Project explorer: Systems opened (click reloads), Samples with their Interpretation chips, comparisons (click reopens the chart), Web sources, and Reports (click opens in a new tab). Reports are the only files; students do not upload files.
 
 **Data**
 - Every query runs live against TAP (`pscomppars` only) with a ~5 s timeout; on failure fall back to a Snapshot. Each result is labelled "Live · fetched HH:MM" or "Cached · Snapshot YYYY-MM-DD". Measured latency: ~1.1–1.4 s per query.
@@ -50,7 +57,7 @@ Backup demo System if TRAPPIST-1 misbehaves: TOI-700 (not Kepler-186 — its ecc
 | `load_system(name)` | Live System load into the System view |
 | `set_scene_view(focus, time_scale, labels, color_by)` | Scene `ui_commands` |
 | `compare(planet_ids \| sample, x, y)` | Table + Plotly scatter |
-| `export_report()` | HTML Report |
+| `export_report(title, include)` | HTML Report covering the chosen part of the Project |
 | `web_search(query)` | Web sources for questions the archive can't answer |
 
 - `web_search`: a normal custom tool whose handler calls xAI's `web_search` tool via `POST /v1/responses` with `grok-4.20-0309-non-reasoning` (measured ~6 s, 16–22 source URLs from `web_search_call.action.sources` and message annotations). Gemini's built-in `google_search` was rejected after the smoke test: mixing it with function declarations returns HTTP 500, and alone it takes 34–58 s on Gemma 4 26b. Rules: search only when the archive can't answer; at most one search per turn; claims cited aloud; no domain restriction; web text treated as normal data.
@@ -60,8 +67,9 @@ Backup demo System if TRAPPIST-1 misbehaves: TOI-700 (not Kepler-186 — its ecc
 - One endpoint: `POST /turn {text | audio} → {transcript, reply_text, reply_audio, ui_commands[], data}`. `ui_commands` are validated server-side; no WebSockets, no frontend acknowledgement.
 
 **Report**
-- One self-contained HTML file: research question, numbered tool-call log, interactive Plotly chart (embedded JSON), System view snapshot (canvas capture), data table with units/uncertainties/source papers, Live-vs-Snapshot provenance, Interpretations, "Literature & web sources", Limitations.
-- The template fills every number and table from saved data. Gemma writes only the short summary and the limitations prose.
+- A Project can hold many Reports. Each covers a chosen part of the Project: Gemma picks the comparisons, Samples, Systems and Web sources from the request ("a report on the TRAPPIST-1 radius comparison") and says what it included. Each Report has a title, is listed in the Project explorer, opens in a new tab, and is never edited after it is written; to change one, write a new one.
+- One self-contained HTML file: title, numbered tool-call log for the included items, interactive Plotly chart (embedded JSON), System view snapshot (canvas capture), data table with units/uncertainties/source papers, Live-vs-Snapshot provenance, Interpretations, "Literature & web sources", Limitations.
+- The template fills every number and table from saved data. Gemma writes only the short summary and the limitations prose. No readiness checklist.
 
 ## Build order
 
@@ -71,13 +79,15 @@ Backup demo System if TRAPPIST-1 misbehaves: TOI-700 (not Kepler-186 — its ecc
 4. Compare chart with linked selection.
 5. Live Sample search with Interpretation chips; cross-System click.
 6. `web_search`.
-7. Report export.
+7. Projects (save, switch, new) and Report export.
 8. Rehearse the full demo twice.
 
 ## Non-goals
 
 - Star map / population view in 3D; more than one System in the System view.
-- Saved Samples beyond the current one; evidence-inspection panel (tooltips only).
+- Evidence-inspection panel (tooltips only).
+- Student file uploads (PDFs, papers, worksheets).
+- Checking the model's prose or numbers against evidence (beyond tools returning honest errors).
 - What-if scenarios, Lightkurve, REBOUND, transit fitting, MCP server.
 - CSV / manifest bundles, PDF export.
 - ADK, LangGraph, WebSockets, deployment.
