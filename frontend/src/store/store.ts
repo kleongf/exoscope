@@ -10,6 +10,8 @@ import type {
   UiCommand,
 } from "../api/client";
 import { addSample, type SampleState } from "./samples";
+import { changeOrbitLayers, readSimulatedTime } from "./sceneActions";
+import type { Layers } from "@/features/scene/orbits/layers";
 
 export type TurnStatus = "idle" | "requesting" | "recording" | "processing";
 export type PlaybackStatus = "idle" | "playing" | "blocked" | "error";
@@ -35,6 +37,8 @@ export interface ExoState extends SceneState, SampleState {
   projectError: string | null;
   projectTransition: boolean;
   sceneSettings: ProjectState["sceneSettings"];
+  /** Remount the scene clock when restoring, including recovery of the same Project. */
+  sceneRestoreVersion: number;
 
   loadedSystems: System[];
   /** Comparisons build up across the Project; the drawer shows the active one. */
@@ -57,6 +61,8 @@ export interface ExoState extends SceneState, SampleState {
   openComparison: (id: number) => void;
   openSample: (id: number) => void;
   setPlaying: (playing: boolean) => void;
+  setOrbitLayers: (layers: Layers) => void;
+  setSimulatedJulianDate: (jd: number, manual?: boolean) => void;
   setDraft: (draft: string) => void;
   setStatus: (status: TurnStatus) => void;
   setPlayback: (playback: PlaybackStatus) => void;
@@ -127,6 +133,7 @@ export const useExoStore = create<ExoState>()((set) => ({
   projectError: null,
   projectTransition: false,
   sceneSettings: {},
+  sceneRestoreVersion: 0,
   system: null,
   focusedPlanetName: null,
   cameraFocus: null,
@@ -160,7 +167,13 @@ export const useExoStore = create<ExoState>()((set) => ({
     }));
   },
   setPlaying: (playing) => {
-    set({ playing });
+    set((state) => (state.projectTransition ? {} : { playing }));
+  },
+  setOrbitLayers: (layers) => {
+    set((state) => changeOrbitLayers(state, layers));
+  },
+  setSimulatedJulianDate: (jd, manual) => {
+    set((state) => readSimulatedTime(state, jd, manual));
   },
   selectPlanetIn: (hostname, name) => {
     set((state) => {

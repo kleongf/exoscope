@@ -75,7 +75,9 @@ describe("single turn controller", () => {
     controller.dispose();
   });
   it("accepts the next question while the completed turn is still saving", async () => {
-    let finishSave!: () => void;
+    let finishSave: () => void = () => {
+      throw new Error("Save not pending");
+    };
     const flush = vi
       .spyOn(projectController, "flush")
       .mockResolvedValueOnce()
@@ -85,7 +87,9 @@ describe("single turn controller", () => {
             finishSave = resolve;
           }),
       );
-    let respond!: (response: TurnResponse) => void;
+    let respond: (response: TurnResponse) => void = () => {
+      throw new Error("Response not pending");
+    };
     vi.mocked(sendTurn)
       .mockResolvedValueOnce(reply)
       .mockImplementationOnce(

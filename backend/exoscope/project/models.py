@@ -67,7 +67,7 @@ class ProjectState(BaseModel):
     system: System | None = None
     loadedSystems: list[System] = Field(default_factory=list[System])
     focusedPlanetName: str | None = None
-    daysPerSecond: float = Field(default=1, ge=0, le=1000)
+    daysPerSecond: float = Field(default=0.5, ge=0, le=1000)
     drawerOpen: bool = False
     turns: list[ConversationTurn] = Field(default_factory=list[ConversationTurn])
     samples: list[SavedSample] = Field(default_factory=list[SavedSample])

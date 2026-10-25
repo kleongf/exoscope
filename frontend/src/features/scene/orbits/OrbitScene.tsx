@@ -2,7 +2,7 @@
  * The System view's orbit scene ("honesty layers"): real Keplerian orbits at true relative scale
  * in a tilted 3D view, with uncertainty and assumptions drawn rather than hidden.
  * Time, labels, colouring and camera focus are controlled by the caller (the store);
- * honesty layers are local, manual toggles.
+ * honesty layers can also be controlled; standalone previews use local toggles.
  */
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -45,6 +45,10 @@ export interface OrbitSceneProps {
   onSpeedChange: (daysPerSecond: number) => void;
   onShowLabelsChange: (visible: boolean) => void;
   onColorByChange: (property: ColorProperty) => void;
+  layers?: Layers;
+  onLayersChange?: (layers: Layers) => void;
+  initialJulianDate?: number | undefined;
+  onTimeReadout?: (jd: number, manual?: boolean) => void;
 }
 
 /** Advances simulated time inside the render loop. */
@@ -63,21 +67,27 @@ function Clock({
   return null;
 }
 
-function useSimTime() {
-  const [start] = useState(() => jdFromDate(new Date()));
+function useSimTime(
+  initialJulianDate: number | undefined,
+  onReadout: OrbitSceneProps["onTimeReadout"],
+) {
+  const [start] = useState(() => initialJulianDate ?? jdFromDate(new Date()));
   const jdRef = useRef(start);
   const [jd, setJd] = useState(start);
   useEffect(() => {
+    onReadout?.(jdRef.current);
     const id = window.setInterval(() => {
       setJd(jdRef.current);
+      onReadout?.(jdRef.current);
     }, READOUT_MS);
     return () => {
       window.clearInterval(id);
     };
-  }, []);
+  }, [onReadout]);
   const resetToNow = () => {
     jdRef.current = jdFromDate(new Date());
     setJd(jdRef.current);
+    onReadout?.(jdRef.current, true);
   };
   return { jdRef, jd, resetToNow };
 }
@@ -89,10 +99,12 @@ export function OrbitScene(props: OrbitSceneProps) {
     () => colorize(base.planets, props.colorBy),
     [base, props.colorBy],
   );
-  const [layers, setLayers] = useState<Layers>(DEFAULT_LAYERS);
+  const [localLayers, setLocalLayers] = useState<Layers>(DEFAULT_LAYERS);
+  const layers = props.layers ?? localLayers;
+  const setLayers = props.onLayersChange ?? setLocalLayers;
   const [hovered, setHovered] = useState<string | null>(null);
   const [labels] = useState(() => new LabelRegistry());
-  const time = useSimTime();
+  const time = useSimTime(props.initialJulianDate, props.onTimeReadout);
   const sizes = layers.trueSizes ? TRUE_SIZES : EXAGGERATED;
   const extent = base.maxAu * base.scale;
   const inclination = system.planets[0]?.inclination.value ?? null;
@@ -150,7 +162,7 @@ export function OrbitScene(props: OrbitSceneProps) {
           showLabels={props.showLabels}
           onSelect={onSelectPlanet}
         />
-        <div className="absolute top-3 left-3 flex flex-col gap-2">
+        <div className="absolute top-3 left-3 z-10 flex max-h-[calc(100%-5rem)] flex-col gap-2 overflow-y-auto">
           <LayerPanel layers={layers} onChange={setLayers} />
           <ViewControls
             showLabels={props.showLabels}

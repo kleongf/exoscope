@@ -1,5 +1,10 @@
 import { sendTurn, type ProjectAction, type Project, type ProjectState } from "@/api/client";
 import { useExoStore } from "@/store/store";
+import {
+  observedProjectKey,
+  restoreSceneControls,
+  snapshotSceneSettings,
+} from "./scenePersistence";
 
 export function projectSnapshot(): ProjectState {
   const s = useExoStore.getState();
@@ -15,7 +20,7 @@ export function projectSnapshot(): ProjectState {
     activeComparisonId: s.activeComparisonId,
     activeSampleId: s.activeSampleId,
     drawerView: s.drawerView,
-    sceneSettings: s.sceneSettings,
+    sceneSettings: snapshotSceneSettings(s.sceneSettings, s),
     draft: s.draft,
     transcript: s.transcript,
     replyText: s.replyText,
@@ -26,6 +31,8 @@ function restore(project: Project) {
   const s = project.state;
   useExoStore.setState({
     ...s,
+    ...restoreSceneControls(s.sceneSettings),
+    sceneRestoreVersion: useExoStore.getState().sceneRestoreVersion + 1,
     turns: s.turns,
     currentProject: project,
     replyAudio: null,
@@ -43,6 +50,7 @@ export class ProjectController {
   private unsubscribe: (() => void) | undefined;
   private applying = false;
   private lastSaved = "";
+  private lastSavedObservedKey = "";
   private lastObserved = "";
   ready: Promise<void> = Promise.resolve();
 
@@ -51,7 +59,7 @@ export class ProjectController {
     this.unsubscribe = useExoStore.subscribe((state, previous) => {
       if (this.applying || !state.currentProject || state.status !== "idle") return;
       if (state.projectError && state.projectError !== previous.projectError) return;
-      const value = JSON.stringify(projectSnapshot());
+      const value = observedProjectKey(projectSnapshot());
       if (value === this.lastObserved) return;
       this.lastObserved = value;
       useExoStore.setState({ projectStatus: "unsaved" });
@@ -89,7 +97,8 @@ export class ProjectController {
       }
       if (apply) {
         this.lastSaved = JSON.stringify(projectSnapshot());
-        this.lastObserved = this.lastSaved;
+        this.lastSavedObservedKey = observedProjectKey(projectSnapshot());
+        this.lastObserved = this.lastSavedObservedKey;
       }
     } finally {
       this.applying = false;
@@ -103,7 +112,10 @@ export class ProjectController {
         await work();
         useExoStore.setState({
           projectError: null,
-          projectStatus: JSON.stringify(projectSnapshot()) === this.lastSaved ? "saved" : "unsaved",
+          projectStatus:
+            observedProjectKey(projectSnapshot()) === this.lastSavedObservedKey
+              ? "saved"
+              : "unsaved",
         });
       } catch (error) {
         useExoStore.setState({
@@ -135,6 +147,7 @@ export class ProjectController {
         false,
       );
       this.lastSaved = serialized;
+      this.lastSavedObservedKey = observedProjectKey(state);
     });
   }
 

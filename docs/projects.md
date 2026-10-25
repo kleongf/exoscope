@@ -31,3 +31,9 @@ Saved conversation records and their nested tool steps/Web evidence are validate
 Validation includes process restart, concurrent-worker/stale-write tests, injected filesystem
 failures, and a browser flow through autosave, reload, New Project, switching back and
 reopening saved comparison/Interpretation evidence. Smoke storage uses a temporary directory.
+
+The grouped explorer has collapsible sections with counts; their open state is saved with the
+Project. Scene saves retain play/pause, pace, labels, colouring, camera focus, honesty layers,
+and simulated Julian date. New Project restores the default scene controls. Clock readouts
+alone do not trigger writes or delay autosave; explicit turn/switch/report saves capture the
+latest simulated date. A paused date restores exactly rather than resetting to the current time.

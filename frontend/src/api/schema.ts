@@ -380,7 +380,7 @@ export interface components {
       focusedPlanetName?: string | null;
       /**
        * Dayspersecond
-       * @default 1
+       * @default 0.5
        */
       daysPerSecond: number;
       /**

@@ -5,6 +5,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { chromium } from "playwright";
 import { exerciseVoice } from "./voice-smoke.mjs";
 import { exerciseLayout } from "./layout-smoke.mjs";
+import { exerciseScenePersistence } from "./scene-persistence-smoke.mjs";
 import { exerciseProjects } from "./project-smoke.mjs";
 import { exerciseAr } from "./ar-smoke.mjs";
 import { exerciseWeb } from "./web-smoke.mjs";
@@ -35,6 +36,7 @@ try {
   await page.screenshot({ path: `${outDir}smoke.png` });
   await exerciseAr(page, outDir);
   await exerciseProjects(page);
+  await exerciseScenePersistence(page);
   await page.screenshot({ path: `${outDir}smoke.png` });
   const errors = logs.filter(
     (line) => line.startsWith("[error]") || line.startsWith("[pageerror]"),

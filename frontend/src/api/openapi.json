@@ -1018,7 +1018,7 @@
             "maximum": 1000.0,
             "minimum": 0.0,
             "title": "Dayspersecond",
-            "default": 1
+            "default": 0.5
           },
           "drawerOpen": {
             "type": "boolean",

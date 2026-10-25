@@ -76,6 +76,16 @@ export async function exerciseProjects(page) {
   await explorer.getByRole("button", { name: /TOI-700/ }).waitFor();
   await explorer.getByRole("button", { name: /^TRAPPIST-1/ }).waitFor();
   await explorer.getByTestId("sample-item").waitFor();
+  const sampleGroup = explorer.getByRole("button", { name: "Samples (1)", exact: true });
+  await sampleGroup.click();
+  await page.getByTestId("project-save-status").filter({ hasText: "Project saved" }).waitFor();
+  await page.reload();
+  await sampleGroup.waitFor();
+  assert.equal(await sampleGroup.getAttribute("aria-expanded"), "false");
+  assert.equal(await explorer.getByTestId("sample-item").isVisible(), false);
+  await sampleGroup.click();
+  await explorer.getByTestId("sample-item").waitFor();
+
   assert.equal(await page.getByLabel("Or type your question").inputValue(), "A saved draft");
   await explorer.getByTestId("comparison-item").click();
   await page.getByTestId("compare-workspace").waitFor();
