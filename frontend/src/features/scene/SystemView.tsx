@@ -1,17 +1,27 @@
-import { OrbitControls } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
+import { PrototypeSwitcher, useVariant } from "@/components/PROTOTYPE_VariantSwitcher";
+import { useProtoClock } from "./prototype/PROTOTYPE_store";
+import { VARIANT_A_NAME, VariantA } from "./prototype/PROTOTYPE_VariantA";
+import { VARIANT_B_NAME, VariantB } from "./prototype/PROTOTYPE_VariantB";
+import { VARIANT_C_NAME, VariantC } from "./prototype/PROTOTYPE_VariantC";
 
-/** The System view: exactly one System in 3D. Placeholder star for now. */
+// PROTOTYPE (issue #5): three System view variants switchable via ?variant=A|B|C.
+const VARIANTS = [
+  { key: "A", name: VARIANT_A_NAME },
+  { key: "B", name: VARIANT_B_NAME },
+  { key: "C", name: VARIANT_C_NAME },
+] as const;
+const KEYS = VARIANTS.map((v) => v.key);
+
+/** The System view: exactly one System in 3D. */
 export function SystemView() {
+  useProtoClock();
+  const variant = useVariant(KEYS);
   return (
-    <Canvas data-testid="system-view" camera={{ position: [0, 4, 8] }}>
-      <ambientLight intensity={0.2} />
-      <pointLight position={[0, 0, 0]} intensity={50} />
-      <mesh>
-        <sphereGeometry args={[1, 32, 32]} />
-        <meshBasicMaterial color="#ff9b54" />
-      </mesh>
-      <OrbitControls />
-    </Canvas>
+    <>
+      {variant === "A" && <VariantA />}
+      {variant === "B" && <VariantB />}
+      {variant === "C" && <VariantC />}
+      <PrototypeSwitcher variants={VARIANTS} current={variant} />
+    </>
   );
 }
