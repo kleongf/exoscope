@@ -35,7 +35,9 @@ export async function exerciseLayout(page) {
   // Select through the actual scene label; names match the canonical archive ID.
   // Labels ride along with orbiting planets, so pause time first to give a stable target.
   await scene.getByRole("button", { name: "Pause" }).click();
-  await scene.getByRole("button", { name: "TRAPPIST-1 e", exact: true }).click();
+  // Positions follow today's date, so the label can sit under an overlay panel; dispatch the
+  // click on the label itself so the check doesn't depend on the time of day.
+  await scene.getByRole("button", { name: "TRAPPIST-1 e", exact: true }).dispatchEvent("click");
   await card.getByText("TRAPPIST-1 e", { exact: true }).waitFor();
   assert((await card.innerText()).includes("Missing (Earth radii)"));
   await page.getByRole("button", { name: "Close planet properties" }).click();

@@ -5,6 +5,7 @@
  * honesty layers are local, manual toggles.
  */
 import { OrbitControls } from "@react-three/drei";
+import { ArSystemButton } from "@/features/ar/ArSystemButton";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { CameraFocus } from "./CameraFocus";
@@ -174,6 +175,7 @@ export function OrbitScene(props: OrbitSceneProps) {
             onSpeedChange={props.onSpeedChange}
             onResetToNow={time.resetToNow}
           />
+          <ArSystemButton system={system} getJd={() => time.jdRef.current} />
         </div>
       </div>
       {/* Always visible, outside the canvas so no control ever covers it. */}

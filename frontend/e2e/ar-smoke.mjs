@@ -26,3 +26,31 @@ export async function exerciseAr(page, outDir) {
   await page.getByRole("button", { name: "Close planet properties" }).click();
   console.log(`ar smoke: model built (${bytes} bytes), label honest, unavailable reason shown`);
 }
+
+// The System miniature: frozen at the current simulated time, with the System view's badge.
+export async function exerciseArSystem(page, outDir) {
+  await page.getByRole("button", { name: "View System in AR" }).click();
+  const dialog = page.getByTestId("ar-system-dialog");
+  await dialog.waitFor();
+  const label = await dialog.getByTestId("ar-system-label").innerText();
+  for (const expected of [
+    "TRAPPIST-1 · schematic model",
+    "(simulated date)",
+    "System is edge-on from Earth",
+    "Planet sizes ×25, star ×3",
+    "Not an N-body simulation",
+  ]) {
+    assert(label.includes(expected), `missing "${expected}" in:\n${label}`);
+  }
+  await page.waitForFunction(() => document.querySelector("model-viewer")?.loaded === true);
+  const bytes = await page.evaluate(async () => {
+    const src = document.querySelector("model-viewer")?.src;
+    return src ? (await (await fetch(src)).arrayBuffer()).byteLength : 0;
+  });
+  assert(bytes > 50_000, `exported System GLB too small: ${bytes} bytes`);
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: `${outDir}ar-system.png` });
+  await page.keyboard.press("Escape");
+  await dialog.waitFor({ state: "detached" });
+  console.log(`ar system smoke: model built (${bytes} bytes), badge and frozen date on the model`);
+}
