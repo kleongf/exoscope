@@ -28,7 +28,7 @@ Backup demo System if TRAPPIST-1 misbehaves: TOI-700 (not Kepler-186 — its ecc
 **Product**
 - Name: ExoScope.
 - The System view shows exactly one System. Samples live only in the table/chart.
-- Orbits: Keplerian ellipses at true relative scale, phase from transit epochs; default camera looks down on the orbital plane. Persistent badge: "View rotated: system is edge-on from Earth · Positions extrapolated from transit epochs · Planet sizes ×N · Not an N-body simulation."
+- Orbits (chosen from the `prototype/orbits` prototype, variant C "Honesty layers"): Keplerian ellipses at true relative scale, phase from transit epochs, in a tilted 3D view. Toggleable honesty layers: ±1σ orbit bands from the semi-major-axis error, ±2σ position spread growing with time since the transit epoch, assumption lines (line of nodes, Earth direction), and a true-sizes toggle. Hovering a planet shows its provenance ("N orbits since that epoch → position ±X°, TTVs ignored"). A persistent badge still states: "System is edge-on from Earth · Positions extrapolated from transit epochs · Planet sizes ×N · Not an N-body simulation."
 - Push-to-talk voice (Grok STT/TTS) plus an always-visible text box; transcript always shown.
 - Runs on localhost for the demo.
 - Layout (chosen from the `prototype/turn-ui` prototype, variant A): Project explorer on the left, System view in the centre with the chart drawer beneath it, chat on the right. The selected planet's properties (values, units, source-paper tooltips) appear in a floating card in the top-right corner of the System view, closed when nothing is selected. Each chat answer shows its tool steps inline with timings while the turn runs, a Live/Cached badge, and on failure "Nothing in the view was changed."
