@@ -9,3 +9,6 @@ dist/
 artifacts/
 .DS_Store
 *.tsbuildinfo
+
+# Tickets live in GitHub issues
+.scratch/
