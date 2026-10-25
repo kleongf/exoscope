@@ -38,7 +38,7 @@ export async function exerciseLayout(page) {
   assert((await card.innerText()).includes("Missing (Earth radii)"));
   await page.getByRole("button", { name: "Close planet properties" }).click();
   await page.getByRole("button", { name: "Chart & table" }).click();
-  await page.getByText("No comparison yet.", { exact: false }).waitFor();
+  await page.getByText("No comparison or Sample yet.", { exact: false }).waitFor();
   await page.getByRole("button", { name: "Chart & table" }).click();
   assert.equal(await page.getByTestId("conversation-turn").count(), 3);
   assert(
