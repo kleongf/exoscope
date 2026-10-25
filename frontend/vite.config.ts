@@ -8,7 +8,10 @@ export default defineConfig({
   resolve: {
     alias: { "@": path.resolve(import.meta.dirname, "src") },
   },
+  // A Cloudflare quick tunnel gives phones an HTTPS URL, which AR requires (see docs/ar.md).
+  preview: { allowedHosts: [".trycloudflare.com"] },
   server: {
+    allowedHosts: [".trycloudflare.com"],
     proxy: {
       "/api": {
         target: "http://127.0.0.1:8000",
