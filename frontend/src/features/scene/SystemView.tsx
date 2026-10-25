@@ -8,6 +8,8 @@ import { PlanetPanel } from "./PlanetPanel";
 import { SystemEvidence } from "./SystemEvidence";
 import { provenanceLabel } from "./provenance";
 
+// Keep scene labels below the planet card (z-10) and dialogs; drei's default is ~16.7M.
+const LABEL_Z: [number, number] = [9, 0];
 const COLORS = ["#9ed9de", "#cfb9ed", "#f0ba88", "#a8c99a"];
 function SystemScene({ system }: { system: System }) {
   const select = useExoStore((state) => state.selectPlanet);
@@ -25,7 +27,7 @@ function SystemScene({ system }: { system: System }) {
         <sphereGeometry args={[0.14, 32, 32]} />
         <meshBasicMaterial color="#ffcf8a" />
       </mesh>
-      <Html position={[0, 0.22, 0]} center>
+      <Html position={[0, 0.22, 0]} center zIndexRange={LABEL_Z}>
         <span className="rounded bg-black/70 px-1 text-xs text-white">{system.hostname}</span>
       </Html>
       {planets.map(({ planet, distance }, index) => {
@@ -57,7 +59,7 @@ function SystemScene({ system }: { system: System }) {
                 <sphereGeometry args={[0.055, 20, 20]} />
                 <meshStandardMaterial color={COLORS[index % COLORS.length] ?? "#9ed9de"} />
               </mesh>
-              <Html position={[0, 0.14, 0]} center>
+              <Html position={[0, 0.14, 0]} center zIndexRange={LABEL_Z}>
                 <Button
                   variant="ghost"
                   size="xs"
