@@ -1,1 +1,1 @@
-"""Report: template-built HTML export of an Investigation."""
+"""Report: template-built HTML export from a Project."""
