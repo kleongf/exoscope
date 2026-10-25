@@ -40,13 +40,14 @@ describe("per-turn Web evidence", () => {
     useExoStore.getState().applyCommand({ kind: "focus_planet", name: "TRAPPIST-1 e" });
   });
   it("stores original evidence and spoken reply availability without changing System state", () => {
+    useExoStore.getState().applyCommand({ kind: "set_time_scale", days_per_second: 10 });
     accept();
     const state = useExoStore.getState();
     expect(state.turns[0]?.webSearch).toBe(web);
     expect(state.turns[0]?.hasSpokenReply).toBe(true);
     expect(state.system).toBe(system);
     expect(state.focusedPlanetName).toBe("TRAPPIST-1 e");
-    expect(state.daysPerSecond).toBe(1);
+    expect(state.daysPerSecond).toBe(10);
     expect(state.system?.planets).toEqual(snapshot.planets);
   });
   it("starts a new turn with no citations and keeps historical evidence in context", () => {

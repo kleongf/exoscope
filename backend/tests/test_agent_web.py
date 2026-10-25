@@ -60,8 +60,10 @@ def test_custom_declaration_does_not_mix_builtin_search() -> None:
         "load_system",
         "compare",
         "search_catalog",
+        "set_scene_view",
         "web_search",
     }
+    assert len(declarations) == 5
     assert tool.google_search is None
     web = next(item for item in declarations if item.name == "web_search")
     assert web.parameters_json_schema is not None

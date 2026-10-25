@@ -35,7 +35,10 @@ export async function exerciseLayout(page) {
   // Select through the actual scene label; names match the canonical archive ID.
   // Labels ride along with orbiting planets, so pause time first to give a stable target.
   await scene.getByRole("button", { name: "Pause" }).click();
-  await scene.getByRole("button", { name: "TRAPPIST-1 e", exact: true }).click();
+  // A projected label can sit beneath the honesty controls; activate its keyboard action.
+  const planetLabel = scene.getByRole("button", { name: "TRAPPIST-1 e", exact: true });
+  await planetLabel.focus();
+  await planetLabel.press("Enter");
   await card.getByText("TRAPPIST-1 e", { exact: true }).waitFor();
   assert((await card.innerText()).includes("Missing (Earth radii)"));
   await page.getByRole("button", { name: "Close planet properties" }).click();
