@@ -6,13 +6,13 @@ The document every agent works from. Vocabulary is defined in [GLOSSARY.md](../G
 
 A voice-operated exoplanet research workbench. A student speaks (or types) a question; Gemma calls typed tools against **live** NASA Exoplanet Archive data; the **System view** (3D) and a linked chart update; everything the student builds up is kept in a **Project**, from which they can write any number of **Reports** with their evidence.
 
-Hackathon: **about 4 hours, 2 people.** Tracks: Space/Cursor/Grok, Gemma, Open-source. The demo matters more than completeness.
+Hackathon: **about 4 hours, 2 people.** Tracks: Space/Cursor/Grok, Gemma, Open-source. Judging is from a **recorded demo video**, not a live demo; the video matters more than completeness.
 
 ## Who it is for
 
 Students organising evidence-based work in Projects, with educators as the secondary user. Not researchers.
 
-## What "good" looks like — the demo (build backwards from this)
+## What "good" looks like — the demo video (build backwards from this)
 
 1. **"Open TRAPPIST-1."** — System loads live into the System view.
 2. **"Speed up time / focus on planet e."** — scene changes via tool-issued `ui_commands`.
@@ -30,14 +30,14 @@ Backup demo System if TRAPPIST-1 misbehaves: TOI-700 (not Kepler-186 — its ecc
 - The System view shows exactly one System. Samples live only in the table/chart.
 - Orbits (chosen from the `prototype/orbits` prototype, variant C "Honesty layers"): Keplerian ellipses at true relative scale, phase from transit epochs, in a tilted 3D view. Toggleable honesty layers: ±1σ orbit bands from the semi-major-axis error, ±2σ position spread growing with time since the transit epoch, assumption lines (line of nodes, Earth direction), and a true-sizes toggle. Hovering a planet shows its provenance ("N orbits since that epoch → position ±X°, TTVs ignored"). A persistent badge still states: "System is edge-on from Earth · Positions extrapolated from transit epochs · Planet sizes ×N · Not an N-body simulation."
 - Push-to-talk voice (Grok STT/TTS) plus an always-visible text box; transcript always shown.
-- Runs on localhost for the demo.
+- Runs on localhost; the demo is recorded as a video (no deployment, no live presentation). Slow turns can be trimmed in the edit.
 - Layout (chosen from the `prototype/turn-ui` prototype, variant A): Project explorer on the left, System view in the centre with the chart drawer beneath it, chat on the right. The selected planet's properties (values, units, source-paper tooltips) appear in a floating card in the top-right corner of the System view, closed when nothing is selected. Each chat answer shows its tool steps inline with timings while the turn runs, a Live/Cached badge, and on failure "Nothing in the view was changed."
 
 **Projects**
 - A Project organises work; it needs no research question. A student can have several Projects and switch between them; "New Project" starts an empty one.
-- Each Project is saved by the backend as one JSON file and survives a restart.
+- Each Project is saved by the backend as one JSON file, automatically after every turn, and survives a restart.
 - Evidence, Systems opened, Samples, comparisons, Web sources and Reports build up across the Project; opening a new System only changes the System view.
-- The left panel is the Project explorer: Systems opened (click reloads), Samples with their Interpretation chips, comparisons (click reopens the chart), Web sources, and Reports (click opens in a new tab). Reports are the only files; students do not upload files.
+- The left panel is the Project explorer (chosen from `prototype/project-explorer`, variant A "grouped list"): collapsible sections with counts, a Project switcher dropdown with "New Project" at the top of the panel, and Interpretation chips shown on each Sample (from variant C). Sections: Systems opened (click reloads), Samples with their Interpretation chips, comparisons (click reopens the chart), Web sources, and Reports (click opens in a new tab). Reports are the only files; students do not upload files.
 
 **Data**
 - Every query runs live against TAP (`pscomppars` only) with a ~5 s timeout; on failure fall back to a Snapshot. Each result is labelled "Live · fetched HH:MM" or "Cached · Snapshot YYYY-MM-DD". Measured latency: ~1.1–1.4 s per query.
@@ -67,6 +67,8 @@ Backup demo System if TRAPPIST-1 misbehaves: TOI-700 (not Kepler-186 — its ecc
 - One endpoint: `POST /turn {text | audio} → {transcript, reply_text, reply_audio, ui_commands[], data}`. `ui_commands` are validated server-side; no WebSockets, no frontend acknowledgement.
 
 **Report**
+- Report layout (chosen from `prototype/report-look`, variant A "scientific paper"): summary, method, figures (chart beside the System view snapshot), data table with source papers, limitations, references and Web sources, tool-call log. Template-filled numbers and Gemma-written prose are visibly distinguished.
+- Reports **copy** their data when written (settled with `prototype/project-model`): the HTML is rendered once at write time and never changes, even if the Project's items are later redone or deleted; the Project JSON keeps the Report's metadata (title, request, included item IDs).
 - A Project can hold many Reports. Each covers a chosen part of the Project: Gemma picks the comparisons, Samples, Systems and Web sources from the request ("a report on the TRAPPIST-1 radius comparison") and says what it included. Each Report has a title, is listed in the Project explorer, opens in a new tab, and is never edited after it is written; to change one, write a new one.
 - One self-contained HTML file: title, numbered tool-call log for the included items, interactive Plotly chart (embedded JSON), System view snapshot (canvas capture), data table with units/uncertainties/source papers, Live-vs-Snapshot provenance, Interpretations, "Literature & web sources", Limitations.
 - The template fills every number and table from saved data. Gemma writes only the short summary and the limitations prose. No readiness checklist.
@@ -80,7 +82,7 @@ Backup demo System if TRAPPIST-1 misbehaves: TOI-700 (not Kepler-186 — its ecc
 5. Live Sample search with Interpretation chips; cross-System click.
 6. `web_search`.
 7. Projects (save, switch, new) and Report export.
-8. Rehearse the full demo twice.
+8. Record the demo video (script the six beats; retake slow or failed turns).
 
 ## Non-goals
 
