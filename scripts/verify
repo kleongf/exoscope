@@ -25,11 +25,20 @@ fi
 
 step "app: launch and smoke test (screenshot + console in artifacts/)"
 mkdir -p artifacts
+for port in 8000 5173; do
+  if lsof -ti "tcp:$port" -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "port $port is already in use (a stale server would be tested instead); stop it first:"
+    echo "  lsof -ti tcp:$port | xargs kill"
+    exit 1
+  fi
+done
 (cd backend && uv run uvicorn exoscope.app:app --port 8000 >"$ROOT/artifacts/backend.log" 2>&1) &
 BACK=$!
 (cd frontend && pnpm -s preview >"$ROOT/artifacts/frontend.log" 2>&1) &
 FRONT=$!
-cleanup() { kill "$BACK" "$FRONT" 2>/dev/null || true; pkill -P "$BACK" 2>/dev/null || true; pkill -P "$FRONT" 2>/dev/null || true; }
+# The servers are grandchildren (subshell -> uv/pnpm -> python/node), so kill whole trees.
+killtree() { local child; for child in $(pgrep -P "$1" 2>/dev/null); do killtree "$child"; done; kill "$1" 2>/dev/null || true; }
+cleanup() { killtree "$BACK"; killtree "$FRONT"; }
 trap cleanup EXIT
 ready=0
 for _ in $(seq 1 40); do
