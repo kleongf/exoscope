@@ -1,0 +1,40 @@
+# Local hooks only: they run the same tools as ./scripts/verify.
+# Install once: uvx pre-commit install
+repos:
+  - repo: local
+    hooks:
+      - id: file-size
+        name: file size (max 300 lines)
+        entry: python3 scripts/check_file_size.py
+        language: system
+        pass_filenames: false
+      - id: ruff-format
+        name: ruff format
+        entry: bash -c 'cd backend && uv run ruff format --check .'
+        language: system
+        files: ^backend/
+        pass_filenames: false
+      - id: ruff
+        name: ruff lint
+        entry: bash -c 'cd backend && uv run ruff check .'
+        language: system
+        files: ^backend/
+        pass_filenames: false
+      - id: pyright
+        name: pyright strict
+        entry: bash -c 'cd backend && uv run pyright'
+        language: system
+        files: ^backend/
+        pass_filenames: false
+      - id: prettier
+        name: prettier
+        entry: bash -c 'cd frontend && pnpm -s format:check'
+        language: system
+        files: ^frontend/
+        pass_filenames: false
+      - id: eslint
+        name: eslint + tsc
+        entry: bash -c 'cd frontend && pnpm -s typecheck && pnpm -s lint'
+        language: system
+        files: ^frontend/
+        pass_filenames: false

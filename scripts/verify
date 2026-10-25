@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# The one command that defines "done". Usage: ./scripts/verify [--no-app]
+set -euo pipefail
+cd "$(dirname "$0")/.."
+ROOT=$(pwd)
+
+step() { printf '\n==> %s\n' "$1"; }
+
+step "file size"
+python3 scripts/check_file_size.py
+
+step "backend: format, lint, typecheck, test"
+(cd backend && uv run ruff format --check . && uv run ruff check . && uv run pyright && uv run pytest -q)
+
+step "frontend: api types up to date"
+(cd frontend && pnpm -s gen:api >/dev/null)
+git diff --quiet -- frontend/src/api || { echo "Generated API types changed; commit them."; git --no-pager diff --stat -- frontend/src/api; }
+
+step "frontend: format, typecheck, lint, test, build"
+(cd frontend && pnpm -s format:check && pnpm -s typecheck && pnpm -s lint && pnpm -s test && pnpm -s build)
+
+if [[ "${1:-}" == "--no-app" ]]; then
+  echo; echo "verify: OK (app launch skipped)"; exit 0
+fi
+
+step "app: launch and smoke test (screenshot + console in artifacts/)"
+mkdir -p artifacts
+(cd backend && uv run uvicorn exoscope.app:app --port 8000 >"$ROOT/artifacts/backend.log" 2>&1) &
+BACK=$!
+(cd frontend && pnpm -s preview >"$ROOT/artifacts/frontend.log" 2>&1) &
+FRONT=$!
+cleanup() { kill "$BACK" "$FRONT" 2>/dev/null || true; pkill -P "$BACK" 2>/dev/null || true; pkill -P "$FRONT" 2>/dev/null || true; }
+trap cleanup EXIT
+ready=0
+for _ in $(seq 1 40); do
+  if curl -sf http://127.0.0.1:8000/health >/dev/null && curl -sf http://127.0.0.1:5173/ >/dev/null; then ready=1; break; fi
+  sleep 0.5
+done
+[[ $ready == 1 ]] || { echo "app did not start; see artifacts/*.log"; exit 1; }
+(cd frontend && pnpm -s e2e)
+
+echo; echo "verify: OK. Now look at artifacts/smoke.png and artifacts/console.log."
