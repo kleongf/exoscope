@@ -4,6 +4,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { chromium } from "playwright";
 import { exerciseVoice } from "./voice-smoke.mjs";
 import { exerciseLayout } from "./layout-smoke.mjs";
+import { exerciseAr } from "./ar-smoke.mjs";
 
 const outDir = new URL("../../artifacts/", import.meta.url).pathname;
 mkdirSync(outDir, { recursive: true });
@@ -24,6 +25,7 @@ try {
   await page.waitForTimeout(1000);
   await exerciseLayout(page);
   await page.screenshot({ path: `${outDir}smoke.png` });
+  await exerciseAr(page, outDir);
   const errors = logs.filter(
     (line) => line.startsWith("[error]") || line.startsWith("[pageerror]"),
   );
