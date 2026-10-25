@@ -17,6 +17,7 @@ export async function exerciseVoice(page) {
   let releaseResponse;
   let failure = false;
   await page.route("**/api/turn", async (route) => {
+    if (route.request().postDataJSON().project_action) return route.continue();
     const request = route.request();
     assert.equal(request.method(), "POST");
     const headers = request.headers();

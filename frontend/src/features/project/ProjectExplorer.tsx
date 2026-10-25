@@ -1,4 +1,4 @@
-import { FolderOpen, Telescope } from "lucide-react";
+import { Telescope } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -6,11 +6,12 @@ import { Separator } from "@/components/ui/separator";
 import { useExoStore } from "@/store/store";
 import { projectTurnController } from "@/features/voice/turnController";
 import { SampleList } from "@/features/catalog/SampleList";
+import { ProjectHeader } from "./ProjectHeader";
 import { ComparisonList } from "./ComparisonList";
 
 import { ProjectWebSources } from "./ProjectWebSources";
 
-/** Current Project shell; persistence and Reports belong to a later ticket. */
+/** Saved evidence accumulates while the System view shows one System. */
 export function ProjectExplorer() {
   const systems = useExoStore((state) => state.loadedSystems);
   const current = useExoStore((state) => state.system);
@@ -22,10 +23,7 @@ export function ProjectExplorer() {
         <h2 className="text-sm font-semibold">ExoScope</h2>
       </header>
       <Separator />
-      <div className="flex items-center gap-2 px-4 py-3 text-sm font-medium">
-        <FolderOpen className="size-4 text-muted-foreground" />
-        Project
-      </div>
+      <ProjectHeader />
       <ScrollArea className="min-h-0 flex-1">
         <section className="px-3 pb-4">
           <h3 className="mb-2 px-1 text-xs font-medium text-muted-foreground">Systems opened</h3>

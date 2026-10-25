@@ -3,10 +3,13 @@
 from exoscope.agent.models import ToolStep, TurnRequest, TurnResponse
 from exoscope.agent.runner import run_agent
 from exoscope.agent.timing import timed_step
+from exoscope.project.turn import handle_project_action
 from exoscope.voice import service as voice
 
 
 def handle_turn(request: TurnRequest) -> TurnResponse:
+    if request.project_action is not None:
+        return handle_project_action(request.project_action)
     transcript = request.text or ""
     steps: list[ToolStep] = []
     if request.audio is not None:

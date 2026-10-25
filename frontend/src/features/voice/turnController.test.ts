@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { sendTurn, type TurnResponse } from "../../api/client";
 import { useExoStore } from "../../store/store";
+import { projectController, projectSnapshot } from "../project/persistence";
 import { TurnController } from "./turnController";
 vi.mock("../../api/client", () => ({ sendTurn: vi.fn() }));
 const reply: TurnResponse = {
@@ -12,6 +13,19 @@ describe("single turn controller", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useExoStore.setState(useExoStore.getInitialState());
+    useExoStore.setState({
+      currentProject: {
+        id: "a".repeat(32),
+        title: "Test",
+        version: 1,
+        revision: 0,
+        created_at: "2026-10-25",
+        updated_at: "2026-10-25",
+        state: projectSnapshot(),
+        reports: [],
+      },
+    });
+    vi.spyOn(projectController, "flush").mockResolvedValue();
   });
   it("sends a typed turn once, with current System context and no credentials", async () => {
     vi.mocked(sendTurn).mockResolvedValue(reply);
@@ -38,7 +52,9 @@ describe("single turn controller", () => {
     const controller = new TurnController();
     const pending = controller.submit({ audio: { data_base64: "AA==", mime_type: "audio/webm" } });
     await controller.submit({ text: "duplicate" });
-    expect(sendTurn).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(sendTurn).toHaveBeenCalledTimes(1);
+    });
     controller.dispose();
     expect(vi.mocked(sendTurn).mock.calls[0]?.[1].aborted).toBe(true);
     respond(reply);

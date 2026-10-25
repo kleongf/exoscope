@@ -25,3 +25,11 @@ export async function sendTurn(body: TurnRequest, signal: AbortSignal) {
   if (!response.ok || !data) throw new Error("The turn could not be completed. Try typing again.");
   return data;
 }
+
+export type ProjectState = Required<components["schemas"]["ProjectState"]>;
+export type Project = Omit<Required<components["schemas"]["Project"]>, "state"> & {
+  state: ProjectState;
+};
+export type ProjectSummary = components["schemas"]["ProjectSummary"];
+export type ProjectAction = components["schemas"]["ProjectAction"];
+export type ConversationTurn = components["schemas"]["ConversationTurn"];

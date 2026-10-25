@@ -21,6 +21,7 @@ export async function exerciseWeb(page) {
   let nextReply = waterReply;
   let release;
   await page.route("**/api/turn", async (route) => {
+    if (route.request().postDataJSON().project_action) return route.continue();
     assert.equal(route.request().method(), "POST");
     requests.push(route.request().postDataJSON());
     const started = performance.now();

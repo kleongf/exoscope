@@ -33,6 +33,7 @@ def test_turn_returns_validated_response(monkeypatch: pytest.MonkeyPatch) -> Non
         "transcript": "Open TRAPPIST-1",
         "reply_text": "",
         "reply_audio": None,
+        "project_result": None,
         "ui_commands": [],
         "data": {"system": None, "comparison": None, "sample": None, "web_search": None},
         "error": "Agent unavailable",

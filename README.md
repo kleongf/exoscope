@@ -49,3 +49,5 @@ Questions beyond archive coverage can request xAI Web search. Sources stay attac
 ```
 
 This runs backend checks/tests, regenerates API types, checks/builds the frontend, and launches a browser smoke exercise. Inspect `artifacts/smoke.png` and `artifacts/console.log` afterward. Browser fixtures exercise controlled scenarios; service smoke checks make separate live requests. Use `./scripts/verify --no-app` for checks without the browser exercise.
+
+Projects now save automatically to local backend JSON files. Use the Project switcher or New Project in the explorer header. See [Project persistence](docs/projects.md) for storage, recovery, and API details.
