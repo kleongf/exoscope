@@ -40,7 +40,7 @@ Backup demo System if TRAPPIST-1 misbehaves: TOI-700 (not Kepler-186 — its ecc
 - Known data quirks: `st_lum` is log10(L/Lsun); `pl_orblper` can fall outside [0, 360) — normalise mod 360; 28 rows lack `sy_dist`.
 
 **Agent**
-- Plain `google-genai` function-calling loop with Gemma 4. No ADK. Max 5 tool calls per turn.
+- Plain `google-genai` function-calling loop with Gemma 4 `gemma-4-26b-a4b-it` (one tool-call step ~3 s; `gemma-4-31b-it` measured ~17 s, too slow for voice). No ADK. Max 5 tool calls per turn.
 - Vague words become Interpretations: Gemma picks one, says it aloud, it is passed as `interpretations` on `search_catalog`, shown as a chip, recorded in the Report. Loaded words ("Earth-like", "habitable") always carry a caveat.
 - Tools (more may be added later):
 
@@ -53,7 +53,7 @@ Backup demo System if TRAPPIST-1 misbehaves: TOI-700 (not Kepler-186 — its ecc
 | `export_report()` | HTML Report |
 | `web_search(query)` | Web sources for questions the archive can't answer |
 
-- `web_search`: a normal custom tool whose handler makes a separate Gemma call with only Gemini's built-in `google_search` enabled, returning grounded text plus grounding chunks (title, uri). If the smoke test shows Gemma can mix `google_search` with function declarations in one request, drop the separate call. Rules: search only when the archive can't answer; at most one search per turn; claims cited aloud; no domain restriction; web text treated as normal data.
+- `web_search`: a normal custom tool whose handler calls xAI's `web_search` tool via `POST /v1/responses` with `grok-4.20-0309-non-reasoning` (measured ~6 s, 16–22 source URLs from `web_search_call.action.sources` and message annotations). Gemini's built-in `google_search` was rejected after the smoke test: mixing it with function declarations returns HTTP 500, and alone it takes 34–58 s on Gemma 4 26b. Rules: search only when the archive can't answer; at most one search per turn; claims cited aloud; no domain restriction; web text treated as normal data.
 - Web sources are a distinct evidence kind: badged, cited, never plotted, tabled or rendered in 3D.
 
 **API**
@@ -65,7 +65,7 @@ Backup demo System if TRAPPIST-1 misbehaves: TOI-700 (not Kepler-186 — its ecc
 
 ## Build order
 
-1. **Smoke test first (partner):** one Gemma 4 tool call, Gemma `google_search` mixed with function declarations in one request, one Grok STT→TTS round-trip. Nothing else is trusted until this passes.
+1. **Smoke test (done 2026-10-25, results on issue #1):** Gemma 4 26b tool call ✓ (~3 s); Grok TTS ✓ (0.8 s) and STT ✓ (0.5 s); xAI `web_search` ✓ (~6 s); Gemini `google_search` ✗ (see `web_search` above).
 2. System view for TRAPPIST-1 with real orbits and the badge.
 3. `/turn` + agent loop + scene tools.
 4. Compare chart with linked selection.
