@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Live, billable service checks; offline coverage runs in scripts/verify.
+set -euo pipefail
+ROOT=$(cd "$(dirname "$0")/.." && pwd)
+exec uv run --project "$ROOT/backend" python -m exoscope.service_smoke "$@"
