@@ -32,6 +32,27 @@ function FailureOutcome({ appliedCommands }: { appliedCommands: number }) {
     </p>
   );
 }
+function ReplyFinding({ turn }: { turn: ConversationTurn }) {
+  return (
+    <>
+      {turn.reply && (
+        <div>
+          {turn.webSearch?.status === "ok" && (
+            <p className="text-xs text-muted-foreground">
+              {turn.error ? "Synthesis unavailable" : "Gemma synthesis · with archive context"}
+            </p>
+          )}
+          <p
+            className="whitespace-pre-wrap break-words text-sm leading-relaxed"
+            data-testid="student-reply"
+          >
+            {turn.reply}
+          </p>
+        </div>
+      )}
+    </>
+  );
+}
 function TurnBlock({ turn }: { turn: ConversationTurn }) {
   const failed = Boolean(turn.error) || turn.steps.some((step) => step.status === "failed");
   return (
@@ -66,9 +87,7 @@ function TurnBlock({ turn }: { turn: ConversationTurn }) {
             </ol>
           )}
           {turn.finishedAt === null && <Waiting startedAt={turn.startedAt} />}
-          {turn.reply && (
-            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{turn.reply}</p>
-          )}
+          <ReplyFinding turn={turn} />
           {turn.error && (
             <p className="text-sm text-destructive" role="alert">
               {turn.error}

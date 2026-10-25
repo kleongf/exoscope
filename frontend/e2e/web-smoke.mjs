@@ -108,7 +108,16 @@ export async function exerciseWeb(page) {
     1,
   );
   await evidence.getByTestId("spoken-attribution").waitFor();
-  assert((await originalArticle.innerText()).includes("According to"));
+  const studentReply = originalArticle.getByTestId("student-reply");
+  assert.equal(await studentReply.innerText(), waterReply.reply_text);
+  assert(!(await studentReply.innerText()).includes("Yes, TRAPPIST-1 e"));
+  await originalArticle
+    .getByText("Gemma synthesis · with archive context", { exact: true })
+    .waitFor();
+  await evidence
+    .getByRole("heading", { name: "Original Grok result · provider support" })
+    .waitFor();
+  assert((await evidence.innerText()).includes("not to Gemma synthesis"));
   await page.waitForFunction((previous) => window.voiceFixture.plays > previous, playsBefore);
   assert.equal(await evidence.locator("iframe").count(), 0);
   assert.equal(await projectSources.getByTestId("web-sources").locator("li").count(), 2);

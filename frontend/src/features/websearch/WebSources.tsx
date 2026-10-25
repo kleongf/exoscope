@@ -11,7 +11,7 @@ export function CitedSupport({
 }) {
   return (
     <div className="space-y-2">
-      <h4 className="text-xs font-medium">Claim associations</h4>
+      <h4 className="text-xs font-medium">Provider citation associations</h4>
       {result.supports?.length ? (
         <ul className="space-y-3" data-testid="web-supports">
           {result.supports.map((support, index) => (

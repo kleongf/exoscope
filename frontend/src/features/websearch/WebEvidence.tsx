@@ -28,14 +28,15 @@ export function WebEvidence({
         </p>
       ) : (
         <>
-          {hasSpokenReply && (
-            <p className="text-xs text-muted-foreground" data-testid="spoken-attribution">
-              Spoken reply text is shown above. Claim associations below apply to the original
-              search result.
-            </p>
-          )}
+          <p className="text-xs text-muted-foreground" data-testid="spoken-attribution">
+            {hasSpokenReply
+              ? "Gemma synthesis is shown and spoken above. "
+              : "Reply text is shown above. "}
+            Provider citation associations below apply only to the original Grok text, not to Gemma
+            synthesis. They do not verify the claims.
+          </p>
           <div className="space-y-1">
-            <h4 className="text-xs font-medium">Original search result</h4>
+            <h4 className="text-xs font-medium">Original Grok result · provider support</h4>
             <p className="whitespace-pre-wrap text-xs" data-testid="grounded-text">
               {result.grounded_text}
             </p>

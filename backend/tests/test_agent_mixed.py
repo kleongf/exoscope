@@ -13,7 +13,7 @@ from exoscope.catalog.models import LiveProvenance, Missing, SnapshotProvenance
 from exoscope.websearch.models import WebSearchResult
 from tests.catalog_fakes import FakeTap
 from tests.test_agent import answer, call
-from tests.test_agent_web import CLAIM, evidence
+from tests.test_agent_web import CLAIM, SYNTHESIS, evidence
 
 QUESTION = "Compare their radii and evidence for liquid water"
 
@@ -56,13 +56,13 @@ def run_mixed(
     replies = iter(
         [
             answer(call("web_search", query=question)),
-            answer(types.Part(text="Radius is 999 Earth radii and liquid water is certain.")),
+            answer(types.Part(text=SYNTHESIS)),
         ]
     )
     return runner.run_loop(question, "TRAPPIST-1", lambda _: next(replies))
 
 
-def test_mixed_finding_composes_typed_radii_with_original_supported_claim(
+def test_mixed_finding_composes_typed_radii_with_gemma_synthesis(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     system = archive()
@@ -73,7 +73,7 @@ def test_mixed_finding_composes_typed_radii_with_original_supported_claim(
     assert "NASA Exoplanet Archive (Snapshot 2026-10-24)" in result.reply_text
     assert "missing values remain missing" in result.reply_text
     assert "source papers: Radius paper" in result.reply_text
-    assert f"According to science.nasa.gov, {CLAIM}" in result.reply_text[:600]
+    assert SYNTHESIS in result.reply_text[:600]
     assert "999" not in result.reply_text and "water is certain" not in result.reply_text
     assert "Orbital period:" not in result.reply_text
     assert "Semi-major axis:" not in result.reply_text
@@ -103,7 +103,7 @@ def test_mixed_finding_includes_requested_period_and_distance_from_live_archive(
     assert "Semi-major axis: 0.01 AU (TRAPPIST-1 b) to 0.03 AU (TRAPPIST-1 d)" in result.reply_text
     assert "source papers: Period paper" in result.reply_text
     assert "source papers: Distance paper" in result.reply_text
-    assert f"According to science.nasa.gov, {CLAIM}" in result.reply_text[:600]
+    assert SYNTHESIS in result.reply_text[:600]
 
 
 def test_all_missing_radii_never_become_zero_or_web_measurements(
