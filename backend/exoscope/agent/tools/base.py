@@ -13,13 +13,14 @@ from pydantic import BaseModel
 
 from exoscope.agent.result import AgentResult
 from exoscope.catalog import CatalogError
+from exoscope.scene.planets import SceneError
 
 
 class ToolError(Exception):
     """A tool could not do what was asked. The message is shown to the student."""
 
 
-TOOL_ERRORS: tuple[type[Exception], ...] = (ToolError, CatalogError)
+TOOL_ERRORS: tuple[type[Exception], ...] = (ToolError, CatalogError, SceneError)
 
 
 @dataclass(frozen=True)

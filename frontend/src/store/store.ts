@@ -27,11 +27,19 @@ export interface SavedComparison {
   id: number;
   comparison: Comparison;
 }
-interface SceneState {
+export type ColorBy = Extract<UiCommand, { kind: "set_color_by" }>["property"];
+export interface SceneState {
   system: System | null;
   focusedPlanetName: string | null;
+  /** Planet the camera follows; set by focus commands, cleared by a new System or deselection. */
+  cameraFocus: string | null;
+  /** Simulated days per real second while playing. */
   daysPerSecond: number;
+  playing: boolean;
+  showLabels: boolean;
+  colorBy: ColorBy;
 }
+export const DEFAULT_DAYS_PER_SECOND = 0.5;
 export interface ExoState extends SceneState, SampleState {
   loadedSystems: System[];
   /** Comparisons build up across the Project; the drawer shows the active one. */
@@ -53,6 +61,7 @@ export interface ExoState extends SceneState, SampleState {
   selectPlanetIn: (hostname: string, name: string) => void;
   openComparison: (id: number) => void;
   openSample: (id: number) => void;
+  setPlaying: (playing: boolean) => void;
   setDraft: (draft: string) => void;
   setStatus: (status: TurnStatus) => void;
   setPlayback: (playback: PlaybackStatus) => void;
@@ -65,11 +74,18 @@ export interface ExoState extends SceneState, SampleState {
 export function reduceCommand(state: SceneState, command: UiCommand): SceneState {
   switch (command.kind) {
     case "load_system":
-      return { ...state, system: command.system, focusedPlanetName: null };
+      return { ...state, system: command.system, focusedPlanetName: null, cameraFocus: null };
     case "focus_planet":
-      return { ...state, focusedPlanetName: command.name };
+      return { ...state, focusedPlanetName: command.name, cameraFocus: command.name };
     case "set_time_scale":
-      return { ...state, daysPerSecond: command.days_per_second };
+      // 0 pauses but keeps the last pace, so pressing play resumes at it.
+      return command.days_per_second === 0
+        ? { ...state, playing: false }
+        : { ...state, daysPerSecond: command.days_per_second, playing: true };
+    case "set_labels":
+      return { ...state, showLabels: command.visible };
+    case "set_color_by":
+      return { ...state, colorBy: command.property };
   }
 }
 function remember(systems: System[], system: System | null) {
@@ -105,7 +121,11 @@ function finishTurn(turns: ConversationTurn[], update: Partial<ConversationTurn>
 export const useExoStore = create<ExoState>()((set) => ({
   system: null,
   focusedPlanetName: null,
-  daysPerSecond: 1,
+  cameraFocus: null,
+  daysPerSecond: DEFAULT_DAYS_PER_SECOND,
+  playing: true,
+  showLabels: true,
+  colorBy: "none",
   loadedSystems: [],
   comparisons: [],
   activeComparisonId: null,
@@ -126,7 +146,13 @@ export const useExoStore = create<ExoState>()((set) => ({
     set({ drawerOpen });
   },
   selectPlanet: (focusedPlanetName) => {
-    set({ focusedPlanetName });
+    set((state) => ({
+      focusedPlanetName,
+      cameraFocus: focusedPlanetName === null ? null : state.cameraFocus,
+    }));
+  },
+  setPlaying: (playing) => {
+    set({ playing });
   },
   selectPlanetIn: (hostname, name) => {
     set((state) => {

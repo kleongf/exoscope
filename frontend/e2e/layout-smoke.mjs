@@ -33,6 +33,8 @@ export async function exerciseLayout(page) {
   await page.getByRole("button", { name: "Close planet properties" }).click();
   assert.equal(await card.count(), 0);
   // Select through the actual scene label; names match the canonical archive ID.
+  // Labels ride along with orbiting planets, so pause time first to give a stable target.
+  await scene.getByRole("button", { name: "Pause" }).click();
   await scene.getByRole("button", { name: "TRAPPIST-1 e", exact: true }).click();
   await card.getByText("TRAPPIST-1 e", { exact: true }).waitFor();
   assert((await card.innerText()).includes("Missing (Earth radii)"));

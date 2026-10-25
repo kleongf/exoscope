@@ -939,6 +939,42 @@
         "required": ["name", "hostname", "values"],
         "title": "SamplePlanet"
       },
+      "SetColorBy": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "set_color_by",
+            "title": "Kind",
+            "default": "set_color_by"
+          },
+          "property": {
+            "type": "string",
+            "enum": ["none", "insolation", "radius", "equilibrium_temperature"],
+            "title": "Property"
+          }
+        },
+        "type": "object",
+        "required": ["property"],
+        "title": "SetColorBy",
+        "description": "Colour planets by one archive property, with a legend; \"none\" restores fixed colours."
+      },
+      "SetLabels": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "set_labels",
+            "title": "Kind",
+            "default": "set_labels"
+          },
+          "visible": {
+            "type": "boolean",
+            "title": "Visible"
+          }
+        },
+        "type": "object",
+        "required": ["visible"],
+        "title": "SetLabels"
+      },
       "SetTimeScale": {
         "properties": {
           "kind": {
@@ -956,7 +992,8 @@
         },
         "type": "object",
         "required": ["days_per_second"],
-        "title": "SetTimeScale"
+        "title": "SetTimeScale",
+        "description": "Simulated days per real second; 0 pauses time."
       },
       "SnapshotProvenance": {
         "properties": {
@@ -1386,6 +1423,12 @@
                   "$ref": "#/components/schemas/SetTimeScale"
                 },
                 {
+                  "$ref": "#/components/schemas/SetLabels"
+                },
+                {
+                  "$ref": "#/components/schemas/SetColorBy"
+                },
+                {
                   "$ref": "#/components/schemas/LoadSystem"
                 }
               ],
@@ -1394,6 +1437,8 @@
                 "mapping": {
                   "focus_planet": "#/components/schemas/FocusPlanet",
                   "load_system": "#/components/schemas/LoadSystem",
+                  "set_color_by": "#/components/schemas/SetColorBy",
+                  "set_labels": "#/components/schemas/SetLabels",
                   "set_time_scale": "#/components/schemas/SetTimeScale"
                 }
               }

@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { fixtureReply, installVoiceFixtures } from "./voice-fixtures.mjs";
 
+// Overridable so parallel worktrees can run the smoke on other ports.
+const WEB_URL = process.env.EXO_WEB_URL ?? "http://127.0.0.1:5173";
+
 const visibleText = async (page, testid, expected) => {
   await page.waitForFunction(
     ({ testid, expected }) =>
@@ -23,7 +26,7 @@ export async function exerciseVoice(page) {
         "Browser request must not carry provider credentials",
       );
     const url = new URL(request.url());
-    assert.equal(url.origin, "http://127.0.0.1:5173");
+    assert.equal(url.origin, WEB_URL);
     assert.equal(url.search, "");
     const body = request.postDataJSON();
     assert(Object.keys(body).every((key) => ["text", "audio", "current_system"].includes(key)));
@@ -64,7 +67,7 @@ export async function exerciseVoice(page) {
       "Provider calls must stay on the backend",
     );
   });
-  await page.goto("http://127.0.0.1:5173/");
+  await page.goto(`${WEB_URL}/`);
   const talk = page.getByTestId("push-to-talk");
   // Release before permission resolves: late grant must stop tracks, never record or send.
   await page.evaluate(() => {

@@ -363,7 +363,36 @@ export interface components {
           | components["schemas"]["TextValue"];
       };
     };
-    /** SetTimeScale */
+    /**
+     * SetColorBy
+     * @description Colour planets by one archive property, with a legend; "none" restores fixed colours.
+     */
+    SetColorBy: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      kind: "set_color_by";
+      /**
+       * Property
+       * @enum {string}
+       */
+      property: "none" | "insolation" | "radius" | "equilibrium_temperature";
+    };
+    /** SetLabels */
+    SetLabels: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      kind: "set_labels";
+      /** Visible */
+      visible: boolean;
+    };
+    /**
+     * SetTimeScale
+     * @description Simulated days per real second; 0 pauses time.
+     */
     SetTimeScale: {
       /**
        * @description discriminator enum property added by openapi-typescript
@@ -500,6 +529,8 @@ export interface components {
       ui_commands?: (
         | components["schemas"]["FocusPlanet"]
         | components["schemas"]["SetTimeScale"]
+        | components["schemas"]["SetLabels"]
+        | components["schemas"]["SetColorBy"]
         | components["schemas"]["LoadSystem"]
       )[];
       data?: components["schemas"]["TurnData"];

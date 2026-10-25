@@ -14,8 +14,8 @@ export default defineConfig({
     allowedHosts: [".trycloudflare.com"],
     proxy: {
       "/api": {
-        // Override to run a second copy beside the default one, e.g. EXOSCOPE_API=http://127.0.0.1:8020.
-        target: process.env.EXOSCOPE_API ?? "http://127.0.0.1:8000",
+        // Override to run a second copy beside the default one (either name works).
+        target: process.env.EXOSCOPE_API ?? process.env.EXO_API_URL ?? "http://127.0.0.1:8000",
         rewrite: (path) => path.replace(/^\/api/, ""),
       },
     },
