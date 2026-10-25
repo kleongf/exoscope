@@ -73,7 +73,7 @@ def test_one_post_configuration_and_call_time_xai_key(
     assert "google" not in request.content.decode().lower()
     assert mocked.options == {"retries": 0, "trust_env": False}
     assert request.extensions["timeout"] == dict.fromkeys(
-        ["connect", "read", "write", "pool"], 15.0
+        ["connect", "read", "write", "pool"], 30.0
     )
 
 
