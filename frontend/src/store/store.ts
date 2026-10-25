@@ -5,7 +5,9 @@ import type { UiCommand } from "../api/client";
 export interface ExoState {
   focusedPlanetId: string | null;
   daysPerSecond: number;
+  drawerOpen: boolean;
   applyCommand: (command: UiCommand) => void;
+  setDrawerOpen: (open: boolean) => void;
 }
 
 export function reduceCommand(
@@ -23,7 +25,11 @@ export function reduceCommand(
 export const useExoStore = create<ExoState>()((set) => ({
   focusedPlanetId: null,
   daysPerSecond: 1,
+  drawerOpen: false,
   applyCommand: (command) => {
     set((state) => reduceCommand(state, command));
+  },
+  setDrawerOpen: (open) => {
+    set({ drawerOpen: open });
   },
 }));

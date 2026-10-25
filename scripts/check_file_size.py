@@ -8,6 +8,7 @@ from pathlib import Path
 MAX_LINES = 300
 SUFFIXES = {".py", ".ts", ".tsx"}
 EXCLUDE = {"frontend/src/api/schema.ts"}
+EXCLUDE_DIRS = ("frontend/src/components/ui/",)  # vendored shadcn/ui components
 
 
 def tracked_files() -> list[Path]:
@@ -17,7 +18,11 @@ def tracked_files() -> list[Path]:
         text=True,
         check=True,
     ).stdout
-    return [Path(p) for p in out.splitlines() if Path(p).suffix in SUFFIXES and p not in EXCLUDE]
+    return [
+        Path(p)
+        for p in out.splitlines()
+        if Path(p).suffix in SUFFIXES and p not in EXCLUDE and not p.startswith(EXCLUDE_DIRS)
+    ]
 
 
 def main() -> int:

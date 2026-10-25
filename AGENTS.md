@@ -25,5 +25,6 @@ Read [docs/intent.md](docs/intent.md) before working. Use the vocabulary in [GLO
 - `ui_commands` are Pydantic models in `backend/exoscope/scene/commands.py`; anything that reaches the browser is validated there first.
 - Frontend state lives in the single zustand store (`src/store/store.ts`) and changes only by applying a `ui_command` or a user-interaction action.
 - Every number shown or exported carries its unit and its provenance (Live result or Snapshot, source paper). Missing is shown as missing, never zero.
+- UI controls come from shadcn/ui (Radix): add them with `pnpm dlx shadcn@latest add <name>`; never hand-roll a control shadcn provides, and never edit `src/components/ui/` (vendored).
 - Files stay under 300 lines (enforced). Split by responsibility.
 - Secrets live in `.env` (see `.env.example`), server-side only. The app must start without them.
