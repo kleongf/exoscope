@@ -6,12 +6,16 @@ from time import monotonic
 
 from google import genai
 from google.genai import types
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import ValidationError
 
 from exoscope.agent.model_config import gemma_model
-from exoscope.agent.models import ToolStep, TurnData
+from exoscope.agent.models import ToolStep
+from exoscope.agent.result import AgentResult
+from exoscope.agent.tools.base import TOOL_ERRORS, ToolError
+from exoscope.agent.tools.registry import TOOLS, declaration
 from exoscope.catalog import CatalogError, load_system
-from exoscope.scene.commands import LoadSystem, UiCommand
+
+__all__ = ["AgentResult", "declaration", "run_agent", "run_loop"]
 
 MAX_TOOL_CALLS = 5
 Generate = Callable[[list[types.Content]], types.GenerateContentResponse]
@@ -27,77 +31,41 @@ INSTRUCTIONS = (
     "when a Quantity has status missing (it has no value). Include units and Live versus dated "
     "Snapshot provenance in findings. "
     "Source papers can differ between properties. Habitability is not established by this catalog. "
-    "Only System loading and catalog questions are implemented. Do not claim scene, comparison, "
-    "web search or report actions. Give a short finding suitable for speech."
+    "Only the tools you are given are implemented; never claim an action no tool performed. "
+    "Give a short finding suitable for speech."
 )
 
 
-class LoadArguments(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
-    name: str = Field(min_length=1, max_length=200)
-
-
-class AgentResult(BaseModel):
-    reply_text: str = ""
-    ui_commands: list[UiCommand] = Field(default_factory=list[UiCommand])
-    data: TurnData = Field(default_factory=TurnData)
-    error: str | None = None
-    warnings: list[str] = Field(default_factory=list)
-    steps: list[ToolStep] = Field(default_factory=list[ToolStep])
-
-
-def declaration() -> types.Tool:
-    return types.Tool(
-        function_declarations=[
-            types.FunctionDeclaration(
-                name="load_system",
-                description="Load one System by case/spacing-insensitive archive hostname.",
-                parameters_json_schema=LoadArguments.model_json_schema(),
-            )
-        ]
-    )
-
-
-def _execute(call: types.FunctionCall, result: AgentResult) -> dict[str, object]:
+def _execute(call: types.FunctionCall, result: AgentResult) -> tuple[dict[str, object], str]:
+    tool = TOOLS.get(call.name or "")
     try:
-        if call.name != "load_system":
-            raise CatalogError("Unsupported tool call; only load_system is available.")
-        arguments = LoadArguments.model_validate(call.args or {})
-        system = load_system(arguments.name)
-        result.data.system = system
-        result.ui_commands.append(LoadSystem(system=system))
+        if tool is None:
+            raise ToolError(f"Unsupported tool call; available tools: {', '.join(TOOLS)}.")
+        output = tool.invoke(call.args or {}, result)
+    except ValidationError:
+        error = f"Invalid {call.name} arguments."
+    except TOOL_ERRORS as exc:
+        error = str(exc)
+    else:
         if result.error:
             result.warnings.append(
-                f"An earlier tool request failed: {result.error} A later archive lookup succeeded."
+                f"An earlier tool request failed: {result.error} A later tool call succeeded."
             )
             result.error = None
-        if system.provenance.mode == "snapshot":
-            warning = "Live archive unavailable; using dated Snapshot data."
-            if warning not in result.warnings:
-                result.warnings.append(warning)
-        return {"system": system.model_dump(mode="json")}
-    except ValidationError:
-        error = "Invalid load_system arguments; provide only an archive System name."
-    except CatalogError as exc:
-        error = str(exc)
+        return output.payload, output.detail
     result.error = f"{result.error} {error}" if result.error else error
-    return {"error": error}
+    return {"error": error}, error
 
 
 def _dispatch(call: types.FunctionCall, result: AgentResult) -> dict[str, object]:
     started = monotonic()
     payload: dict[str, object] = {}
+    detail = "Tool dispatch failed."
     try:
-        payload = _execute(call, result)
+        payload, detail = _execute(call, result)
         return payload
     finally:
         failed = not payload or "error" in payload
-        system = result.data.system
-        detail = (
-            str(payload.get("error", "Tool dispatch failed."))
-            if failed
-            else (f"Loaded {system.hostname}." if system is not None else "Completed.")
-        )
         result.steps.append(
             ToolStep(
                 id=f"tool-{len(result.steps) + 1}",

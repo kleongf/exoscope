@@ -4,9 +4,16 @@ import pytest
 from google.genai import types
 
 from exoscope.agent import loop, model_config, turn
+from exoscope.agent.tools import load_system as load_system_tool
 from exoscope.catalog import CatalogError, CatalogUnavailableError, System, load_system
 from exoscope.catalog.tap import Row
 from exoscope.voice.models import ReplyAudio
+
+
+def patch_catalog(monkeypatch: pytest.MonkeyPatch, load: object) -> None:
+    """The loop refreshes current-System context; the load_system tool opens Systems."""
+    monkeypatch.setattr(loop, "load_system", load)
+    monkeypatch.setattr(load_system_tool, "load_system", load)
 
 
 def offline_system(name: str) -> System:
@@ -34,7 +41,7 @@ def test_tool_result_round_trip_and_validated_command(monkeypatch: pytest.Monkey
     def load(_: str) -> System:
         return system
 
-    monkeypatch.setattr(loop, "load_system", load)
+    patch_catalog(monkeypatch, load)
     requests: list[list[types.Content]] = []
 
     def generate(contents: list[types.Content]) -> types.GenerateContentResponse:
@@ -60,7 +67,7 @@ def test_unknown_tool_error_retained_even_if_model_claims_success(
     def unknown(_: str) -> System:
         raise CatalogError("Unknown System name")
 
-    monkeypatch.setattr(loop, "load_system", unknown)
+    patch_catalog(monkeypatch, unknown)
     replies = iter([answer(call(**{"name": "made up"})), answer(types.Part(text="Loaded it."))])
     result = loop.run_loop("Open made up", None, lambda _: next(replies))
     assert result.error == "Unknown System name"
@@ -77,7 +84,7 @@ def test_five_call_limit_including_multiple_calls_per_response(
         executed.append(name)
         return offline_system("TRAPPIST-1")
 
-    monkeypatch.setattr(loop, "load_system", load)
+    patch_catalog(monkeypatch, load)
     result = loop.run_loop(
         "Open TRAPPIST-1",
         None,
@@ -90,7 +97,7 @@ def test_five_call_limit_including_multiple_calls_per_response(
 
 
 def test_final_answer_allowed_after_fifth_call(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(loop, "load_system", offline_system)
+    patch_catalog(monkeypatch, offline_system)
     responses = iter(
         [answer(call(**{"name": "TRAPPIST-1"})) for _ in range(5)]
         + [answer(types.Part(text="Loaded from Snapshot."))]
@@ -99,7 +106,7 @@ def test_final_answer_allowed_after_fifth_call(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_provider_failure_after_tool_retains_evidence(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(loop, "load_system", offline_system)
+    patch_catalog(monkeypatch, offline_system)
     responses = iter([answer(call(**{"name": "TRAPPIST-1"}))])
     result = loop.run_loop("open", None, lambda _: next(responses))
     assert result.error is not None and "unverified" in result.error
@@ -108,7 +115,7 @@ def test_provider_failure_after_tool_retains_evidence(monkeypatch: pytest.Monkey
 
 
 def test_current_system_is_refetched_and_canonicalized(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(loop, "load_system", offline_system)
+    patch_catalog(monkeypatch, offline_system)
 
     def generate(contents: list[types.Content]) -> types.GenerateContentResponse:
         text = (contents[0].parts or [])[0].text or ""
@@ -129,7 +136,7 @@ def test_unavailable_current_system_does_not_block_opening_another(
             raise CatalogError("Live archive unavailable; current System absent from Snapshot.")
         return offline_system(name)
 
-    monkeypatch.setattr(loop, "load_system", load)
+    patch_catalog(monkeypatch, load)
     responses = iter(
         [
             answer(call(**{"name": "TRAPPIST-1"})),
@@ -162,7 +169,7 @@ def test_unlisted_tools_and_extra_arguments_never_execute(
     def forbidden(_: str) -> System:
         pytest.fail("Invalid tool input reached catalog")
 
-    monkeypatch.setattr(loop, "load_system", forbidden)
+    patch_catalog(monkeypatch, forbidden)
     responses = iter([answer(tool_part), answer(types.Part(text="Success."))])
     result = loop.run_loop("open", None, lambda _: next(responses))
     assert result.error is not None
@@ -187,7 +194,7 @@ def test_recovered_catalog_failure_is_timed_and_allows_spoken_reply(
     )
     clock = iter([10.0, 10.025, 20.0, 20.05])
     monkeypatch.setattr(loop, "monotonic", lambda: next(clock))
-    monkeypatch.setattr(loop, "load_system", load)
+    patch_catalog(monkeypatch, load)
 
     def agent(text: str, current: str | None) -> loop.AgentResult:
         return loop.run_loop(text, current, lambda _: next(responses))
@@ -213,7 +220,7 @@ def test_recovered_catalog_failure_is_timed_and_allows_spoken_reply(
 def test_agent_receives_complete_canonical_snapshot_data(
     monkeypatch: pytest.MonkeyPatch, name: str
 ) -> None:
-    monkeypatch.setattr(loop, "load_system", offline_system)
+    patch_catalog(monkeypatch, offline_system)
 
     def generate(contents: list[types.Content]) -> types.GenerateContentResponse:
         text = (contents[0].parts or [])[0].text or ""
@@ -251,7 +258,7 @@ def test_current_context_does_not_clear_failed_lookup_without_later_success(
             return offline_system(name)
         raise CatalogError("Unknown System name")
 
-    monkeypatch.setattr(loop, "load_system", load)
+    patch_catalog(monkeypatch, load)
     responses = iter([answer(call(name="made up")), answer(types.Part(text="Loaded it."))])
     result = loop.run_loop("Open made up", "TRAPPIST-1", lambda _: next(responses))
     assert result.error == "Unknown System name"
