@@ -1,0 +1,1052 @@
+{
+  "hostname": "TRAPPIST-1",
+  "star": {
+    "hostname": "TRAPPIST-1",
+    "effective_temperature": {
+      "status": "measured",
+      "value": 2566.0,
+      "unit": "K",
+      "err_lo": 26.0,
+      "err_hi": 26.0,
+      "limit": null,
+      "reference": {
+        "label": "Agol et al. 2021",
+        "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+      },
+      "note": null
+    },
+    "radius": {
+      "status": "measured",
+      "value": 0.1192,
+      "unit": "Solar radii",
+      "err_lo": 0.0013,
+      "err_hi": 0.0013,
+      "limit": null,
+      "reference": {
+        "label": "Agol et al. 2021",
+        "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+      },
+      "note": null
+    },
+    "mass": {
+      "status": "measured",
+      "value": 0.0898,
+      "unit": "Solar masses",
+      "err_lo": 0.0023,
+      "err_hi": 0.0023,
+      "limit": null,
+      "reference": {
+        "label": "Agol et al. 2021",
+        "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+      },
+      "note": null
+    },
+    "luminosity": {
+      "status": "measured",
+      "value": 0.0005530061994883787,
+      "unit": "Solar luminosities",
+      "err_lo": 0.00001899544919349821,
+      "err_hi": 0.000018999030927549596,
+      "limit": null,
+      "reference": {
+        "label": "Agol et al. 2021",
+        "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+      },
+      "note": "Converted from the archive's log10(L/Lsun) value."
+    },
+    "distance": {
+      "status": "measured",
+      "value": 12.42988881,
+      "unit": "pc",
+      "err_lo": 0.01870661,
+      "err_hi": 0.01870661,
+      "limit": null,
+      "reference": {
+        "label": "Gaia DR2",
+        "url": "https://ui.adsabs.harvard.edu/abs/2018A&A...616A...1G/abstract"
+      },
+      "note": null
+    },
+    "ra": {
+      "status": "measured",
+      "value": 346.6263919,
+      "unit": "deg",
+      "err_lo": null,
+      "err_hi": null,
+      "limit": null,
+      "reference": {
+        "label": "TICv8",
+        "url": "https://ui.adsabs.harvard.edu/abs/2019AJ....158..138S/abstract"
+      },
+      "note": null
+    },
+    "dec": {
+      "status": "measured",
+      "value": -5.0434618,
+      "unit": "deg",
+      "err_lo": null,
+      "err_hi": null,
+      "limit": null,
+      "reference": {
+        "label": "TICv8",
+        "url": "https://ui.adsabs.harvard.edu/abs/2019AJ....158..138S/abstract"
+      },
+      "note": null
+    }
+  },
+  "planets": [
+    {
+      "name": "TRAPPIST-1 b",
+      "letter": "b",
+      "orbital_period": {
+        "status": "measured",
+        "value": 1.510826,
+        "unit": "day",
+        "err_lo": 6e-6,
+        "err_hi": 6e-6,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "semi_major_axis": {
+        "status": "measured",
+        "value": 0.01154,
+        "unit": "AU",
+        "err_lo": 0.0001,
+        "err_hi": 0.0001,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "radius": {
+        "status": "measured",
+        "value": 1.116,
+        "unit": "Earth radii",
+        "err_lo": 0.012,
+        "err_hi": 0.014,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "mass": {
+        "status": "measured",
+        "value": 1.374,
+        "unit": "Earth masses",
+        "err_lo": 0.069,
+        "err_hi": 0.069,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "mass_provenance": "Mass",
+      "insolation": {
+        "status": "measured",
+        "value": 4.153,
+        "unit": "Earth flux",
+        "err_lo": 0.159,
+        "err_hi": 0.161,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "equilibrium_temperature": {
+        "status": "measured",
+        "value": 397.6,
+        "unit": "K",
+        "err_lo": 3.8,
+        "err_hi": 3.8,
+        "limit": null,
+        "reference": {
+          "label": "Ducrot et al. 2020",
+          "url": "https://ui.adsabs.harvard.edu/abs/2020A&A...640A.112D/abstract"
+        },
+        "note": null
+      },
+      "eccentricity": {
+        "status": "measured",
+        "value": 0.00622,
+        "unit": null,
+        "err_lo": 0.00304,
+        "err_hi": 0.00304,
+        "limit": null,
+        "reference": {
+          "label": "Grimm et al. 2018",
+          "url": "https://ui.adsabs.harvard.edu/abs/2018A&A...613A..68G/abstract"
+        },
+        "note": null
+      },
+      "inclination": {
+        "status": "measured",
+        "value": 89.728,
+        "unit": "deg",
+        "err_lo": 0.165,
+        "err_hi": 0.165,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "transit_midpoint": {
+        "status": "measured",
+        "value": 2457322.514193,
+        "unit": "BJD",
+        "err_lo": 3e-6,
+        "err_hi": 3e-6,
+        "limit": null,
+        "reference": {
+          "label": "Ducrot et al. 2020",
+          "url": "https://ui.adsabs.harvard.edu/abs/2020A&A...640A.112D/abstract"
+        },
+        "note": null
+      },
+      "argument_of_periastron": {
+        "status": "measured",
+        "value": 336.86,
+        "unit": "deg",
+        "err_lo": 34.24,
+        "err_hi": 34.24,
+        "limit": null,
+        "reference": {
+          "label": "Grimm et al. 2018",
+          "url": "https://ui.adsabs.harvard.edu/abs/2018A&A...613A..68G/abstract"
+        },
+        "note": null
+      }
+    },
+    {
+      "name": "TRAPPIST-1 c",
+      "letter": "c",
+      "orbital_period": {
+        "status": "measured",
+        "value": 2.421937,
+        "unit": "day",
+        "err_lo": 0.000018,
+        "err_hi": 0.000018,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "semi_major_axis": {
+        "status": "measured",
+        "value": 0.0158,
+        "unit": "AU",
+        "err_lo": 0.00013,
+        "err_hi": 0.00013,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "radius": {
+        "status": "measured",
+        "value": 1.097,
+        "unit": "Earth radii",
+        "err_lo": 0.012,
+        "err_hi": 0.014,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "mass": {
+        "status": "measured",
+        "value": 1.308,
+        "unit": "Earth masses",
+        "err_lo": 0.056,
+        "err_hi": 0.056,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "mass_provenance": "Mass",
+      "insolation": {
+        "status": "measured",
+        "value": 2.214,
+        "unit": "Earth flux",
+        "err_lo": 0.085,
+        "err_hi": 0.086,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "equilibrium_temperature": {
+        "status": "measured",
+        "value": 339.7,
+        "unit": "K",
+        "err_lo": 3.3,
+        "err_hi": 3.3,
+        "limit": null,
+        "reference": {
+          "label": "Ducrot et al. 2020",
+          "url": "https://ui.adsabs.harvard.edu/abs/2020A&A...640A.112D/abstract"
+        },
+        "note": null
+      },
+      "eccentricity": {
+        "status": "measured",
+        "value": 0.00654,
+        "unit": null,
+        "err_lo": 0.00188,
+        "err_hi": 0.00188,
+        "limit": null,
+        "reference": {
+          "label": "Grimm et al. 2018",
+          "url": "https://ui.adsabs.harvard.edu/abs/2018A&A...613A..68G/abstract"
+        },
+        "note": null
+      },
+      "inclination": {
+        "status": "measured",
+        "value": 89.778,
+        "unit": "deg",
+        "err_lo": 0.118,
+        "err_hi": 0.118,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "transit_midpoint": {
+        "status": "measured",
+        "value": 2457282.8113871,
+        "unit": "BJD",
+        "err_lo": 3.8e-6,
+        "err_hi": 3.8e-6,
+        "limit": null,
+        "reference": {
+          "label": "Ducrot et al. 2020",
+          "url": "https://ui.adsabs.harvard.edu/abs/2020A&A...640A.112D/abstract"
+        },
+        "note": null
+      },
+      "argument_of_periastron": {
+        "status": "measured",
+        "value": 282.45,
+        "unit": "deg",
+        "err_lo": 17.1,
+        "err_hi": 17.1,
+        "limit": null,
+        "reference": {
+          "label": "Grimm et al. 2018",
+          "url": "https://ui.adsabs.harvard.edu/abs/2018A&A...613A..68G/abstract"
+        },
+        "note": null
+      }
+    },
+    {
+      "name": "TRAPPIST-1 d",
+      "letter": "d",
+      "orbital_period": {
+        "status": "measured",
+        "value": 4.049219,
+        "unit": "day",
+        "err_lo": 0.000026,
+        "err_hi": 0.000026,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "semi_major_axis": {
+        "status": "measured",
+        "value": 0.02227,
+        "unit": "AU",
+        "err_lo": 0.00019,
+        "err_hi": 0.00019,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "radius": {
+        "status": "measured",
+        "value": 0.788,
+        "unit": "Earth radii",
+        "err_lo": 0.01,
+        "err_hi": 0.011,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "mass": {
+        "status": "measured",
+        "value": 0.388,
+        "unit": "Earth masses",
+        "err_lo": 0.012,
+        "err_hi": 0.012,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "mass_provenance": "Mass",
+      "insolation": {
+        "status": "measured",
+        "value": 1.115,
+        "unit": "Earth flux",
+        "err_lo": 0.043,
+        "err_hi": 0.043,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "equilibrium_temperature": {
+        "status": "measured",
+        "value": 286.2,
+        "unit": "K",
+        "err_lo": 2.8,
+        "err_hi": 2.8,
+        "limit": null,
+        "reference": {
+          "label": "Ducrot et al. 2020",
+          "url": "https://ui.adsabs.harvard.edu/abs/2020A&A...640A.112D/abstract"
+        },
+        "note": null
+      },
+      "eccentricity": {
+        "status": "measured",
+        "value": 0.00837,
+        "unit": null,
+        "err_lo": 0.00093,
+        "err_hi": 0.00093,
+        "limit": null,
+        "reference": {
+          "label": "Grimm et al. 2018",
+          "url": "https://ui.adsabs.harvard.edu/abs/2018A&A...613A..68G/abstract"
+        },
+        "note": null
+      },
+      "inclination": {
+        "status": "measured",
+        "value": 89.896,
+        "unit": "deg",
+        "err_lo": 0.077,
+        "err_hi": 0.077,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "transit_midpoint": {
+        "status": "measured",
+        "value": 2457670.1463014,
+        "unit": "BJD",
+        "err_lo": 0.0000184,
+        "err_hi": 0.0000184,
+        "limit": null,
+        "reference": {
+          "label": "Ducrot et al. 2020",
+          "url": "https://ui.adsabs.harvard.edu/abs/2020A&A...640A.112D/abstract"
+        },
+        "note": null
+      },
+      "argument_of_periastron": {
+        "status": "measured",
+        "value": 351.27,
+        "unit": "deg",
+        "err_lo": 6.17,
+        "err_hi": 6.17,
+        "limit": null,
+        "reference": {
+          "label": "Grimm et al. 2018",
+          "url": "https://ui.adsabs.harvard.edu/abs/2018A&A...613A..68G/abstract"
+        },
+        "note": null
+      }
+    },
+    {
+      "name": "TRAPPIST-1 e",
+      "letter": "e",
+      "orbital_period": {
+        "status": "measured",
+        "value": 6.101013,
+        "unit": "day",
+        "err_lo": 0.000035,
+        "err_hi": 0.000035,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "semi_major_axis": {
+        "status": "measured",
+        "value": 0.02925,
+        "unit": "AU",
+        "err_lo": 0.0025,
+        "err_hi": 0.0025,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "radius": {
+        "status": "measured",
+        "value": 0.92,
+        "unit": "Earth radii",
+        "err_lo": 0.012,
+        "err_hi": 0.013,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "mass": {
+        "status": "measured",
+        "value": 0.692,
+        "unit": "Earth masses",
+        "err_lo": 0.022,
+        "err_hi": 0.022,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "mass_provenance": "Mass",
+      "insolation": {
+        "status": "measured",
+        "value": 0.646,
+        "unit": "Earth flux",
+        "err_lo": 0.025,
+        "err_hi": 0.025,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "equilibrium_temperature": {
+        "status": "measured",
+        "value": 249.7,
+        "unit": "K",
+        "err_lo": 2.4,
+        "err_hi": 2.4,
+        "limit": null,
+        "reference": {
+          "label": "Ducrot et al. 2020",
+          "url": "https://ui.adsabs.harvard.edu/abs/2020A&A...640A.112D/abstract"
+        },
+        "note": null
+      },
+      "eccentricity": {
+        "status": "measured",
+        "value": 0.0051,
+        "unit": null,
+        "err_lo": 0.00058,
+        "err_hi": 0.00058,
+        "limit": null,
+        "reference": {
+          "label": "Grimm et al. 2018",
+          "url": "https://ui.adsabs.harvard.edu/abs/2018A&A...613A..68G/abstract"
+        },
+        "note": null
+      },
+      "inclination": {
+        "status": "measured",
+        "value": 89.793,
+        "unit": "deg",
+        "err_lo": 0.048,
+        "err_hi": 0.048,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "transit_midpoint": {
+        "status": "measured",
+        "value": 2457660.3676621,
+        "unit": "BJD",
+        "err_lo": 0.0000143,
+        "err_hi": 0.0000143,
+        "limit": null,
+        "reference": {
+          "label": "Ducrot et al. 2020",
+          "url": "https://ui.adsabs.harvard.edu/abs/2020A&A...640A.112D/abstract"
+        },
+        "note": null
+      },
+      "argument_of_periastron": {
+        "status": "measured",
+        "value": 108.37,
+        "unit": "deg",
+        "err_lo": 8.47,
+        "err_hi": 8.47,
+        "limit": null,
+        "reference": {
+          "label": "Grimm et al. 2018",
+          "url": "https://ui.adsabs.harvard.edu/abs/2018A&A...613A..68G/abstract"
+        },
+        "note": null
+      }
+    },
+    {
+      "name": "TRAPPIST-1 f",
+      "letter": "f",
+      "orbital_period": {
+        "status": "measured",
+        "value": 9.20754,
+        "unit": "day",
+        "err_lo": 0.000032,
+        "err_hi": 0.000032,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "semi_major_axis": {
+        "status": "measured",
+        "value": 0.03849,
+        "unit": "AU",
+        "err_lo": 0.00033,
+        "err_hi": 0.00033,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "radius": {
+        "status": "measured",
+        "value": 1.045,
+        "unit": "Earth radii",
+        "err_lo": 0.012,
+        "err_hi": 0.013,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "mass": {
+        "status": "measured",
+        "value": 1.039,
+        "unit": "Earth masses",
+        "err_lo": 0.031,
+        "err_hi": 0.031,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "mass_provenance": "Mass",
+      "insolation": {
+        "status": "measured",
+        "value": 0.373,
+        "unit": "Earth flux",
+        "err_lo": 0.014,
+        "err_hi": 0.015,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "equilibrium_temperature": {
+        "status": "measured",
+        "value": 217.7,
+        "unit": "K",
+        "err_lo": 2.1,
+        "err_hi": 2.1,
+        "limit": null,
+        "reference": {
+          "label": "Ducrot et al. 2020",
+          "url": "https://ui.adsabs.harvard.edu/abs/2020A&A...640A.112D/abstract"
+        },
+        "note": null
+      },
+      "eccentricity": {
+        "status": "measured",
+        "value": 0.01007,
+        "unit": null,
+        "err_lo": 0.00068,
+        "err_hi": 0.00068,
+        "limit": null,
+        "reference": {
+          "label": "Grimm et al. 2018",
+          "url": "https://ui.adsabs.harvard.edu/abs/2018A&A...613A..68G/abstract"
+        },
+        "note": null
+      },
+      "inclination": {
+        "status": "measured",
+        "value": 89.74,
+        "unit": "deg",
+        "err_lo": 0.019,
+        "err_hi": 0.019,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "transit_midpoint": {
+        "status": "measured",
+        "value": 2457671.3737299,
+        "unit": "BJD",
+        "err_lo": 0.0000157,
+        "err_hi": 0.0000157,
+        "limit": null,
+        "reference": {
+          "label": "Ducrot et al. 2020",
+          "url": "https://ui.adsabs.harvard.edu/abs/2020A&A...640A.112D/abstract"
+        },
+        "note": null
+      },
+      "argument_of_periastron": {
+        "status": "measured",
+        "value": 8.810000000000002,
+        "unit": "deg",
+        "err_lo": 3.11,
+        "err_hi": 3.11,
+        "limit": null,
+        "reference": {
+          "label": "Grimm et al. 2018",
+          "url": "https://ui.adsabs.harvard.edu/abs/2018A&A...613A..68G/abstract"
+        },
+        "note": null
+      }
+    },
+    {
+      "name": "TRAPPIST-1 g",
+      "letter": "g",
+      "orbital_period": {
+        "status": "measured",
+        "value": 12.352446,
+        "unit": "day",
+        "err_lo": 0.000054,
+        "err_hi": 0.000054,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "semi_major_axis": {
+        "status": "measured",
+        "value": 0.04683,
+        "unit": "AU",
+        "err_lo": 0.0004,
+        "err_hi": 0.0004,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "radius": {
+        "status": "measured",
+        "value": 1.129,
+        "unit": "Earth radii",
+        "err_lo": 0.013,
+        "err_hi": 0.015,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "mass": {
+        "status": "measured",
+        "value": 1.321,
+        "unit": "Earth masses",
+        "err_lo": 0.038,
+        "err_hi": 0.038,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "mass_provenance": "Mass",
+      "insolation": {
+        "status": "measured",
+        "value": 0.252,
+        "unit": "Earth flux",
+        "err_lo": 0.01,
+        "err_hi": 0.01,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "equilibrium_temperature": {
+        "status": "measured",
+        "value": 197.3,
+        "unit": "K",
+        "err_lo": 1.9,
+        "err_hi": 1.9,
+        "limit": null,
+        "reference": {
+          "label": "Ducrot et al. 2020",
+          "url": "https://ui.adsabs.harvard.edu/abs/2020A&A...640A.112D/abstract"
+        },
+        "note": null
+      },
+      "eccentricity": {
+        "status": "measured",
+        "value": 0.00208,
+        "unit": null,
+        "err_lo": 0.00058,
+        "err_hi": 0.00058,
+        "limit": null,
+        "reference": {
+          "label": "Grimm et al. 2018",
+          "url": "https://ui.adsabs.harvard.edu/abs/2018A&A...613A..68G/abstract"
+        },
+        "note": null
+      },
+      "inclination": {
+        "status": "measured",
+        "value": 89.742,
+        "unit": "deg",
+        "err_lo": 0.012,
+        "err_hi": 0.012,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "transit_midpoint": {
+        "status": "measured",
+        "value": 2457665.3628439,
+        "unit": "BJD",
+        "err_lo": 0.0000206,
+        "err_hi": 0.0000206,
+        "limit": null,
+        "reference": {
+          "label": "Ducrot et al. 2020",
+          "url": "https://ui.adsabs.harvard.edu/abs/2020A&A...640A.112D/abstract"
+        },
+        "note": null
+      },
+      "argument_of_periastron": {
+        "status": "measured",
+        "value": 191.34,
+        "unit": "deg",
+        "err_lo": 13.83,
+        "err_hi": 13.83,
+        "limit": null,
+        "reference": {
+          "label": "Grimm et al. 2018",
+          "url": "https://ui.adsabs.harvard.edu/abs/2018A&A...613A..68G/abstract"
+        },
+        "note": null
+      }
+    },
+    {
+      "name": "TRAPPIST-1 h",
+      "letter": "h",
+      "orbital_period": {
+        "status": "measured",
+        "value": 18.772866,
+        "unit": "day",
+        "err_lo": 0.000214,
+        "err_hi": 0.000214,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "semi_major_axis": {
+        "status": "measured",
+        "value": 0.06189,
+        "unit": "AU",
+        "err_lo": 0.00053,
+        "err_hi": 0.00053,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "radius": {
+        "status": "measured",
+        "value": 0.755,
+        "unit": "Earth radii",
+        "err_lo": 0.014,
+        "err_hi": 0.014,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "mass": {
+        "status": "measured",
+        "value": 0.326,
+        "unit": "Earth masses",
+        "err_lo": 0.02,
+        "err_hi": 0.02,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "mass_provenance": "Mass",
+      "insolation": {
+        "status": "measured",
+        "value": 0.144,
+        "unit": "Earth flux",
+        "err_lo": 0.006,
+        "err_hi": 0.006,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "equilibrium_temperature": {
+        "status": "measured",
+        "value": 171.7,
+        "unit": "K",
+        "err_lo": 1.7,
+        "err_hi": 1.7,
+        "limit": null,
+        "reference": {
+          "label": "Ducrot et al. 2020",
+          "url": "https://ui.adsabs.harvard.edu/abs/2020A&A...640A.112D/abstract"
+        },
+        "note": null
+      },
+      "eccentricity": {
+        "status": "measured",
+        "value": 0.00567,
+        "unit": null,
+        "err_lo": 0.00121,
+        "err_hi": 0.00121,
+        "limit": null,
+        "reference": {
+          "label": "Grimm et al. 2018",
+          "url": "https://ui.adsabs.harvard.edu/abs/2018A&A...613A..68G/abstract"
+        },
+        "note": null
+      },
+      "inclination": {
+        "status": "measured",
+        "value": 89.805,
+        "unit": "deg",
+        "err_lo": 0.013,
+        "err_hi": 0.013,
+        "limit": null,
+        "reference": {
+          "label": "Agol et al. 2021",
+          "url": "https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract"
+        },
+        "note": null
+      },
+      "transit_midpoint": {
+        "status": "measured",
+        "value": 2457662.5741486,
+        "unit": "BJD",
+        "err_lo": 0.0000913,
+        "err_hi": 0.0000913,
+        "limit": null,
+        "reference": {
+          "label": "Ducrot et al. 2020",
+          "url": "https://ui.adsabs.harvard.edu/abs/2020A&A...640A.112D/abstract"
+        },
+        "note": null
+      },
+      "argument_of_periastron": {
+        "status": "measured",
+        "value": 338.92,
+        "unit": "deg",
+        "err_lo": 9.66,
+        "err_hi": 9.66,
+        "limit": null,
+        "reference": {
+          "label": "Grimm et al. 2018",
+          "url": "https://ui.adsabs.harvard.edu/abs/2018A&A...613A..68G/abstract"
+        },
+        "note": null
+      }
+    }
+  ],
+  "provenance": {
+    "mode": "snapshot",
+    "source": "NASA Exoplanet Archive (pscomppars)",
+    "snapshot_date": "2026-10-25"
+  },
+  "notes": [
+    "pscomppars combines values from different publications; they may not be mutually consistent."
+  ]
+}

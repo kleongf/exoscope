@@ -4,10 +4,12 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
+from exoscope.catalog import System
+
 
 class FocusPlanet(BaseModel):
     kind: Literal["focus_planet"] = "focus_planet"
-    planet_id: str = Field(description="Archive pl_name, e.g. 'TRAPPIST-1 e'.")
+    name: str = Field(description="Archive pl_name, e.g. 'TRAPPIST-1 e'.")
 
 
 class SetTimeScale(BaseModel):
@@ -15,4 +17,9 @@ class SetTimeScale(BaseModel):
     days_per_second: float = Field(ge=0, le=1000)
 
 
-UiCommand = Annotated[FocusPlanet | SetTimeScale, Field(discriminator="kind")]
+class LoadSystem(BaseModel):
+    kind: Literal["load_system"] = "load_system"
+    system: System
+
+
+UiCommand = Annotated[FocusPlanet | SetTimeScale | LoadSystem, Field(discriminator="kind")]

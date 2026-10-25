@@ -4,7 +4,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from exoscope.agent.environment import load_environment
 from exoscope.agent.turn import TurnRequest, TurnResponse, handle_turn
+
+load_environment()
 
 app = FastAPI(title="ExoScope")
 app.add_middleware(
