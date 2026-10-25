@@ -12,3 +12,6 @@ artifacts/
 
 # Tickets live in GitHub issues
 .scratch/
+
+# Agent worktrees
+.claude/worktrees/

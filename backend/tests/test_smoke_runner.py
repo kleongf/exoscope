@@ -15,6 +15,7 @@ def test_explicit_dotenv_only_and_environment_precedence(
     child = tmp_path / "child"
     child.mkdir()
     monkeypatch.delenv("XAI_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     assert "XAI_API_KEY" not in configuration(child / ".env")
     explicit = child / "test.env"
     explicit.write_text("XAI_API_KEY=file-value\nGEMINI_API_KEY=${XAI_API_KEY}\n")
