@@ -5,10 +5,11 @@ from pydantic import BaseModel
 
 from exoscope.agent.tools.base import Tool
 from exoscope.agent.tools.load_system import LOAD_SYSTEM
+from exoscope.agent.tools.set_scene_view import SET_SCENE_VIEW
 
 TOOLS: dict[str, Tool[BaseModel]] = {
     tool.name: tool  # pyright: ignore[reportAssignmentType]
-    for tool in (LOAD_SYSTEM,)
+    for tool in (LOAD_SYSTEM, SET_SCENE_VIEW)
 }
 
 

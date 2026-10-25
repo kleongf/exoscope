@@ -63,6 +63,11 @@ export function TimeControls(props: TimeControlsProps) {
       >
         {playing ? <Pause /> : <Play />}
       </Button>
+      {!(SPEEDS as readonly number[]).includes(daysPerSecond) && (
+        <Badge variant="secondary" className="text-[10px]" title="Set by a request">
+          {daysPerSecond} d/s
+        </Badge>
+      )}
       {SPEEDS.map((s) => (
         <Button
           key={s}
@@ -98,7 +103,7 @@ export function CaveatBadge({ sizes, provenance }: { sizes: SizeFactors; provena
     "Not an N-body simulation",
   ];
   return (
-    <div className="flex max-w-md flex-wrap justify-end gap-1" data-testid="caveat-badge">
+    <div className="flex flex-wrap justify-end gap-1" data-testid="caveat-badge">
       {parts.map((p) => (
         <Badge key={p} variant="outline" className="bg-black/70 text-[10px] text-white/75">
           {p}

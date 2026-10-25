@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { System } from "../api/client";
-import { reduceCommand, useExoStore } from "./store";
+import { reduceCommand, useExoStore, type SceneState } from "./store";
 
 const missing = { status: "missing", unit: null } as const;
 const system: System = {
@@ -23,7 +23,36 @@ const system: System = {
     snapshot_date: "2026-10-25",
   },
 };
-const scene = { system: null, focusedPlanetName: null, daysPerSecond: 1 };
+const scene: SceneState = {
+  system: null,
+  focusedPlanetName: null,
+  cameraFocus: null,
+  daysPerSecond: 1,
+  playing: true,
+  showLabels: true,
+  colorBy: "none",
+};
+describe("scene control commands", () => {
+  it("focus moves the camera; manual deselection releases it", () => {
+    const focused = reduceCommand(scene, { kind: "focus_planet", name: "TRAPPIST-1 e" });
+    expect(focused.cameraFocus).toBe("TRAPPIST-1 e");
+    useExoStore.setState(focused);
+    useExoStore.getState().selectPlanet(null);
+    expect(useExoStore.getState().cameraFocus).toBeNull();
+  });
+  it("time scale 0 pauses and keeps the last pace", () => {
+    const paused = reduceCommand(scene, { kind: "set_time_scale", days_per_second: 0 });
+    expect(paused).toMatchObject({ playing: false, daysPerSecond: 1 });
+    const resumed = reduceCommand(paused, { kind: "set_time_scale", days_per_second: 10 });
+    expect(resumed).toMatchObject({ playing: true, daysPerSecond: 10 });
+  });
+  it("labels and colour-by", () => {
+    const hidden = reduceCommand(scene, { kind: "set_labels", visible: false });
+    expect(hidden.showLabels).toBe(false);
+    const colored = reduceCommand(hidden, { kind: "set_color_by", property: "insolation" });
+    expect(colored.colorBy).toBe("insolation");
+  });
+});
 describe("System commands and turn state", () => {
   beforeEach(() => {
     useExoStore.setState(useExoStore.getInitialState());

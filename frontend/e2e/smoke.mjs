@@ -1,5 +1,6 @@
 // Launch-and-look check. Voice uses explicit browser fixtures, never live provider calls.
-// Assumes backend on :8000 and frontend on :5173 (scripts/verify starts both).
+// Assumes backend on :8000 and frontend on :5173 (scripts/verify starts both);
+// EXO_API_URL / EXO_WEB_URL override them.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { chromium } from "playwright";
 import { exerciseVoice } from "./voice-smoke.mjs";
@@ -7,7 +8,8 @@ import { exerciseLayout } from "./layout-smoke.mjs";
 
 const outDir = new URL("../../artifacts/", import.meta.url).pathname;
 mkdirSync(outDir, { recursive: true });
-const health = await fetch("http://127.0.0.1:8000/health", {
+const API_URL = process.env.EXO_API_URL ?? "http://127.0.0.1:8000";
+const health = await fetch(`${API_URL}/health`, {
   signal: AbortSignal.timeout(15000),
 }).then((r) => r.json());
 if (health.status !== "ok") throw new Error(`backend /health: ${JSON.stringify(health)}`);

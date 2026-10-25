@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import fixture from "../../../dev/trappist1.fixture.json";
+import type { System } from "@/api/client";
+import snapshot from "@/test/trappist-1.json";
+import { toOrbitSystem } from "./adapter";
 import {
   bandRadii,
   dateFromJd,
@@ -17,9 +19,10 @@ import {
   spreadArc,
   type Elements,
 } from "./maths";
-import type { OrbitPlanet, OrbitSystem, Quantity } from "./types";
+import type { OrbitPlanet, Quantity } from "./types";
 
-const system = fixture as OrbitSystem;
+// The real TRAPPIST-1 Snapshot, through the same adapter the System view uses.
+const system = toOrbitSystem(snapshot as System);
 const starMass = system.star.mass.value ?? 0;
 
 function q(value: number | null, err: number | null = null): Quantity {
