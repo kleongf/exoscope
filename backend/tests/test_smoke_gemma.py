@@ -159,6 +159,28 @@ def test_missing_gemini_key_is_failure() -> None:
         check_gemma("", mixed=False)
 
 
+def test_explicit_model_round_trip_reports_the_model_actually_tested(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    factory = MagicMock()
+    generate = factory.return_value.__enter__.return_value.models.generate_content
+
+    def respond(**kwargs: Any) -> types.GenerateContentResponse:
+        assert kwargs["model"] == "gemma-4-26b-a4b-it"
+        contents = kwargs["contents"]
+        if len(contents) == 1:
+            return response([tool_response()])
+        nonce = contents[-1].parts[0].function_response.response["nonce"]
+        return response([{"text": f"Returned nonce: {nonce}"}])
+
+    generate.side_effect = respond
+    monkeypatch.setattr("exoscope.service_smoke.gemma.genai.Client", factory)
+    detail = check_gemma("test-key", mixed=False, model="gemma-4-26b-a4b-it")
+    assert detail.startswith("gemma-4-26b-a4b-it:")
+    assert "gemma-4-31b-it" not in detail
+    assert generate.call_count == 2
+
+
 @pytest.mark.parametrize("mixed", [False, True])
 def test_sdk_uses_documented_model_and_combination_flag(
     mixed: bool, monkeypatch: pytest.MonkeyPatch

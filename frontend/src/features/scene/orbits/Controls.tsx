@@ -15,27 +15,24 @@ export function LayerPanel({
   onChange: (next: Layers) => void;
 }) {
   return (
-    <div className="w-64 rounded-lg border border-white/10 bg-black/75 p-3 text-xs text-white/85 backdrop-blur">
-      <div className="mb-2 font-semibold">Honesty layers</div>
-      <div className="flex flex-col gap-2">
-        {LAYER_ROWS.map(({ key, label, hint }) => (
-          <label key={key} className="flex cursor-pointer items-start gap-2">
-            <Switch
-              size="sm"
-              className="mt-0.5"
-              checked={layers[key]}
-              onCheckedChange={(checked) => {
-                onChange({ ...layers, [key]: checked });
-              }}
-              aria-label={label}
-            />
-            <span>
-              {label}
-              <span className="block text-[10px] text-white/50">{hint}</span>
-            </span>
-          </label>
-        ))}
-      </div>
+    <div className="flex flex-col gap-2">
+      {LAYER_ROWS.map(({ key, label, hint }) => (
+        <label key={key} className="flex cursor-pointer items-start gap-2">
+          <Switch
+            size="sm"
+            className="mt-0.5"
+            checked={layers[key]}
+            onCheckedChange={(checked) => {
+              onChange({ ...layers, [key]: checked });
+            }}
+            aria-label={label}
+          />
+          <span>
+            {label}
+            <span className="block text-[10px] text-white/50">{hint}</span>
+          </span>
+        </label>
+      ))}
     </div>
   );
 }

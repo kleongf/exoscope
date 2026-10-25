@@ -11,7 +11,8 @@ from urllib.parse import quote
 
 from dotenv import dotenv_values
 
-from exoscope.service_smoke.gemma import check_gemma
+from exoscope.agent.model_config import SUPPORTED_MODELS
+from exoscope.service_smoke.gemma import MODEL, check_gemma
 from exoscope.service_smoke.voice import PHRASE, check_voice
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -55,6 +56,12 @@ def run_checks(checks: list[tuple[str, Callable[[], str]]], config: Mapping[str,
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--env-file", type=Path, default=ROOT / ".env")
+    parser.add_argument(
+        "--model",
+        choices=SUPPORTED_MODELS,
+        default=MODEL,
+        help="Gemma model to verify (defaults to ticket 01's original 31B model).",
+    )
     parser.add_argument("--output-dir", type=Path, default=ROOT / "artifacts/service-smoke")
     parser.add_argument(
         "--audio", type=Path, help="Optional short speech clip instead of a TTS seed"
@@ -71,8 +78,11 @@ def main() -> int:
     gemini = config.get("GEMINI_API_KEY") or config.get("GOOGLE_API_KEY", "")
     xai = config.get("XAI_API_KEY", "")
     checks: list[tuple[str, Callable[[], str]]] = [
-        ("1 Gemma function/result", lambda: check_gemma(gemini, mixed=False)),
-        ("2 Gemma mixed search/functions", lambda: check_gemma(gemini, mixed=True)),
+        ("1 Gemma function/result", lambda: check_gemma(gemini, mixed=False, model=args.model)),
+        (
+            "2 Gemma mixed search/functions",
+            lambda: check_gemma(gemini, mixed=True, model=args.model),
+        ),
         (
             "3 Grok STT/TTS",
             lambda: check_voice(xai, args.output_dir, args.audio, args.expected_transcript),

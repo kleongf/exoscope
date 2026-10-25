@@ -6,6 +6,10 @@ import { chromium } from "playwright";
 import { exerciseVoice } from "./voice-smoke.mjs";
 import { exerciseLayout } from "./layout-smoke.mjs";
 import { exerciseAr, exerciseArSystem } from "./ar-smoke.mjs";
+import { exerciseWeb } from "./web-smoke.mjs";
+import { validateTurnFixtures } from "./validate-fixtures.mjs";
+
+validateTurnFixtures();
 
 const outDir = new URL("../../artifacts/", import.meta.url).pathname;
 mkdirSync(outDir, { recursive: true });
@@ -26,6 +30,7 @@ try {
   await page.locator("canvas").first().waitFor();
   await page.waitForTimeout(1000);
   await exerciseLayout(page);
+  await exerciseWeb(page);
   await page.screenshot({ path: `${outDir}smoke.png` });
   await exerciseAr(page, outDir);
   await exerciseArSystem(page, outDir);

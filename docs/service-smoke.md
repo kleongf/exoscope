@@ -6,6 +6,8 @@ From the repo root, after `cd backend && uv sync`:
 ./scripts/smoke-services
 # Explicitly use existing configuration elsewhere, without copying it:
 ./scripts/smoke-services --env-file ../.env
+# Test the app's selected 26B model explicitly; diagnostics retain the original 31B default:
+./scripts/smoke-services --env-file ../.env --model gemma-4-26b-a4b-it
 # Optional independent recording (otherwise a TTS-generated seed is used):
 ./scripts/smoke-services --audio /path/to/clip.wav --expected-transcript 'Open the planet view.'
 ```
@@ -47,12 +49,20 @@ A subsequent independent search-only probe made exactly one `gemma-4-31b-it` req
 - The observed WAV advertised RIFF length `0x80000023` and data length `0x7fffffff`; finalize only those sentinels after receiving the complete HTTP body before saving finite playback files. `finalise_wav` is tested for this behavior. Check browser playback separately.
 - This ticket adds no microphone UI, backend audio endpoint, or turn integration. Ticket 07 still depends on ticket 04. Retain the text fallback on service failure.
 
-## Integration notes for ticket 10
+## Historical Google-search notes for ticket 10
+
+The following records the original Gemini experiment. Current `docs/intent.md` instead selects xAI Responses Web search; the production handler and its evidence contract are described in [web-search.md](web-search.md). Do not use the historical Google configuration as the current implementation plan.
 
 - Preserve `web_search` as a custom tool whose handler makes a separate search-only call; the independent probe also returned HTTP 500, so it remains unverified on this account. A provider HTTP 500 should produce an honest failure, not fabricated Web sources.
 - Use `client.models.generate_content` with the documented `gemma-4-31b-it` identifier and `types.Tool(google_search=types.GoogleSearch())` for the separate call. Read `candidates[0].grounding_metadata.grounding_chunks[].web.{title,uri}` and grounding supports. Do not substitute another model silently.
 - If retesting combination later, enable `types.ToolConfig(include_server_side_tool_invocations=True)` and circulate all returned `tool_call`, `tool_response`, function-call IDs, and thought signatures. Request acceptance alone is insufficient. Rerun the smoke command before changing the architecture.
 - Live function calling is also unverified, so ticket 04's agent loop cannot be considered ready on the evidence from ticket 01. Ticket 10 still depends on ticket 04.
+
+## Later observations
+
+The original 31B results remain unchanged. A subsequent investigation observed successful 26B function/result checks and a real seven-planet System load; the app explicitly selects 26B without automatic failover. A synthetic-speech backend turn later passed STT, canonical TRAPPIST-1 loading, and reply TTS in 8.61 seconds before the canonical-loader rebase. Physical microphone rehearsal is not claimed.
+
+Google-search grounding remained inconsistent: one 26B mixed run passed with one cited source, while later mixed checks and standalone searches did not establish reliable grounding. A separate live check of the selected xAI adapter succeeded in 13.11 seconds with 33 retrieved sources and six annotation-linked text segments. Its initial eight-second request had timed out; the bounded deadline is now 15 seconds, with no automatic retry. See [Web search evidence](web-search.md).
 
 ## Official references consulted
 

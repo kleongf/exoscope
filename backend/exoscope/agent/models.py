@@ -8,6 +8,7 @@ from exoscope.catalog import Sample, System
 from exoscope.compare import Comparison
 from exoscope.scene.commands import UiCommand
 from exoscope.voice.models import AudioInput, ReplyAudio
+from exoscope.websearch.models import WebSearchResult
 
 
 class TurnRequest(BaseModel):
@@ -29,6 +30,7 @@ class TurnData(BaseModel):
     system: System | None = None
     comparison: Comparison | None = None
     sample: Sample | None = None
+    web_search: WebSearchResult | None = None
 
 
 class ToolStep(BaseModel):

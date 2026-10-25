@@ -12,7 +12,7 @@ interface ViewControlsProps {
 
 export function ViewControls(props: ViewControlsProps) {
   return (
-    <div className="flex w-64 flex-col gap-2 rounded-lg border border-white/10 bg-black/75 p-3 text-xs text-white/85 backdrop-blur">
+    <div className="flex flex-col gap-2">
       <label className="flex cursor-pointer items-center gap-2">
         <Switch
           size="sm"

@@ -1,1 +1,1 @@
-"""Websearch: the web_search tool (Gemini google_search grounding) returning Web sources."""
+"""The web_search tool: bounded xAI search returning distinct Web sources."""

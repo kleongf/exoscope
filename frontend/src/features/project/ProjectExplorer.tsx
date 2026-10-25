@@ -8,6 +8,8 @@ import { projectTurnController } from "@/features/voice/turnController";
 import { SampleList } from "@/features/catalog/SampleList";
 import { ComparisonList } from "./ComparisonList";
 
+import { ProjectWebSources } from "./ProjectWebSources";
+
 /** Current Project shell; persistence and Reports belong to a later ticket. */
 export function ProjectExplorer() {
   const systems = useExoStore((state) => state.loadedSystems);
@@ -50,12 +52,11 @@ export function ProjectExplorer() {
         </section>
         <SampleList />
         <ComparisonList />
-        {["Web sources", "Reports"].map((label) => (
-          <section key={label} className="border-t px-4 py-3">
-            <h3 className="text-xs font-medium text-muted-foreground">{label}</h3>
-            <p className="mt-1 text-xs text-muted-foreground">None yet</p>
-          </section>
-        ))}
+        <ProjectWebSources />
+        <section className="border-t px-4 py-3">
+          <h3 className="text-xs font-medium text-muted-foreground">Reports</h3>
+          <p className="mt-1 text-xs text-muted-foreground">None yet</p>
+        </section>
       </ScrollArea>
     </aside>
   );
