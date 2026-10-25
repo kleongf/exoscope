@@ -36,7 +36,9 @@ The explicit parent dotenv configuration contained both required keys. No missin
 - **Check 2 FAIL:** same HTTP 500 `INTERNAL` on the corrected request. The initial request without the circulation flag returned `400 INVALID_ARGUMENT`: "Please enable tool_config.include_server_side_tool_invocations to use Built-in tools with Function calling." After consulting the combination docs, the script enables that flag. An HTTP 500 does not prove unsupported model capability. Mixed tools remain unverified; the separate-call fallback stays in `intent.md`.
 - **Check 3 PASS:** `grok-voice-transcribe-2.0` returned exactly "Open the planet view."; TTS `eve` produced a 1.27-second, mono, 24 kHz, 16-bit PCM WAV (60,960 sample bytes). `afinfo` recognized it and `afplay` exited 0. Default input was synthesized speech, not a microphone recording. An initial validator rejected xAI's streaming length sentinel; the final probe handles that observed format and completed the full round-trip.
 
-Local evidence: `artifacts/service-smoke/live-run.log`, `voice-input.wav`, and `voice-reply.wav`. Overall live command exit: **1**, because checks 1 and 2 failed. No separate search-only probe was performed.
+Local evidence: `artifacts/service-smoke/live-run.log`, `voice-input.wav`, and `voice-reply.wav`. Overall live command exit: **1**, because checks 1 and 2 failed.
+
+A subsequent independent search-only probe made exactly one `gemma-4-31b-it` request with only `google_search`, a 45-second timeout, and one attempt. It failed after 10.42 seconds with HTTP 500 `INTERNAL` ("Internal error encountered."). No text or usable grounding chunks were returned. The separate-call fallback remains unverified on this account.
 
 ## Integration notes for ticket 07
 
@@ -47,7 +49,7 @@ Local evidence: `artifacts/service-smoke/live-run.log`, `voice-input.wav`, and `
 
 ## Integration notes for ticket 10
 
-- Preserve `web_search` as a custom tool whose handler makes a separate search-only call; it remains unverified on this account. A provider HTTP 500 should produce an honest failure, not fabricated Web sources.
+- Preserve `web_search` as a custom tool whose handler makes a separate search-only call; the independent probe also returned HTTP 500, so it remains unverified on this account. A provider HTTP 500 should produce an honest failure, not fabricated Web sources.
 - Use `client.models.generate_content` with the documented `gemma-4-31b-it` identifier and `types.Tool(google_search=types.GoogleSearch())` for the separate call. Read `candidates[0].grounding_metadata.grounding_chunks[].web.{title,uri}` and grounding supports. Do not substitute another model silently.
 - If retesting combination later, enable `types.ToolConfig(include_server_side_tool_invocations=True)` and circulate all returned `tool_call`, `tool_response`, function-call IDs, and thought signatures. Request acceptance alone is insufficient. Rerun the smoke command before changing the architecture.
 - Live function calling is also unverified, so ticket 04's agent loop cannot be considered ready on the evidence from ticket 01. Ticket 10 still depends on ticket 04.

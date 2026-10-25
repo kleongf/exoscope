@@ -129,6 +129,16 @@ def test_search_claim_without_complete_grounding_fails(missing: str) -> None:
     assert grounded_sources(candidate, "Archive website.") == 0
 
 
+def test_grounding_counts_only_distinct_sources_supporting_answer_text() -> None:
+    data = metadata()
+    data["grounding_chunks"].append(
+        {"web": {"title": "Uncited source", "uri": "https://example.org/uncited"}}
+    )
+    data["grounding_supports"].append(data["grounding_supports"][0])
+    candidate = types.Candidate(grounding_metadata=types.GroundingMetadata.model_validate(data))
+    assert grounded_sources(candidate, "Archive website.") == 1
+
+
 def test_accepting_mixed_tools_is_not_a_pass() -> None:
     def generate(
         contents: list[types.Content], _tools: list[types.Tool]

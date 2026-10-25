@@ -70,7 +70,16 @@ def test_missing_keys_print_three_failures_without_network(
 ) -> None:
     for key in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "XAI_API_KEY"):
         monkeypatch.delenv(key, raising=False)
-    monkeypatch.setattr("sys.argv", ["smoke", "--env-file", str(tmp_path / "absent.env")])
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "smoke",
+            "--env-file",
+            str(tmp_path / "absent.env"),
+            "--output-dir",
+            str(tmp_path / "out"),
+        ],
+    )
     assert main() == 1
     out = capsys.readouterr().out
     assert out.count("FAIL ") == 3 and "PASS " not in out

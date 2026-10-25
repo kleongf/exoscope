@@ -42,15 +42,11 @@ def grounded_sources(candidate: types.Candidate, text: str) -> int:
         and urlparse(chunk.web.uri).scheme in {"https", "http"}
         and urlparse(chunk.web.uri).netloc
     }
+    cited_indices: set[int] = set()
     for support in metadata.grounding_supports or []:
-        if (
-            support.segment
-            and support.segment.text
-            and support.segment.text in text
-            and valid_indices.intersection(support.grounding_chunk_indices or [])
-        ):
-            return len(valid_indices)
-    return 0
+        if support.segment and support.segment.text and support.segment.text in text:
+            cited_indices.update(valid_indices.intersection(support.grounding_chunk_indices or []))
+    return len(cited_indices)
 
 
 def exercise(generate: Generate, *, mixed: bool) -> str:
