@@ -6,8 +6,10 @@ import pytest
 
 from exoscope.agent import turn
 from exoscope.agent.models import TurnResponse
+from exoscope.compare import compare
 from exoscope.project.models import ProjectResult
 from tests.test_app import request
+from tests.test_turn import offline_system
 
 IDENTIFIER = "a" * 32
 
@@ -45,7 +47,17 @@ def test_api_bootstrap_save_list_create_load() -> None:
             "id": project.id,
             "revision": 0,
             "title": "Radius comparison",
-            "state": {"draft": "Next question", "comparisons": [{"id": "radius"}]},
+            "state": {
+                "draft": "Next question",
+                "comparisons": [
+                    {
+                        "id": 1,
+                        "comparison": compare(
+                            [offline_system("TRAPPIST-1")], "radius", "insolation"
+                        ).model_dump(mode="json"),
+                    }
+                ],
+            },
         }
     ).current
     assert saved is not None and saved.revision == 1 and saved.title == "Radius comparison"

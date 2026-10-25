@@ -22,11 +22,11 @@ failures without replacing the current view. Reload saved Project explicitly dis
 unsaved local changes; Retry save retries them. An absent, corrupt, incomplete, or unsafe
 Project file is an error, never a silent empty Project.
 
-Comparison/Sample feature records are preserved as JSON so their feature-owned payloads
-can grow independently. The saved-comparison viewer accepts allowlisted quantity axes,
-uses saved catalog measurements, labels missing values, and never reads Web evidence as
-measurements. New comparisons and live Samples are supplied by tickets #8/#9. The browser
-smoke explicitly seeds comparison/Sample fixtures, while exercising the real persistence API.
+Comparisons and Samples use the canonical typed models from tickets #8/#9. Their saved
+measurements, uncertainties, source papers, exclusions and provenance are retained exactly;
+reopening one does not substitute newly fetched System values. The active Sample/comparison
+and drawer mode also survive reloads. Interpretation chips remain editable through normal turns.
+Saved conversation records and their nested tool steps/Web evidence are validated before restore.
 
 Validation includes process restart, concurrent-worker/stale-write tests, injected filesystem
 failures, and a browser flow through autosave, reload, New Project, switching back and

@@ -18,12 +18,45 @@ export async function exerciseProjects(page) {
   other.hostname = "TOI-700";
   other.star.hostname = "TOI-700";
   other.planets = [];
+  const system = fixtureReply.data.system;
   const comparison = {
-    id: "radius-fixture",
-    title: "Radius and irradiation",
-    x: "radius",
-    y: "insolation",
-    system_ids: ["TRAPPIST-1"],
+    id: 1,
+    comparison: {
+      x: { property: "radius", label: "Radius", unit: "Earth radii" },
+      y: { property: "insolation", label: "Insolation", unit: "Earth flux" },
+      rows: system.planets.map((planet) => ({
+        planet: planet.name,
+        hostname: system.hostname,
+        x: planet.radius,
+        y: planet.insolation,
+        excluded:
+          planet.radius.status === "missing"
+            ? "missing_x"
+            : planet.insolation.status === "missing"
+              ? "missing_y"
+              : null,
+      })),
+      provenance: [{ hostname: system.hostname, provenance: system.provenance }],
+      notes: [],
+    },
+  };
+  const sample = {
+    id: 1,
+    sample: {
+      filters: [{ field: "radius", op: "<", value: 2, upper: null }],
+      interpretations: [{ term: "small", as: "radius under 2 Earth radii", caveat: null }],
+      sort: null,
+      limit: 20,
+      fields: [{ name: "radius", label: "Radius", unit: "Earth radii" }],
+      planets: system.planets
+        .filter((p) => p.radius.status === "measured")
+        .map((p) => ({ name: p.name, hostname: system.hostname, values: { radius: p.radius } })),
+      matched: 1,
+      truncated: false,
+      excluded: { count: 1, by_field: { radius: 1 }, reason: "Missing radius" },
+      provenance: system.provenance,
+      notes: [],
+    },
   };
   await call({
     operation: "save",
@@ -33,13 +66,7 @@ export async function exerciseProjects(page) {
       ...current.state,
       loadedSystems: [...current.state.loadedSystems, other],
       comparisons: [comparison],
-      samples: [
-        {
-          id: "small-fixture",
-          title: "Small planets",
-          interpretations: ["radius under 2 Earth radii"],
-        },
-      ],
+      samples: [sample],
       daysPerSecond: 12,
       draft: "A saved draft",
     },
@@ -47,11 +74,11 @@ export async function exerciseProjects(page) {
   await page.reload();
   const explorer = page.getByRole("complementary", { name: "Project explorer" });
   await explorer.getByRole("button", { name: /TOI-700/ }).waitFor();
-  await explorer.getByRole("button", { name: /TRAPPIST-1/ }).waitFor();
-  await explorer.getByText("radius under 2 Earth radii", { exact: true }).waitFor();
+  await explorer.getByRole("button", { name: /^TRAPPIST-1/ }).waitFor();
+  await explorer.getByTestId("sample-item").waitFor();
   assert.equal(await page.getByLabel("Or type your question").inputValue(), "A saved draft");
-  await explorer.getByRole("button", { name: "Radius and irradiation", exact: true }).click();
-  await page.getByRole("region", { name: "Saved comparison" }).waitFor();
+  await explorer.getByTestId("comparison-item").click();
+  await page.getByTestId("compare-workspace").waitFor();
   await page.getByTestId("project-save-status").filter({ hasText: "Project saved" }).waitFor();
   await explorer.getByRole("button", { name: "New Project", exact: true }).click();
   await explorer.getByText("Systems you open appear here.", { exact: true }).waitFor();
@@ -62,9 +89,9 @@ export async function exerciseProjects(page) {
   assert.equal(await page.getByTestId("conversation-turn").count(), current.state.turns.length);
   await page.reload();
   await explorer.getByRole("button", { name: /TOI-700/ }).waitFor();
-  await page.getByRole("region", { name: "Saved comparison" }).waitFor();
+  await page.getByTestId("compare-workspace").waitFor();
   await page
-    .getByRole("region", { name: "Saved comparison" })
+    .getByTestId("compare-workspace")
     .locator(".js-plotly-plot .main-svg")
     .first()
     .waitFor();
