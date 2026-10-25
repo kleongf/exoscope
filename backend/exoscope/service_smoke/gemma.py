@@ -49,7 +49,7 @@ def grounded_sources(candidate: types.Candidate, text: str) -> int:
     return len(cited_indices)
 
 
-def exercise(generate: Generate, *, mixed: bool) -> str:
+def exercise(generate: Generate, *, mixed: bool, model: str = MODEL) -> str:
     tools = [declaration()]
     prompt = (
         'Call smoke_probe with id "exoscope-smoke". Then state the exact returned nonce '
@@ -84,7 +84,7 @@ def exercise(generate: Generate, *, mixed: bool) -> str:
                 raise ValueError(
                     f"Mixed tools accepted, but no observed search-grounded citation; text={text!r}"
                 )
-            return f"{MODEL}: structured smoke_probe call and returned nonce observed" + (
+            return f"{model}: structured smoke_probe call and returned nonce observed" + (
                 f"; both tools enabled on every request, {sources} cited Web sources"
                 if mixed
                 else ""
@@ -113,7 +113,7 @@ def exercise(generate: Generate, *, mixed: bool) -> str:
     raise ValueError("Model did not finish within four requests")
 
 
-def check_gemma(key: str, *, mixed: bool) -> str:
+def check_gemma(key: str, *, mixed: bool, model: str = MODEL) -> str:
     if not key:
         raise ValueError("Missing GEMINI_API_KEY (or GOOGLE_API_KEY); live Gemma check unverified")
     with genai.Client(
@@ -128,7 +128,7 @@ def check_gemma(key: str, *, mixed: bool) -> str:
         ) -> types.GenerateContentResponse:
             # SDK contents union includes optional PIL types without installed stubs.
             return client.models.generate_content(  # pyright: ignore[reportUnknownMemberType]
-                model=MODEL,
+                model=model,
                 contents=contents,
                 config=types.GenerateContentConfig(
                     tools=tools,
@@ -142,4 +142,4 @@ def check_gemma(key: str, *, mixed: bool) -> str:
                 ),
             )
 
-        return exercise(generate, mixed=mixed)
+        return exercise(generate, mixed=mixed, model=model)

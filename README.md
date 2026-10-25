@@ -34,11 +34,13 @@ Copy `.env.example` to the repository's `.env` and configure the server-side key
 
 ## Service readiness
 
-Run `./scripts/smoke-services` to test the configured services. [Service evidence and integration notes](docs/service-smoke.md) distinguish observed live results from mocked tests.
+Run `./scripts/smoke-services` to repeat the original Gemma/Grok diagnostics. The command retains its original 31B model default; use `--model gemma-4-26b-a4b-it` to test 26B explicitly. [Service evidence and integration notes](docs/service-smoke.md) distinguish observed live results from mocked tests.
 
 On 2026-10-25, Grok's STT/TTS round trip passed. Original `gemma-4-31b-it` tool requests returned HTTP 500/504 errors; the app now uses `gemma-4-26b-a4b-it`, as settled in the current product intent. A later live synthetic-speech turn transcribed “Open Trappist One,” loaded seven TRAPPIST-1 planets with Live provenance, and returned validated reply audio in 8.61 seconds. This is provider/backend evidence, not a physical microphone rehearsal.
 
 The agent calls the canonical ticket 02 catalog through `exoscope.catalog.load_system`. It reads NASA's `pscomppars` table with bounded requests and dated TRAPPIST-1/TOI-700 Snapshot fallback, preserving uncertainties, units, source papers, and explicit missing quantities. There is one production catalog loader. Snapshot results are labelled as cached, and missing values stay missing.
+
+Questions beyond archive coverage can request xAI Web search. Sources stay attached to their conversation turn and accumulate in the Project explorer; they never replace archive numbers. Each turn permits one search attempt with a 15-second deadline and an honest unavailable result on failure. See [Web search evidence and limits](docs/web-search.md).
 
 ## Verify changes
 

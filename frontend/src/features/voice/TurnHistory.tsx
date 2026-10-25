@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useExoStore, type ConversationTurn } from "@/store/store";
+import { WebEvidence } from "@/features/websearch/WebEvidence";
 import { provenanceLabel } from "@/features/scene/provenance";
 
 function Waiting({ startedAt }: { startedAt: number }) {
@@ -31,10 +32,31 @@ function FailureOutcome({ appliedCommands }: { appliedCommands: number }) {
     </p>
   );
 }
+function ReplyFinding({ turn }: { turn: ConversationTurn }) {
+  return (
+    <>
+      {turn.reply && (
+        <div>
+          {turn.webSearch?.status === "ok" && (
+            <p className="text-xs text-muted-foreground">
+              {turn.error ? "Synthesis unavailable" : "Gemma synthesis · with archive context"}
+            </p>
+          )}
+          <p
+            className="whitespace-pre-wrap break-words text-sm leading-relaxed"
+            data-testid="student-reply"
+          >
+            {turn.reply}
+          </p>
+        </div>
+      )}
+    </>
+  );
+}
 function TurnBlock({ turn }: { turn: ConversationTurn }) {
   const failed = Boolean(turn.error) || turn.steps.some((step) => step.status === "failed");
   return (
-    <article className="flex flex-col gap-2" data-testid="conversation-turn">
+    <article className="flex flex-col gap-2" data-testid="conversation-turn" data-turn-id={turn.id}>
       <p className="max-w-[95%] self-end rounded-2xl rounded-br-sm bg-primary px-3 py-2 text-sm text-primary-foreground">
         {turn.question || "Spoken question"}
       </p>
@@ -65,9 +87,7 @@ function TurnBlock({ turn }: { turn: ConversationTurn }) {
             </ol>
           )}
           {turn.finishedAt === null && <Waiting startedAt={turn.startedAt} />}
-          {turn.reply && (
-            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{turn.reply}</p>
-          )}
+          <ReplyFinding turn={turn} />
           {turn.error && (
             <p className="text-sm text-destructive" role="alert">
               {turn.error}
@@ -83,6 +103,11 @@ function TurnBlock({ turn }: { turn: ConversationTurn }) {
               {provenanceLabel(turn.provenance)}
             </Badge>
           )}
+          <WebEvidence
+            result={turn.webSearch}
+            hasSpokenReply={turn.hasSpokenReply}
+            anchorPrefix={`turn-${String(turn.id)}`}
+          />
           {failed && <FailureOutcome appliedCommands={turn.appliedCommands} />}
         </CardContent>
       </Card>

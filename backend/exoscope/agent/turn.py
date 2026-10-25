@@ -1,7 +1,7 @@
 """Shared audio → transcript → agent/tools → short spoken reply pipeline."""
 
-from exoscope.agent.loop import run_agent
 from exoscope.agent.models import ToolStep, TurnRequest, TurnResponse
+from exoscope.agent.runner import run_agent
 from exoscope.agent.timing import timed_step
 from exoscope.voice import service as voice
 
