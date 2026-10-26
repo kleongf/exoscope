@@ -1,6 +1,7 @@
-import type { WebSearchResult, WebSource } from "@/api/client";
-import { Badge } from "@/components/ui/badge";
-import { retrievalTime, sourceAnchor, webUrl } from "./evidence";
+import type { WebSearchResult } from "@/api/client";
+import { sourceAnchor } from "./evidence";
+
+export { WebSources } from "./WebSourceList";
 
 export function CitedSupport({
   result,
@@ -41,58 +42,5 @@ export function CitedSupport({
         <p className="text-xs text-muted-foreground">No claim associations were returned.</p>
       )}
     </div>
-  );
-}
-export function WebSources({
-  sources,
-  associatedIds,
-  anchorPrefix,
-}: {
-  sources: WebSource[];
-  associatedIds: string[];
-  anchorPrefix: string;
-}) {
-  return (
-    <ul className="space-y-4" data-testid="web-sources">
-      {sources.map((source, index) => {
-        const href = webUrl(source.url);
-        return (
-          <li
-            className="min-w-0 space-y-1 break-words [overflow-wrap:anywhere]"
-            key={source.id}
-            id={sourceAnchor(anchorPrefix, source.id)}
-          >
-            <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
-              <Badge variant="outline" className="text-[10px]">
-                Web source
-              </Badge>
-              <span>{source.domain}</span>
-              <span>[{index + 1}]</span>
-            </div>
-            {href ? (
-              <a
-                className="text-xs text-primary underline underline-offset-2"
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {source.title}
-              </a>
-            ) : (
-              <span className="text-xs">{source.title} (URL unavailable)</span>
-            )}
-            <p className="text-[10px] text-muted-foreground">
-              Retrieved{" "}
-              <time dateTime={source.retrieved_at}>{retrievalTime(source.retrieved_at)}</time>
-            </p>
-            <p className="text-[10px] text-muted-foreground">
-              {associatedIds.includes(source.id)
-                ? "Associated with a claim in the search result"
-                : "Retrieved only · no claim association returned"}
-            </p>
-          </li>
-        );
-      })}
-    </ul>
   );
 }

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 /** Below this viewport size the panels start folded, leaving the orbits visible. */
-const ROOMY = { width: 1280, height: 900 };
+// Panels start open only on large screens; at 1440×900 they hid a third of the orbits.
+const ROOMY = { width: 1600, height: 1000 };
 
 function startsOpen(): boolean {
   if (typeof window === "undefined") return true;
