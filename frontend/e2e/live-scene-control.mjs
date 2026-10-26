@@ -1,4 +1,4 @@
-// LIVE check, not part of verify: real Gemma + NASA through /turn. Needs keys in .env.
+// LIVE check, not part of verify: real OpenAI + NASA through /turn. Needs keys in .env.
 // Usage: EXO_WEB_URL=http://127.0.0.1:5179 node e2e/live-scene-control.mjs
 import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
@@ -15,7 +15,7 @@ try {
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
   await page.goto(`${WEB_URL}/`);
-  // The free Gemma tier allows 16k input tokens/minute; each turn sends the System as context.
+  // Each turn sends the System as context; space turns out to stay well under rate limits.
   const pause = Number(process.env.EXO_TURN_GAP_MS ?? 65000);
   let first = true;
   const ask = async (text, shot) => {

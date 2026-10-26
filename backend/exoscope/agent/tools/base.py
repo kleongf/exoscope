@@ -2,7 +2,7 @@
 
 A tool validates its arguments with a strict Pydantic model, does model-free work through a
 feature module, writes UI commands or data into the AgentResult, and returns the JSON payload
-Gemma sees plus a one-line detail for the chat's step list. Honest failures raise ToolError
+the model sees plus a one-line detail for the chat's step list. Honest failures raise ToolError
 (or a feature error listed in TOOL_ERRORS); the loop reports them and never claims success.
 """
 

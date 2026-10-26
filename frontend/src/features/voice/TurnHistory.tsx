@@ -41,7 +41,7 @@ function ReplyFinding({ turn }: { turn: ConversationTurn }) {
         <div>
           {turn.webSearch?.status === "ok" && (
             <p className="text-xs text-muted-foreground">
-              {turn.error ? "Synthesis unavailable" : "Gemma synthesis · with archive context"}
+              {turn.error ? "Synthesis unavailable" : "Assistant synthesis · with archive context"}
             </p>
           )}
           <p

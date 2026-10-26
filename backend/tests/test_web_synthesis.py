@@ -1,4 +1,4 @@
-"""An unsuccessful Gemma synthesis must never fall back to provider prose or speech."""
+"""An unsuccessful model synthesis must never fall back to provider prose or speech."""
 
 import pytest
 
@@ -23,7 +23,7 @@ def test_unsuccessful_synthesis_retains_provider_evidence_without_speaking(
         return provider
 
     def forbidden_speech(_: str) -> None:
-        pytest.fail("Failed Gemma synthesis reached TTS")
+        pytest.fail("Failed model synthesis reached TTS")
 
     def agent(text: str, current: str | None) -> loop.AgentResult:
         first = True
@@ -52,7 +52,7 @@ def test_unsuccessful_synthesis_retains_provider_evidence_without_speaking(
     monkeypatch.setattr(turn.voice, "synthesize", forbidden_speech)
     response = turn.handle_turn(TurnRequest(text=QUESTION, current_system="TRAPPIST-1"))
     assert response.error and response.reply_audio is None
-    assert "Gemma could not synthesize a reply" in response.reply_text
+    assert "The assistant could not synthesize a reply" in response.reply_text
     assert OVERCLAIM not in response.reply_text
     assert "private provider failure" not in response.reply_text
     assert response.data.web_search == provider

@@ -1,4 +1,4 @@
-// MANUAL live check for #9: real Gemma + NASA archive. Needs keys in .env; never run by verify.
+// MANUAL live check for #9: real OpenAI + NASA archive. Needs keys in .env; never run by verify.
 // Start the backend and a dev server first, e.g.
 //   (cd backend && uv run uvicorn exoscope.app:app --port 8040)
 //   (cd frontend && EXOSCOPE_API=http://127.0.0.1:8040 pnpm vite --host 127.0.0.1 --port 5180)

@@ -5,7 +5,7 @@ import { Fragment } from "react";
 const NUMBER =
   /(?<![\w-])(\d[\d,]*(?:\.\d+)?(?:e[-+]?\d+)?)(?![\w-])(\s*(?:\(\+[\d.]+\/[-−][\d.]+\)|±\s*[\d.]+))?/gi;
 
-/** Gemma's reply with its numbers picked out in the value colour, uncertainties dimmed. */
+/** The assistant's reply with its numbers picked out in the value colour, uncertainties dimmed. */
 export function ReplyText({ text }: { text: string }) {
   const pieces: React.ReactNode[] = [];
   let last = 0;

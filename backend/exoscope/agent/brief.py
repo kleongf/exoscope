@@ -1,8 +1,8 @@
-"""Compact views of catalog data for Gemma.
+"""Compact views of catalog data for the model.
 
-Gemma 4 on the Gemini API is free-tier only (16k input tokens per minute per model), so the
-model sees numbers, uncertainties, units and provenance, but not reference links or the full
-System JSON. The browser still receives the full records through TurnData.
+To keep turns fast and cheap, the model sees numbers, uncertainties, units and provenance, but
+not reference links or the full System JSON. The browser still receives the full records
+through TurnData.
 """
 
 from exoscope.catalog import System

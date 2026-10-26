@@ -33,12 +33,14 @@ def export_report(
     request: ReportRequest,
     *,
     original_request: str | None = None,
-    gemma: bool = False,
+    model_written: bool = False,
 ) -> Project:
     with PROJECT_WRITES:
         evidence = select(project, request.include)
         written_at = datetime.now(UTC)
-        html = render(project, request, evidence, written_at.isoformat(), gemma=gemma)
+        html = render(
+            project, request, evidence, written_at.isoformat(), model_written=model_written
+        )
         path = report_path(store, f"report-{uuid4().hex}.html")
         temporary = path.with_suffix(".tmp")
         old_seq, old_updated, old_count = project.next_seq, project.updated_at, len(project.reports)

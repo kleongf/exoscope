@@ -180,7 +180,7 @@ def test_duplicates_consume_one_attempt_including_batches(
     result = runner.run_loop(QUESTION, "TRAPPIST-1", lambda _: next(responses))
     assert queries == [QUESTION]
     assert result.data.web_search is not None and result.data.web_search.status == "ok"
-    assert "Gemma could not synthesize" in result.reply_text
+    assert "The assistant could not synthesize" in result.reply_text
     assert "According to" not in result.reply_text
     assert [step.status for step in result.steps] == ["completed", "failed"]
     assert "already used" in result.steps[1].detail

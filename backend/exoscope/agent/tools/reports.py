@@ -58,7 +58,11 @@ def _export(arguments: ReportRequest, _result: AgentResult) -> ToolOutput:
         context = active_project()
         request = arguments.model_copy(update={"snapshot": context.snapshot})
         export_report(
-            context.project, context.store, request, original_request=context.request, gemma=True
+            context.project,
+            context.store,
+            request,
+            original_request=context.request,
+            model_written=True,
         )
     except ReportError as exc:
         raise ToolError(str(exc)) from exc
@@ -85,8 +89,8 @@ EXPORT_REPORT = Tool(
         "Write one immutable offline HTML Report from selected saved Project IDs. "
         "Call list_project_items first. Include only requested evidence; never pass "
         "measurements or invent IDs. Only summary and limitations prose may be written by "
-        "Gemma; tables/charts come from saved data. Put a short summary and results paragraph "
-        "in summary, separated by a blank line. Say which items were included."
+        "the assistant; tables/charts come from saved data. Put a short summary and results "
+        "paragraph in summary, separated by a blank line. Say which items were included."
     ),
     arguments=ReportRequest,
     run=_export,

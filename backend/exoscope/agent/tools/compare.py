@@ -52,7 +52,7 @@ def _canonical(names: list[str] | None, systems: list[System]) -> list[str] | No
 
 
 def _brief(q: Quantity) -> object:
-    """A value as Gemma needs it: number, uncertainty and limit; sources stay in TurnData."""
+    """A value as the model needs it: number, uncertainty and limit; sources stay in TurnData."""
     if not isinstance(q, Measured):
         return "missing"
     return {"value": q.value, "err": [q.err_lo, q.err_hi], "limit": q.limit}

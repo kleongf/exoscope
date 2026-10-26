@@ -64,7 +64,7 @@ def test_injected_model_export_survives_turn_record_and_voice_failure(
                     "export_report",
                     title="Radius Report",
                     include={"comparisons": ["cmp-4"]},
-                    summary="Gemma narrative\n\nA short Results paragraph.",
+                    summary="Assistant narrative\n\nA short Results paragraph.",
                 )
             ),
             answer("The Report is ready."),
@@ -91,8 +91,8 @@ def test_injected_model_export_survives_turn_record_and_voice_failure(
     assert updated.reports[0].request == text
     assert updated.turns[-1].transcript == text
     assert [s.name for s in response.steps[:2]] == ["list_project_items", "export_report"]
-    assert "Gemma narrative" in html(updated) and PNG in html(updated)
-    assert "Written by Gemma · not number-checked" in html(updated)
+    assert "Assistant narrative" in html(updated) and PNG in html(updated)
+    assert "Written by the assistant · not number-checked" in html(updated)
     assert html(updated).count("A short Results paragraph.") == 1
     assert html(updated).index("A short Results paragraph.") > html(updated).index(
         "<h2>Results</h2>"
@@ -155,7 +155,7 @@ def test_manual_route_no_credentials_and_html_delivery(
     assert opened.status_code == 200 and opened.headers["content-type"].startswith("text/html")
     assert opened.headers["content-disposition"].startswith("inline")
     assert "Student/template narrative" in opened.text
-    assert "Written by Gemma" not in opened.text
+    assert "Written by the assistant" not in opened.text
     downloaded = request("GET", f"/reports/{updated.reports[-1].file}?download=true")
     assert downloaded.content == opened.content
     assert downloaded.headers["content-disposition"].startswith("attachment")

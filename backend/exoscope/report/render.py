@@ -178,7 +178,7 @@ def render(
     evidence: Evidence,
     created_at: str,
     *,
-    gemma: bool = False,
+    model_written: bool = False,
 ) -> str:
     data = saved_data(evidence)
     papers = dict.fromkeys(_papers(data))
@@ -194,11 +194,17 @@ def render(
         else ""
     )
     included = ", ".join(evidence.included)
-    origin = "Written by Gemma · not number-checked" if gemma else "Student/template narrative"
-    summary, _, results = request.summary.partition("\n\n") if gemma else (request.summary, "", "")
+    origin = (
+        "Written by the assistant · not number-checked"
+        if model_written
+        else "Student/template narrative"
+    )
+    summary, _, results = (
+        request.summary.partition("\n\n") if model_written else (request.summary, "", "")
+    )
     results_prose = (
         f'<p class="prose"><small>{origin}</small><br>{escape(results)}</p>'
-        if gemma and results
+        if model_written and results
         else ""
     )
     return (

@@ -70,7 +70,7 @@ export async function exerciseWeb(page) {
     assert(!(await scene.innerText()).includes("987.65"));
     assert.equal(await page.locator("table").count(), 1);
   };
-  // Provider details (Grok text and claim associations) start collapsed under each answer.
+  // Provider details (search text and claim associations) start collapsed under each answer.
   const openProviderDetails = async (evidence) => {
     const toggle = evidence.getByTestId("provider-details-toggle");
     if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
@@ -121,12 +121,12 @@ export async function exerciseWeb(page) {
   assert.equal(await studentReply.innerText(), waterReply.reply_text);
   assert(!(await studentReply.innerText()).includes("Yes, TRAPPIST-1 e"));
   await originalArticle
-    .getByText("Gemma synthesis · with archive context", { exact: true })
+    .getByText("Assistant synthesis · with archive context", { exact: true })
     .waitFor();
   await evidence
-    .getByRole("heading", { name: "Original Grok result · provider support" })
+    .getByRole("heading", { name: "Original search result · provider support" })
     .waitFor();
-  assert((await evidence.innerText()).includes("not to Gemma synthesis"));
+  assert((await evidence.innerText()).includes("apply only to the original search text"));
   await page.waitForFunction((previous) => window.voiceFixture.plays > previous, playsBefore);
   assert.equal(await evidence.locator("iframe").count(), 0);
   assert.equal(await projectSources.getByTestId("web-sources").locator("li").count(), 2);

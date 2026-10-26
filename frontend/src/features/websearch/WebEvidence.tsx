@@ -48,13 +48,13 @@ export function WebEvidence({
             <CollapsibleContent forceMount className="space-y-3 pt-2 data-[state=closed]:hidden">
               <p className="text-xs text-muted-foreground" data-testid="spoken-attribution">
                 {hasSpokenReply
-                  ? "Gemma synthesis is shown and spoken above. "
+                  ? "The assistant's synthesis is shown and spoken above. "
                   : "Reply text is shown above. "}
-                Provider citation associations below apply only to the original Grok text, not to
-                Gemma synthesis. They do not verify the claims.
+                Provider citation associations below apply only to the original search text, not to
+                the assistant's synthesis. They do not verify the claims.
               </p>
               <div className="space-y-1">
-                <h4 className="text-xs font-medium">Original Grok result · provider support</h4>
+                <h4 className="text-xs font-medium">Original search result · provider support</h4>
                 <p className="whitespace-pre-wrap text-xs" data-testid="grounded-text">
                   {result.grounded_text}
                 </p>

@@ -10,7 +10,7 @@ import { sampleTitle } from "./sampleView";
 
 /**
  * One Interpretation as an editable chip. Editing re-runs the search as a normal turn with an
- * explicit instruction, so Gemma restates the new reading and the run shows in the chat.
+ * explicit instruction, so the assistant restates the new reading and the run shows in the chat.
  */
 export function InterpretationChip({
   interpretation,

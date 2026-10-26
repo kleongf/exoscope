@@ -10,7 +10,7 @@ from exoscope.catalog.sample_models import SampleValue
 from exoscope.catalog.search_fields import SEARCH_FIELDS
 
 BRIEF_PLANETS = 15
-"""How many planets Gemma sees; the full Sample goes to the table and chart."""
+"""How many planets the model sees; the full Sample goes to the table and chart."""
 
 
 class SearchArguments(BaseModel):
@@ -36,7 +36,7 @@ def _brief(value: SampleValue) -> object:
 
 
 def _payload(sample: Sample) -> dict[str, object]:
-    """Compact on purpose: Gemma gets counts and a few rows; sources stay in TurnData."""
+    """Compact on purpose: the model gets counts and a few rows; sources stay in TurnData."""
     return {
         "matched": sample.matched,
         "shown": len(sample.planets),

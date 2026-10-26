@@ -85,7 +85,7 @@ def test_agent_failure_after_stt_keeps_transcript(monkeypatch: pytest.MonkeyPatc
         return "Open TRAPPIST-1"
 
     def agent(_: str, __: str | None) -> AgentResult:
-        return AgentResult(error="Gemma unavailable")
+        return AgentResult(error="The agent is unavailable")
 
     monkeypatch.setattr(turn.voice, "transcribe", transcribe)
     monkeypatch.setattr(turn, "run_agent", agent)
@@ -93,7 +93,7 @@ def test_agent_failure_after_stt_keeps_transcript(monkeypatch: pytest.MonkeyPatc
         TurnRequest(audio=AudioInput(data_base64="YQ==", mime_type="audio/webm"))
     )
     assert response.transcript == "Open TRAPPIST-1"
-    assert response.error == "Gemma unavailable"
+    assert response.error == "The agent is unavailable"
 
 
 def test_tts_failure_keeps_text_and_commands(monkeypatch: pytest.MonkeyPatch) -> None:

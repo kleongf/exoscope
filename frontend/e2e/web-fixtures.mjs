@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { fixtureReply } from "./voice-fixtures.mjs";
 
-// Explicit MOCK responses. No live Gemma/xAI calls or readiness claims.
+// Explicit MOCK responses. No live OpenAI calls or readiness claims.
 export const webQuestion = "Does any of these have liquid water?";
 const mockSource = (title, url) => ({
   id: `web-${createHash("sha256").update(url).digest("hex").slice(0, 24)}`,
@@ -18,7 +18,7 @@ export const webResult = {
   status: "ok",
   query: "TRAPPIST-1 e liquid water evidence",
   grounded_text:
-    "MOCK Grok overclaim: Yes, TRAPPIST-1 e could have liquid water. A hypothetical 987.65 Earth radii value is Web source text only.",
+    "MOCK search overclaim: Yes, TRAPPIST-1 e could have liquid water. A hypothetical 987.65 Earth radii value is Web source text only.",
   sources: [cited, retrieved],
   supports: [{ text: "Yes, TRAPPIST-1 e could have liquid water.", source_ids: [cited.id] }],
   search_suggestions_html: null,

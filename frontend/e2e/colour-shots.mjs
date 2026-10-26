@@ -1,4 +1,4 @@
-// MANUAL screenshot check for coloured quantities: real Gemma + NASA. Needs keys; never run by verify.
+// MANUAL screenshot check for coloured quantities: real OpenAI + NASA. Needs keys; never run by verify.
 // FRONTEND=http://127.0.0.1:5192 node e2e/colour-shots.mjs
 import { mkdirSync } from "node:fs";
 import { chromium } from "playwright";

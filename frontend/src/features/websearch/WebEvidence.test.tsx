@@ -35,9 +35,9 @@ describe("Web evidence rendering", () => {
     expect(html).toContain('href="#turn-1-web-source-web-a65bf204b153fce189d34bd1123400de"');
     expect(html).toContain('id="turn-1-web-source-web-a65bf204b153fce189d34bd1123400de"');
     expect(html).toContain('data-testid="spoken-attribution"');
-    expect(html).toContain("Original Grok result · provider support");
+    expect(html).toContain("Original search result · provider support");
     expect(html).toContain("Provider citation associations");
-    expect(html).toContain("not to Gemma synthesis");
+    expect(html).toContain("apply only to the original search text");
     expect(html).toContain("They do not verify the claims.");
     expect(html).not.toContain("<table");
     expect(html).not.toContain("<canvas");

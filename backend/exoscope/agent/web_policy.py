@@ -178,7 +178,7 @@ def web_finding(
     system: System | None = None,
     synthesis: str | None = None,
 ) -> str:
-    """Keep Gemma's synthesis distinct from unchanged provider citation evidence."""
+    """Keep the model's synthesis distinct from unchanged provider citation evidence."""
     limitation = (
         ARCHIVE_LIMITATION
         if re.search(r"\b(water|liquid|ocean|oceans)\b", question, re.I)
@@ -191,7 +191,7 @@ def web_finding(
         finding = synthesis.strip()
     else:
         finding = (
-            "Gemma could not synthesize a reply from the Web sources. "
+            "The assistant could not synthesize a reply from the Web sources. "
             "Original provider support remains available for inspection; it is not a final answer."
         )
     return f"{limitation} {finding} {archive}".strip()

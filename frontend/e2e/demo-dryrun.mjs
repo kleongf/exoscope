@@ -1,4 +1,4 @@
-// MANUAL dry run of the demo video script: real Gemma, NASA and xAI. Needs keys; never run by verify.
+// MANUAL dry run of the demo video script: real OpenAI and NASA. Needs keys; never run by verify.
 // Start backend (:8060) and `EXOSCOPE_API=http://127.0.0.1:8060 pnpm vite --port 5190`, then
 // FRONTEND=http://127.0.0.1:5190 OUT=/tmp/dryrun node e2e/demo-dryrun.mjs
 import { mkdirSync } from "node:fs";
@@ -24,7 +24,7 @@ try {
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(base);
   for (const [i, q] of beats.entries()) {
-    if (i) await page.waitForTimeout(15_000); // stay under Gemma's 16k tokens/min
+    if (i) await page.waitForTimeout(15_000); // space turns out, as in the recorded demo
     const t = Date.now();
     await page.getByLabel("Or type your question").fill(q);
     await page.getByRole("button", { name: "Send question" }).click();

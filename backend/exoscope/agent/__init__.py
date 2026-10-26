@@ -1,1 +1,1 @@
-"""Agent: the Gemma function-calling loop and the /turn contract."""
+"""Agent: the OpenAI function-calling loop and the /turn contract."""
