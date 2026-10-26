@@ -53,3 +53,18 @@ export async function loadProject(id: string) {
   if (!data) throw projectError(error, `Project ${id} could not be opened.`);
   return data;
 }
+
+export type ReportInclude = Required<components["schemas"]["ReportInclude"]>;
+export type ReportRequest = components["schemas"]["ReportRequest"];
+export type ReportSnapshot = components["schemas"]["ReportSnapshot"];
+export function reportUrl(file: string, download = false) {
+  return `/api/reports/${encodeURIComponent(file)}${download ? "?download=true" : ""}`;
+}
+export async function exportReport(projectId: string, body: ReportRequest) {
+  const { data, error } = await api.POST("/projects/{project_id}/reports", {
+    params: { path: { project_id: projectId } },
+    body,
+  });
+  if (!data) throw projectError(error, "The Report could not be written.");
+  return data;
+}

@@ -10,7 +10,7 @@ import { ComparisonList } from "./ComparisonList";
 import { ExplorerSection } from "./ExplorerSection";
 import { ProjectSwitcher } from "./ProjectSwitcher";
 import { ProjectWebSources } from "./ProjectWebSources";
-import { ReportList } from "./ReportList";
+import { ReportsSection } from "@/features/report/ReportsSection";
 
 /** The left panel: the current Project and everything it has gathered, grouped by kind. */
 export function ProjectExplorer() {
@@ -61,7 +61,7 @@ export function ProjectExplorer() {
         <SampleList />
         <ComparisonList />
         <ProjectWebSources />
-        <ReportList />
+        <ReportsSection />
       </ScrollArea>
     </aside>
   );

@@ -28,7 +28,15 @@ def with_current(name: str = "TRAPPIST-1") -> AgentResult:
 def test_compare_is_registered_and_declared() -> None:
     assert "compare" in TOOLS
     names = [d.name for d in declaration().function_declarations or []]
-    assert names == ["load_system", "compare", "search_catalog", "set_scene_view", "web_search"]
+    assert names == [
+        "load_system",
+        "compare",
+        "search_catalog",
+        "set_scene_view",
+        "web_search",
+        "list_project_items",
+        "export_report",
+    ]
 
 
 def test_compares_the_current_system_and_writes_turn_data() -> None:

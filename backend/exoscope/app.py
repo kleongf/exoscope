@@ -5,6 +5,7 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from exoscope.agent.environment import load_environment
@@ -17,6 +18,8 @@ from exoscope.project import (
     ProjectSummary,
     projects_dir,
 )
+from exoscope.report.models import ReportRequest
+from exoscope.report.routes import read_report, write_report
 
 load_environment()
 
@@ -72,3 +75,13 @@ def load_project(project_id: str, projects: Projects) -> Project:
         raise HTTPException(404, str(exc)) from None
     except ProjectCorruptError as exc:
         raise HTTPException(409, str(exc)) from None
+
+
+@app.post("/projects/{project_id}/reports", responses={404: {}, 409: {}, 422: {}})
+def create_report(project_id: str, body: ReportRequest, projects: Projects) -> Project:
+    return write_report(project_id, body, projects)
+
+
+@app.get("/reports/{filename}", responses={404: {}}, response_class=FileResponse)
+def get_report(filename: str, projects: Projects, download: bool = False) -> FileResponse:
+    return read_report(filename, projects, download=download)

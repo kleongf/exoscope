@@ -9,6 +9,7 @@ export function ExplorerSection(props: {
   count: number;
   empty: string;
   children: ReactNode;
+  footer?: ReactNode;
 }) {
   return (
     <Collapsible defaultOpen asChild>
@@ -26,6 +27,7 @@ export function ExplorerSection(props: {
           ) : (
             props.children
           )}
+          {props.footer}
         </CollapsibleContent>
       </section>
     </Collapsible>

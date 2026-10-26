@@ -73,6 +73,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/projects/{project_id}/reports": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Create Report */
+    post: operations["create_report_projects__project_id__reports_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports/{filename}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Report */
+    get: operations["get_report_reports__filename__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -425,6 +459,17 @@ export interface components {
       /** Mime Type */
       mime_type: string;
     };
+    /** ReportInclude */
+    ReportInclude: {
+      /** Systems */
+      systems?: string[];
+      /** Comparisons */
+      comparisons?: string[];
+      /** Samples */
+      samples?: string[];
+      /** Web Sources */
+      web_sources?: string[];
+    };
     /** ReportRecord */
     ReportRecord: {
       /** Id */
@@ -451,6 +496,34 @@ export interface components {
        * @description The Report's HTML file name, rendered once and never edited
        */
       file: string;
+    };
+    /** ReportRequest */
+    ReportRequest: {
+      /** Title */
+      title: string;
+      include: components["schemas"]["ReportInclude"];
+      /**
+       * Summary
+       * @default Selected evidence saved in this Project.
+       */
+      summary: string;
+      /**
+       * Limitations
+       * @default
+       */
+      limitations: string;
+      snapshot?: components["schemas"]["ReportSnapshot"] | null;
+    };
+    /** ReportSnapshot */
+    ReportSnapshot: {
+      /** Hostname */
+      hostname: string;
+      /** Data Url */
+      data_url: string;
+      /** Captured At */
+      captured_at: string;
+      /** Simulated Julian Date */
+      simulated_julian_date?: number | null;
     };
     /**
      * Sample
@@ -737,6 +810,7 @@ export interface components {
        * @description The Project this turn is saved to
        */
       project_id?: string | null;
+      report_snapshot?: components["schemas"]["ReportSnapshot"] | null;
     };
     /** TurnResponse */
     TurnResponse: {
@@ -996,6 +1070,91 @@ export interface operations {
       };
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  create_report_projects__project_id__reports_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        project_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ReportRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Project"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Unprocessable Entity */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  get_report_reports__filename__get: {
+    parameters: {
+      query?: {
+        download?: boolean;
+      };
+      header?: never;
+      path: {
+        filename: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Not Found */
+      404: {
         headers: {
           [name: string]: unknown;
         };

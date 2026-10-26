@@ -163,6 +163,99 @@
           }
         }
       }
+    },
+    "/projects/{project_id}/reports": {
+      "post": {
+        "summary": "Create Report",
+        "operationId": "create_report_projects__project_id__reports_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/reports/{filename}": {
+      "get": {
+        "summary": "Get Report",
+        "operationId": "get_report_reports__filename__get",
+        "parameters": [
+          {
+            "name": "filename",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Filename"
+            }
+          },
+          {
+            "name": "download",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Download"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1064,6 +1157,45 @@
         "required": ["data_base64", "mime_type"],
         "title": "ReplyAudio"
       },
+      "ReportInclude": {
+        "properties": {
+          "systems": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Systems"
+          },
+          "comparisons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Comparisons"
+          },
+          "samples": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Samples"
+          },
+          "web_sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Web Sources"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ReportInclude"
+      },
       "ReportRecord": {
         "properties": {
           "id": {
@@ -1101,6 +1233,83 @@
         "type": "object",
         "required": ["id", "title", "request", "written_at", "includes", "file"],
         "title": "ReportRecord"
+      },
+      "ReportRequest": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Title"
+          },
+          "include": {
+            "$ref": "#/components/schemas/ReportInclude"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 3000,
+            "title": "Summary",
+            "default": "Selected evidence saved in this Project."
+          },
+          "limitations": {
+            "type": "string",
+            "maxLength": 3000,
+            "title": "Limitations",
+            "default": ""
+          },
+          "snapshot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportSnapshot"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["title", "include"],
+        "title": "ReportRequest"
+      },
+      "ReportSnapshot": {
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Hostname"
+          },
+          "data_url": {
+            "type": "string",
+            "maxLength": 6000000,
+            "pattern": "^data:image/png;base64,",
+            "title": "Data Url"
+          },
+          "captured_at": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Captured At"
+          },
+          "simulated_julian_date": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Simulated Julian Date"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["hostname", "data_url", "captured_at"],
+        "title": "ReportSnapshot"
       },
       "Sample": {
         "properties": {
@@ -1866,6 +2075,16 @@
             ],
             "title": "Project Id",
             "description": "The Project this turn is saved to"
+          },
+          "report_snapshot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportSnapshot"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,

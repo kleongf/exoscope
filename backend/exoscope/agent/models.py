@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from exoscope.catalog import Sample, System
 from exoscope.compare import Comparison
 from exoscope.project import Project
+from exoscope.report.models import ReportSnapshot
 from exoscope.scene.commands import UiCommand
 from exoscope.voice.models import AudioInput, ReplyAudio
 from exoscope.websearch.models import WebSearchResult
@@ -20,6 +21,8 @@ class TurnRequest(BaseModel):
     project_id: str | None = Field(
         default=None, max_length=40, description="The Project this turn is saved to"
     )
+
+    report_snapshot: ReportSnapshot | None = None
 
     @model_validator(mode="after")
     def exactly_one_input(self) -> Self:

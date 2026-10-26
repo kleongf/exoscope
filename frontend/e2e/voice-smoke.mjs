@@ -31,7 +31,7 @@ export async function exerciseVoice(page) {
     const body = request.postDataJSON();
     assert(
       Object.keys(body).every((key) =>
-        ["text", "audio", "current_system", "project_id"].includes(key),
+        ["text", "audio", "current_system", "project_id", "report_snapshot"].includes(key),
       ),
     );
     requests.push(body);
