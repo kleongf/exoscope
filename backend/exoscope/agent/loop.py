@@ -46,7 +46,8 @@ INSTRUCTIONS = (
     "Earth-like or habitable always need a caveat that the catalog cannot establish them. "
     "Source papers can differ between properties.Habitability is not established by this catalog. "
     "Only the tools you are given are implemented; never claim an action no tool performed. "
-    "Give a short finding suitable for speech."
+    "Do not call load_system for the System already given as current context. "
+    "Give a short finding suitable for speech, in plain sentences: no Markdown, bold or lists."
 )
 
 

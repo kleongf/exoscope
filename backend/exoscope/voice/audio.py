@@ -57,6 +57,23 @@ def decode_upload(audio: AudioInput) -> tuple[bytes, str, str]:
     return data, mime, f"recording.{_EXTENSIONS[mime]}"
 
 
+UNKNOWN_SIZE = (0xFFFFFFFF).to_bytes(4, "little")
+
+
+def _sized(data: bytes) -> bytes:
+    """OpenAI streams WAV with both RIFF and data sizes unknown; fill in the real sizes.
+
+    The result still goes through every finite-WAV check below.
+    """
+    chunk = data.find(b"data", 12)
+    if data[4:8] != UNKNOWN_SIZE or chunk < 0 or data[chunk + 4 : chunk + 8] != UNKNOWN_SIZE:
+        return data
+    fixed = bytearray(data)
+    fixed[4:8] = (len(data) - 8).to_bytes(4, "little")
+    fixed[chunk + 4 : chunk + 8] = (len(data) - chunk - 8).to_bytes(4, "little")
+    return bytes(fixed)
+
+
 def finalise_wav(data: bytes) -> bytes:
     """Copy the verified smoke behavior without depending on the smoke package.
 
@@ -65,6 +82,7 @@ def finalise_wav(data: bytes) -> bytes:
     """
     if not data or len(data) > MAX_REPLY_BYTES or data[:4] != b"RIFF":
         raise ValueError("Invalid WAV body")
+    data = _sized(data)
     with wave.open(io.BytesIO(data), "rb") as audio:
         params = audio.getparams()
         alignment = audio.getsampwidth() * audio.getnchannels()

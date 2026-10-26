@@ -48,15 +48,17 @@ def test_transcribe_posts_actual_bytes_last_and_returns_text(
     assert calls == ["https://api.openai.com/v1/audio/transcriptions"]
 
 
-@pytest.mark.parametrize("streamed", [False, True])
+@pytest.mark.parametrize("streamed", ["finite", "xai", "openai"])
 def test_synthesize_posts_finding_and_returns_decodable_finite_wav(
-    monkeypatch: pytest.MonkeyPatch, streamed: bool
+    monkeypatch: pytest.MonkeyPatch, streamed: str
 ) -> None:
     calls: list[str] = []
     audio = bytearray(wav())
-    if streamed:
+    if streamed == "xai":
         audio[4:8] = (0x80000023).to_bytes(4, "little")
         audio[40:44] = (0x7FFFFFFF).to_bytes(4, "little")
+    if streamed == "openai":  # observed live: both sizes are 0xFFFFFFFF
+        audio[4:8] = audio[40:44] = (0xFFFFFFFF).to_bytes(4, "little")
 
     def handle(request: httpx.Request) -> httpx.Response:
         calls.append(str(request.url))
