@@ -78,7 +78,7 @@ function turn(data: NonNullable<TurnResponse["data"]>): TurnResponse {
 describe("toComparisonView", () => {
   it("keeps values, uncertainties, sources and missing values exactly", () => {
     const view = toComparisonView(comparison);
-    expect(view.x).toEqual({ label: "Planet radius", unit: "Earth radii" });
+    expect(view.x).toEqual({ label: "Planet radius", unit: "Earth radii", property: "radius" });
     expect(view.rows[0]?.x).toEqual({
       status: "measured",
       value: 0.92,

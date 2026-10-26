@@ -1,10 +1,18 @@
 import type { Quantity } from "@/api/client";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { quantityText } from "./quantity";
+import { quantityParts } from "./quantity";
+import { ColouredQuantity } from "./QuantityParts";
 
 /** A measured value's source paper stays attached to the value, including keyboard access. */
-export function QuantityValue({ quantity }: { quantity: Quantity }) {
+export function QuantityValue({
+  quantity,
+  property,
+}: {
+  quantity: Quantity;
+  /** Archive property key (e.g. "radius"), colouring the value in that property's hue. */
+  property?: string | undefined;
+}) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -12,7 +20,7 @@ export function QuantityValue({ quantity }: { quantity: Quantity }) {
           tabIndex={0}
           className="cursor-help decoration-muted-foreground/50 underline decoration-dotted underline-offset-4"
         >
-          {quantityText(quantity)}
+          <ColouredQuantity parts={quantityParts(quantity)} property={property} />
         </span>
       </TooltipTrigger>
       <TooltipContent className="max-w-72 flex-col items-start">

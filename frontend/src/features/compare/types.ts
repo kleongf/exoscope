@@ -26,6 +26,8 @@ export type ExclusionView = "missing_x" | "missing_y" | "missing_both" | "limit_
 export interface AxisView {
   label: string;
   unit: string | null;
+  /** Archive property key (e.g. "radius"), which picks the axis colour. */
+  property?: string | undefined;
 }
 
 export interface ComparisonRowView {

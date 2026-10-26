@@ -17,8 +17,8 @@ function toValue(q: Quantity): ValueView {
 /** Map the generated API Comparison onto the chart/table view model. */
 export function toComparisonView(c: Comparison): ComparisonView {
   return {
-    x: { label: c.x.label, unit: c.x.unit },
-    y: { label: c.y.label, unit: c.y.unit },
+    x: { label: c.x.label, unit: c.x.unit, property: c.x.property },
+    y: { label: c.y.label, unit: c.y.unit, property: c.y.property },
     rows: c.rows.map((r) => ({
       planet: r.planet,
       hostname: r.hostname,

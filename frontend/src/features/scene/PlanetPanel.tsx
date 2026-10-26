@@ -11,6 +11,9 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArButton } from "@/features/ar/ArButton";
 import { useExoStore } from "@/store/store";
+import { Badge } from "@/components/ui/badge";
+import { provenanceTone } from "@/lib/palette";
+import { PropertyLabel } from "./QuantityParts";
 import { QuantityValue } from "./QuantityValue";
 import { provenanceLabel } from "./provenance";
 
@@ -22,16 +25,16 @@ export function PlanetPanel() {
   const planet = system?.planets.find((item) => item.name === name);
   if (!planet || !system) return null;
   const properties = [
-    ["Radius", planet.radius],
-    ["Mass", planet.mass],
-    ["Period", planet.orbital_period],
-    ["Orbit distance", planet.semi_major_axis],
-    ["Irradiation", planet.insolation],
-    ["Equilibrium temperature", planet.equilibrium_temperature],
-    ["Eccentricity", planet.eccentricity],
-    ["Inclination", planet.inclination],
-    ["Transit midpoint", planet.transit_midpoint],
-    ["Argument of periastron", planet.argument_of_periastron],
+    ["Radius", "radius", planet.radius],
+    ["Mass", "mass", planet.mass],
+    ["Period", "orbital_period", planet.orbital_period],
+    ["Orbit distance", "semi_major_axis", planet.semi_major_axis],
+    ["Irradiation", "insolation", planet.insolation],
+    ["Equilibrium temperature", "equilibrium_temperature", planet.equilibrium_temperature],
+    ["Eccentricity", "eccentricity", planet.eccentricity],
+    ["Inclination", "inclination", planet.inclination],
+    ["Transit midpoint", "transit_midpoint", planet.transit_midpoint],
+    ["Argument of periastron", "argument_of_periastron", planet.argument_of_periastron],
   ] as const;
   return (
     <aside
@@ -42,7 +45,9 @@ export function PlanetPanel() {
         <CardHeader>
           <CardTitle className="text-sm">{planet.name}</CardTitle>
           <CardDescription className="text-[10px]">
-            {provenanceLabel(system.provenance)}
+            <Badge variant="outline" className={provenanceTone(system.provenance.mode)}>
+              {provenanceLabel(system.provenance)}
+            </Badge>
           </CardDescription>
           <CardAction>
             <Button
@@ -61,11 +66,13 @@ export function PlanetPanel() {
           {/* Compact: about five properties visible, the rest scroll. */}
           <ScrollArea className="h-40">
             <dl className="space-y-1.5 pr-3 text-[11px]">
-              {properties.map(([label, quantity]) => (
+              {properties.map(([label, property, quantity]) => (
                 <div key={label}>
-                  <dt className="text-[10px] text-muted-foreground">{label}</dt>
+                  <dt className="text-[10px]">
+                    <PropertyLabel property={property} label={label} />
+                  </dt>
                   <dd>
-                    <QuantityValue quantity={quantity} />
+                    <QuantityValue quantity={quantity} property={property} />
                   </dd>
                 </div>
               ))}

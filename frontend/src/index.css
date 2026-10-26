@@ -5,6 +5,33 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Quantity colours: the single source for how numbers look (mapped in src/lib/palette.ts).
+ * Values bright, uncertainties dim, units soft, missing amber, limits fuchsia; each property
+ * has one hue for its label, table header and chart axis/markers. Hex so Plotly can read them.
+ * `static` always emits these variables: hues are read via var() and getComputedStyle, not classes.
+ */
+@theme static {
+  --color-qty-value: #e0f2fe;
+  --color-qty-err: #7c8aa0;
+  --color-qty-unit: #a5b4fc;
+  --color-qty-missing: #fbbf24;
+  --color-qty-limit: #f0abfc;
+  --color-prop-radius: #38bdf8;
+  --color-prop-mass: #c084fc;
+  --color-prop-period: #4ade80;
+  --color-prop-orbit: #f472b6;
+  --color-prop-insolation: #fb923c;
+  --color-prop-temperature: #f87171;
+  --color-prop-distance: #2dd4bf;
+  --color-prop-shape: #a3e635;
+  --color-prop-other: #cbd5e1;
+  --color-prov-live: #4ade80;
+  --color-prov-cached: #fbbf24;
+  --color-plot-grid: #1e293b;
+  --color-plot-zero: #334155;
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: "Geist Variable", sans-serif;

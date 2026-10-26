@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useExoStore } from "@/store/store";
+import { PropertyLabel } from "./QuantityParts";
 import { QuantityValue } from "./QuantityValue";
 
 export function SystemEvidence({ system }: { system: System }) {
@@ -23,9 +24,15 @@ export function SystemEvidence({ system }: { system: System }) {
         <TableHeader>
           <TableRow>
             <TableHead>Planet</TableHead>
-            <TableHead>Radius</TableHead>
-            <TableHead>Period</TableHead>
-            <TableHead>Orbit distance</TableHead>
+            <TableHead>
+              <PropertyLabel property="radius" label="Radius" />
+            </TableHead>
+            <TableHead>
+              <PropertyLabel property="orbital_period" label="Period" />
+            </TableHead>
+            <TableHead>
+              <PropertyLabel property="semi_major_axis" label="Orbit distance" />
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -43,13 +50,13 @@ export function SystemEvidence({ system }: { system: System }) {
                 </Button>
               </TableCell>
               <TableCell>
-                <QuantityValue quantity={planet.radius} />
+                <QuantityValue quantity={planet.radius} property="radius" />
               </TableCell>
               <TableCell>
-                <QuantityValue quantity={planet.orbital_period} />
+                <QuantityValue quantity={planet.orbital_period} property="orbital_period" />
               </TableCell>
               <TableCell>
-                <QuantityValue quantity={planet.semi_major_axis} />
+                <QuantityValue quantity={planet.semi_major_axis} property="semi_major_axis" />
               </TableCell>
             </TableRow>
           ))}

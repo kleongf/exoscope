@@ -8,19 +8,32 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { axisTitle, exclusionText, formatValue } from "./format";
-import type { ComparisonRowView, ComparisonView, LinkedSelection, ValueView } from "./types";
+import { ColouredQuantity, PropertyLabel } from "@/features/scene/QuantityParts";
+import { axisTitle, exclusionText, valueParts } from "./format";
+import type {
+  AxisView,
+  ComparisonRowView,
+  ComparisonView,
+  LinkedSelection,
+  ValueView,
+} from "./types";
 
-function ValueCell({ value }: { value: ValueView }) {
-  const text = formatValue(value);
+function ValueCell({ value, property }: { value: ValueView; property?: string | undefined }) {
+  const parts = valueParts(value);
   if (value.status === "missing") {
-    return <TableCell className="text-muted-foreground italic">{text}</TableCell>;
+    return (
+      <TableCell>
+        <ColouredQuantity parts={parts} />
+      </TableCell>
+    );
   }
   return (
     <TableCell className="font-mono tabular-nums">
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="cursor-help underline decoration-dotted underline-offset-2">{text}</span>
+          <span className="cursor-help underline decoration-dotted underline-offset-2 decoration-qty-err">
+            <ColouredQuantity parts={parts} property={property} />
+          </span>
         </TooltipTrigger>
         <TooltipContent>
           Source: {value.reference?.label ?? "not given by the archive"}
@@ -33,7 +46,12 @@ function ValueCell({ value }: { value: ValueView }) {
 const SELECTED =
   "data-[state=selected]:bg-sky-500/20 data-[state=selected]:shadow-[inset_3px_0_0_#38bdf8] data-[state=selected]:opacity-100";
 
-function Row({ row, selected, onSelectPlanet }: { row: ComparisonRowView } & LinkedSelection) {
+function Row({
+  row,
+  axes,
+  selected,
+  onSelectPlanet,
+}: { row: ComparisonRowView; axes: [AxisView, AxisView] } & LinkedSelection) {
   const ref = useRef<HTMLTableRowElement>(null);
   const isSelected = row.planet === selected;
   useEffect(() => {
@@ -54,8 +72,8 @@ function Row({ row, selected, onSelectPlanet }: { row: ComparisonRowView } & Lin
       <TableCell className={isSelected ? "font-semibold text-sky-300" : "font-medium"}>
         {row.planet}
       </TableCell>
-      <ValueCell value={row.x} />
-      <ValueCell value={row.y} />
+      <ValueCell value={row.x} property={axes[0].property} />
+      <ValueCell value={row.y} property={axes[1].property} />
       <TableCell className="text-xs text-muted-foreground">
         {row.excluded ? `Excluded: ${exclusionText(row.excluded)}` : "Plotted"}
       </TableCell>
@@ -76,14 +94,24 @@ export function CompareTable({
           <TableHeader>
             <TableRow>
               <TableHead>Planet</TableHead>
-              <TableHead>{axisTitle(comparison.x)}</TableHead>
-              <TableHead>{axisTitle(comparison.y)}</TableHead>
+              <TableHead>
+                <PropertyLabel property={comparison.x.property} label={axisTitle(comparison.x)} />
+              </TableHead>
+              <TableHead>
+                <PropertyLabel property={comparison.y.property} label={axisTitle(comparison.y)} />
+              </TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {comparison.rows.map((row) => (
-              <Row key={row.planet} row={row} selected={selected} onSelectPlanet={onSelectPlanet} />
+              <Row
+                key={row.planet}
+                row={row}
+                axes={[comparison.x, comparison.y]}
+                selected={selected}
+                onSelectPlanet={onSelectPlanet}
+              />
             ))}
           </TableBody>
         </Table>
