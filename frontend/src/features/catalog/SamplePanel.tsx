@@ -28,9 +28,7 @@ export function SamplePanel() {
           Sample
         </h3>
         <ScrollArea className="min-h-0 flex-1">
-          <p className="text-sm text-muted-foreground">
-            No Sample yet. Try “Find small planets with periods under 10 days.”
-          </p>
+          <p className="text-sm text-muted-foreground">No Sample yet.</p>
         </ScrollArea>
       </section>
     </aside>

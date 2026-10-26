@@ -67,10 +67,7 @@ export function SystemView() {
           <ConnectedOrbitScene system={system} />
         ) : (
           <div className="grid h-full min-h-72 place-content-center gap-2 p-6 text-center text-white">
-            <p>Open a System to explore its planets.</p>
-            <p className="text-sm text-white/60">
-              Speak or type “Open TRAPPIST-1” to begin your Project.
-            </p>
+            <p className="text-sm text-white/50">No System open</p>
           </div>
         )}
         <PlanetPanel />

@@ -78,9 +78,6 @@ export function PlanetPanel() {
               ))}
             </dl>
           </ScrollArea>
-          <p className="mt-2 text-[10px] text-muted-foreground">
-            Source papers may differ between properties.
-          </p>
           <div className="mt-2">
             <ArButton planet={planet} system={system} />
           </div>

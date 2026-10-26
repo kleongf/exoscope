@@ -65,7 +65,6 @@ export function TurnPanel() {
         <h2 id="ask-heading" className="text-sm font-semibold">
           Project chat
         </h2>
-        <p className="text-xs text-muted-foreground">Ask, explore, and follow the evidence.</p>
       </header>
       <TurnHistory />
       <section className="space-y-3 border-t p-3" aria-labelledby="ask-heading">
@@ -119,7 +118,7 @@ export function TurnPanel() {
           <Mic />
           {state.status === "recording" ? "Release to send" : "Hold to talk"}
         </Button>
-        <p id="voice-help" className="text-xs text-muted-foreground">
+        <p id="voice-help" className="sr-only">
           Hold with pointer, Space or Enter. Escape cancels. Up to 30 seconds.
         </p>
         <p className="text-xs text-muted-foreground" role="status" data-testid="turn-status">

@@ -128,12 +128,6 @@ export function TurnHistory() {
   return (
     <ScrollArea className="min-h-0 flex-1">
       <div className="flex flex-col gap-4 p-4" aria-live="polite">
-        {turns.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            Ask about a System, e.g. “Open TRAPPIST-1.” Each answer will show the tools used and
-            their timings.
-          </p>
-        )}
         {turns.map((turn) => (
           <TurnBlock key={turn.id} turn={turn} />
         ))}

@@ -10,11 +10,9 @@ function EmptyDrawer() {
   return (
     <div className="grid h-56 grid-cols-2 gap-3 p-3">
       <div className="grid place-items-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
-        No comparison or Sample yet. Try “Compare radius and irradiation.”
+        No comparison or Sample yet.
       </div>
-      <div className="grid place-items-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
-        The table appears here.
-      </div>
+      <div className="grid place-items-center rounded-md border border-dashed border-border text-sm text-muted-foreground"></div>
     </div>
   );
 }
