@@ -288,6 +288,6 @@ def test_provider_failure_retains_archive_commands_and_web_evidence(
     monkeypatch.setattr(web_search, "search_web", evidence)
     responses = iter([answer(call(name="TRAPPIST-1"), call("web_search", query=QUESTION))])
     result = runner.run_loop(QUESTION, None, lambda _: next(responses))
-    assert result.error is not None and "unverified" in result.error
+    assert result.error is not None and "could not complete" in result.error
     assert result.data.system is not None and result.ui_commands
     assert result.data.web_search is not None and result.data.web_search.grounded_text == CLAIM

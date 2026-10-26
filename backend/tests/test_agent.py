@@ -111,7 +111,7 @@ def test_provider_failure_after_tool_retains_evidence(monkeypatch: pytest.Monkey
     patch_catalog(monkeypatch, offline_system)
     responses = iter([answer(call(**{"name": "TRAPPIST-1"}))])
     result = loop.run_loop("open", None, lambda _: next(responses))
-    assert result.error is not None and "unverified" in result.error
+    assert result.error is not None and "could not complete" in result.error
     assert len(result.ui_commands) == 1
     assert result.data.system is not None
 
@@ -271,3 +271,23 @@ def test_current_context_does_not_clear_failed_lookup_without_later_success(
     assert result.ui_commands == []
     assert result.data.system is not None
     assert len(result.steps) == 1 and result.steps[0].status == "failed"
+
+
+@pytest.mark.parametrize(
+    ("code", "expected"),
+    [(429, "rate limit"), (500, "servers returned an error (500)"), (None, "could not complete")],
+)
+def test_gemma_failures_explain_the_cause_without_provider_bodies(
+    code: int | None, expected: str
+) -> None:
+    class ProviderError(Exception):
+        def __init__(self) -> None:
+            super().__init__("secret-key-in-body https://example.invalid")
+            self.code = code
+
+    def fail(_: list[types.Content]) -> types.GenerateContentResponse:
+        raise ProviderError()
+
+    result = loop.run_loop("Open TRAPPIST-1", None, fail)
+    assert result.error is not None and expected in result.error
+    assert "secret-key" not in result.error

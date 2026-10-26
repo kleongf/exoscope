@@ -110,6 +110,21 @@ def _contents(text: str, current_system: str | None, result: AgentResult) -> lis
     ]
 
 
+def gemma_failure(exc: Exception) -> str:
+    """A safe, specific message: status code and kind only, never the provider body."""
+    code = getattr(exc, "code", None)
+    if code == 429:
+        return (
+            "Gemma's rate limit was reached (free tier: 16k input tokens per minute). "
+            "Wait about a minute and ask again."
+        )
+    if isinstance(code, int) and code >= 500:
+        return f"Gemma's servers returned an error ({code}) after 3 attempts. Please ask again."
+    if isinstance(exc, TimeoutError) or "timeout" in type(exc).__name__.lower():
+        return "Gemma took too long to answer (over 30 s). Please ask again."
+    return "Gemma could not complete this turn. Please ask again."
+
+
 def run_loop(text: str, current_system: str | None, generate: Generate) -> AgentResult:
     result = AgentResult()
     try:
@@ -117,9 +132,9 @@ def run_loop(text: str, current_system: str | None, generate: Generate) -> Agent
         _iterate(contents, generate, result)
     except CatalogError as exc:
         result.error = str(exc)
-    except Exception:
+    except Exception as exc:
         # Do not expose SDK exception bodies/URLs, which can contain credentials.
-        message = "Gemma could not complete this turn. Its live tool path remains unverified."
+        message = gemma_failure(exc)
         result.error = f"{result.error} {message}" if result.error else message
     if result.error:
         result.reply_text = result.error
