@@ -85,17 +85,36 @@ def test_synthesize_posts_finding_and_returns_decodable_finite_wav(
 
 def test_long_reply_only_speaks_short_finding(monkeypatch: pytest.MonkeyPatch) -> None:
     long_reply = "A finding with units and provenance. " * 100
+    spoken: list[str] = []
 
     def handle(request: httpx.Request) -> httpx.Response:
-        payload = json.loads(request.content)
-        finding = payload["text"]
-        assert len(finding) <= service.MAX_SPEECH_CHARACTERS
-        assert finding.endswith("…")
-        assert long_reply.startswith(finding[:-1])
+        spoken.append(json.loads(request.content)["text"])
         return httpx.Response(200, content=wav(), headers={"content-type": "audio/wav"})
 
     install_transport(monkeypatch, handle)
     service.synthesize(long_reply)
+    assert spoken == ["A finding with units and provenance. A finding with units and provenance."]
+
+
+@pytest.mark.parametrize(
+    ("reply", "finding"),
+    [
+        (
+            "**TRAPPIST-1 b** gets the most light [1]. See https://example.org/x for more. Extra.",
+            "TRAPPIST-1 b gets the most light. See for more.",
+        ),
+        ("No liquid water is confirmed ([[1]](https://a.org)). Sources:\n- a\n- b", None),
+        ("word " * 200, None),
+    ],
+)
+def test_spoken_finding_drops_markup_links_and_citations(reply: str, finding: str | None) -> None:
+    spoken = service._short_finding(reply)  # pyright: ignore[reportPrivateUsage]
+    assert len(spoken) <= service.MAX_SPEECH_CHARACTERS
+    assert "http" not in spoken and "*" not in spoken and "[" not in spoken
+    if finding is not None:
+        assert spoken == finding
+    if reply.startswith("word"):
+        assert spoken.endswith("…")
 
 
 @pytest.mark.parametrize(

@@ -2,6 +2,7 @@
 
 import base64
 import os
+import re
 import wave
 from collections.abc import Generator
 from contextlib import contextmanager
@@ -16,7 +17,8 @@ from exoscope.voice.models import AudioInput, ReplyAudio
 __all__ = ["VoiceError", "synthesize", "transcribe"]
 
 STT_MODEL = "grok-voice-transcribe-2.0"
-MAX_SPEECH_CHARACTERS = 600
+MAX_SPEECH_CHARACTERS = 280
+SPOKEN_SENTENCES = 2
 REQUEST_TIMEOUT = httpx.Timeout(30.0, connect=5.0)
 
 
@@ -74,13 +76,28 @@ def transcribe(audio: AudioInput) -> str:
     return transcript.strip()
 
 
+_MARKUP = re.compile(r"[*_#`>]+|\[\d+\]|\[\[\d+\]\]\([^)]*\)|https?://\S+|\([^)]*https?://[^)]*\)")
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+
+
 def _short_finding(text: str) -> str:
-    text = text.strip()
+    """The spoken finding: the first sentences of the reply, without markup, links or citations.
+
+    TTS time grows with the text (a 450-character reply took ~4.3 s, a two-sentence one ~1 s),
+    and the full reply stays on screen, so speech only carries the headline.
+    """
+    text = re.sub(r"\s+([.,;:!?])", r"\1", " ".join(_MARKUP.sub("", text).split()))
     if not text:
         raise VoiceError("There is no finding to speak.", status_code=400)
-    if len(text) <= MAX_SPEECH_CHARACTERS:
-        return text
-    prefix = text[: MAX_SPEECH_CHARACTERS - 1]
+    spoken = ""
+    for sentence in _SENTENCE_END.split(text)[:SPOKEN_SENTENCES]:
+        candidate = f"{spoken} {sentence}".strip()
+        if spoken and len(candidate) > MAX_SPEECH_CHARACTERS:
+            break
+        spoken = candidate
+    if len(spoken) <= MAX_SPEECH_CHARACTERS:
+        return spoken
+    prefix = spoken[: MAX_SPEECH_CHARACTERS - 1]
     return (prefix.rsplit(" ", 1)[0] or prefix) + "…"
 
 
