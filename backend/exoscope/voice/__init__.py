@@ -1,1 +1,1 @@
-"""Voice: Grok speech-to-text and text-to-speech."""
+"""Voice: OpenAI speech-to-text and text-to-speech."""

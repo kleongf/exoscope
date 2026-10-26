@@ -33,5 +33,5 @@ def install_transport(monkeypatch: pytest.MonkeyPatch, handler: Handler) -> None
         assert retries == 0
         return httpx.MockTransport(handler)
 
-    monkeypatch.setenv("XAI_API_KEY", "test-server-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-server-key")
     monkeypatch.setattr(httpx, "HTTPTransport", transport)

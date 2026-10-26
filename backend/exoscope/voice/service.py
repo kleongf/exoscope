@@ -1,7 +1,6 @@
-"""Server-only, synchronous xAI speech adapter for the turn handler."""
+"""Server-only, synchronous OpenAI speech adapter for the turn handler."""
 
 import base64
-import os
 import re
 import wave
 from collections.abc import Generator
@@ -10,27 +9,29 @@ from typing import cast
 
 import httpx
 
+from exoscope.openai_api import BASE_URL, STT_MODEL, TTS_MODEL, TTS_VOICE, openai_key
 from exoscope.voice.audio import decode_upload, finalise_wav
 from exoscope.voice.errors import VoiceError
 from exoscope.voice.models import AudioInput, ReplyAudio
 
 __all__ = ["VoiceError", "synthesize", "transcribe"]
 
-STT_MODEL = "grok-voice-transcribe-2.0"
 MAX_SPEECH_CHARACTERS = 280
 SPOKEN_SENTENCES = 2
+# Hints, not required output: names the student is likely to say.
+KEYWORDS = ["TRAPPIST-1", "TOI-700", "exoplanet", "insolation", "semi-major axis"]
 REQUEST_TIMEOUT = httpx.Timeout(30.0, connect=5.0)
 
 
 @contextmanager
 def _client() -> Generator[httpx.Client]:
     # Read at call time so the app can explicitly load its chosen dotenv first.
-    key = os.environ.get("XAI_API_KEY", "").strip()
+    key = openai_key()
     if not key:
-        raise VoiceError("Voice is unavailable: XAI_API_KEY is not configured.", status_code=503)
+        raise VoiceError("Voice is unavailable: OPENAI_API_KEY is not configured.", status_code=503)
     try:
         with httpx.Client(
-            base_url="https://api.x.ai",
+            base_url=BASE_URL,
             headers={"Authorization": f"Bearer {key}"},
             timeout=REQUEST_TIMEOUT,
             follow_redirects=False,
@@ -61,8 +62,8 @@ def transcribe(audio: AudioInput) -> str:
     with _client() as client:
         response = _checked(
             client.post(
-                "/v1/stt",
-                data={"model": STT_MODEL, "language": "en", "format": "true"},
+                "/v1/audio/transcriptions",
+                data={"model": STT_MODEL, "languages[]": ["en"], "keywords[]": KEYWORDS},
                 files={"file": (filename, data, mime)},
             )
         )
@@ -107,12 +108,13 @@ def synthesize(text: str) -> ReplyAudio:
     with _client() as client:
         response = _checked(
             client.post(
-                "/v1/tts",
+                "/v1/audio/speech",
                 json={
-                    "text": finding,
-                    "voice_id": "eve",
-                    "language": "en",
-                    "output_format": {"codec": "wav", "sample_rate": 24000},
+                    "model": TTS_MODEL,
+                    "voice": TTS_VOICE,
+                    "input": finding,
+                    "response_format": "wav",
+                    "instructions": "Speak clearly and calmly, like a science teacher.",
                 },
             )
         )

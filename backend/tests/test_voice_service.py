@@ -33,19 +33,19 @@ def test_transcribe_posts_actual_bytes_last_and_returns_text(
         body = request.read()
         fields = [
             body.index(f'name="{name}"'.encode())
-            for name in ("model", "language", "format", "file")
+            for name in ("model", "languages[]", "keywords[]", "file")
         ]
         assert fields == sorted(fields)
-        assert b"grok-voice-transcribe-2.0" in body
-        assert b'name="language"\r\n\r\nen\r\n' in body
-        assert b'name="format"\r\n\r\ntrue\r\n' in body
+        assert b'name="model"\r\n\r\ngpt-transcribe\r\n' in body
+        assert b'name="languages[]"\r\n\r\nen\r\n' in body
+        assert b'name="keywords[]"\r\n\r\nTRAPPIST-1\r\n' in body
         assert b'filename="recording.wav"\r\nContent-Type: audio/wav\r\n\r\n' in body
         assert wav() in body
         return httpx.Response(200, json={"text": " Open TRAPPIST-1. "})
 
     install_transport(monkeypatch, handle)
     assert service.transcribe(upload()) == "Open TRAPPIST-1."
-    assert calls == ["https://api.x.ai/v1/stt"]
+    assert calls == ["https://api.openai.com/v1/audio/transcriptions"]
 
 
 @pytest.mark.parametrize("streamed", [False, True])
@@ -62,10 +62,11 @@ def test_synthesize_posts_finding_and_returns_decodable_finite_wav(
         calls.append(str(request.url))
         assert request.headers["authorization"] == "Bearer test-server-key"
         assert json.loads(request.content) == {
-            "text": "TRAPPIST-1 e is selected.",
-            "voice_id": "eve",
-            "language": "en",
-            "output_format": {"codec": "wav", "sample_rate": 24000},
+            "model": "gpt-4o-mini-tts",
+            "voice": "coral",
+            "input": "TRAPPIST-1 e is selected.",
+            "response_format": "wav",
+            "instructions": "Speak clearly and calmly, like a science teacher.",
         }
         return httpx.Response(
             200, content=bytes(audio), headers={"content-type": "audio/wav; rate=24000"}
@@ -80,7 +81,7 @@ def test_synthesize_posts_finding_and_returns_decodable_finite_wav(
     with wave.open(io.BytesIO(decoded), "rb") as playback:
         assert playback.getparams()[:4] == (1, 2, 24000, 2400)
         assert playback.readframes(playback.getnframes()) == b"\x00\x10" * 2400
-    assert calls == ["https://api.x.ai/v1/tts"]
+    assert calls == ["https://api.openai.com/v1/audio/speech"]
 
 
 def test_long_reply_only_speaks_short_finding(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -88,7 +89,7 @@ def test_long_reply_only_speaks_short_finding(monkeypatch: pytest.MonkeyPatch) -
     spoken: list[str] = []
 
     def handle(request: httpx.Request) -> httpx.Response:
-        spoken.append(json.loads(request.content)["text"])
+        spoken.append(json.loads(request.content)["input"])
         return httpx.Response(200, content=wav(), headers={"content-type": "audio/wav"})
 
     install_transport(monkeypatch, handle)
@@ -184,10 +185,10 @@ def test_missing_key_is_honest_and_makes_no_request(
 
     install_transport(monkeypatch, never)
     if key is None:
-        monkeypatch.delenv("XAI_API_KEY")
+        monkeypatch.delenv("OPENAI_API_KEY")
     else:
-        monkeypatch.setenv("XAI_API_KEY", key)
-    with pytest.raises(service.VoiceError, match="XAI_API_KEY") as caught:
+        monkeypatch.setenv("OPENAI_API_KEY", key)
+    with pytest.raises(service.VoiceError, match="OPENAI_API_KEY") as caught:
         operation()
     assert caught.value.status_code == 503
 
