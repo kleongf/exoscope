@@ -85,27 +85,10 @@ export function TimeControls(props: TimeControlsProps) {
   );
 }
 
-function sizeText(f: SizeFactors): string {
-  return f.planet === 1
-    ? "True sizes"
-    : `Planet sizes ×${String(f.planet)}, star ×${String(f.star)}`;
-}
-
-/** Always visible: what the view is not. */
-export function CaveatBadge({ sizes, provenance }: { sizes: SizeFactors; provenance: string }) {
-  const parts = [
-    "System is edge-on from Earth",
-    "Positions extrapolated from transit epochs",
-    sizeText(sizes),
-    "Not an N-body simulation",
-  ];
+/** Where the numbers came from: Live result or dated Snapshot. */
+export function CaveatBadge({ provenance }: { sizes?: SizeFactors; provenance: string }) {
   return (
     <div className="flex flex-wrap justify-end gap-1" data-testid="caveat-badge">
-      {parts.map((p) => (
-        <Badge key={p} variant="outline" className="bg-black/70 text-[10px] text-white/75">
-          {p}
-        </Badge>
-      ))}
       <Badge variant="secondary" className="text-[10px]">
         {provenance}
       </Badge>

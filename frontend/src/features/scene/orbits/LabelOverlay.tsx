@@ -1,6 +1,6 @@
 /** DOM labels drawn over the canvas; the LabelProjector moves each one to its 3D anchor. */
 import type { ReactNode } from "react";
-import { EARTH_LABEL, HOVER_LABEL, NODES_LABEL, type LabelRegistry } from "./labels";
+import { HOVER_LABEL, type LabelRegistry } from "./labels";
 import type { PlanetLayout } from "./layout";
 import { ProvenanceCard } from "./ProvenanceCard";
 import type { Provenance } from "./types";
@@ -68,7 +68,7 @@ interface LabelOverlayProps {
 }
 
 export function LabelOverlay(props: LabelOverlayProps) {
-  const { labels, planets, hovered, inclinationDeg } = props;
+  const { labels, planets, hovered } = props;
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       {props.showLabels &&
@@ -77,23 +77,6 @@ export function LabelOverlay(props: LabelOverlayProps) {
             <PlanetLabel item={item} onSelect={props.onSelect} />
           </Anchored>
         ))}
-      {props.showAssumptions && (
-        <div aria-hidden>
-          <Anchored id={NODES_LABEL} labels={labels} centered={false}>
-            <div className="w-40 -translate-y-1/2 text-[10px] text-slate-300">
-              Line of nodes assumed (Ω unknown); all orbits drawn coplanar
-            </div>
-          </Anchored>
-          <Anchored id={EARTH_LABEL} labels={labels} centered={false}>
-            <div className="ml-2 -translate-y-1/2 text-[10px] whitespace-nowrap text-sky-300">
-              Toward Earth
-              {inclinationDeg === null
-                ? ""
-                : ` (system is edge-on, i ≈ ${inclinationDeg.toFixed(1)}°)`}
-            </div>
-          </Anchored>
-        </div>
-      )}
       {hovered !== null && (
         <Anchored id={HOVER_LABEL} labels={labels} centered={false}>
           <ProvenanceCard item={hovered} jd={props.jd} provenance={props.provenance} />
