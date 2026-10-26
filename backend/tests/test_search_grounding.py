@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from exoscope.websearch.grounding import grounded_result
-from tests.xai_fixtures import OTHER_URL, URL, annotation, block, response
+from tests.search_fixtures import OTHER_URL, URL, annotation, block, response
 
 
 def test_completed_shape_preserves_text_urls_and_retrieved_only_sources() -> None:
@@ -24,6 +24,27 @@ def test_completed_shape_preserves_text_urls_and_retrieved_only_sources() -> Non
     assert len({source.retrieved_at for source in result.sources}) == 1
     assert result.sources[0].retrieved_at.utcoffset() == timedelta(0)
     assert result.search_suggestions_html is None
+
+
+TRACKED = URL.replace("#water", "&utm_source=openai#water")
+
+
+@pytest.mark.parametrize("with_parens", [True, False])
+def test_openai_parenthesised_domain_citation(with_parens: bool) -> None:
+    """OpenAI cites as `claim ([domain](url?utm_source=openai))`; either span is accepted."""
+    text = f"Water remains uncertain ([science.nasa.gov]({TRACKED}))."
+    link = f"[science.nasa.gov]({TRACKED})"
+    marker = f"({link})" if with_parens else link
+    text_block = {
+        "type": "output_text",
+        "text": text,
+        "annotations": [annotation(text, marker, TRACKED, "NASA Exoplanets")],
+    }
+    result = grounded_result("water", response(text_block))
+    assert result.supports[0].text == "Water remains uncertain"
+    # The tracking suffix is dropped, so the cited page is the same source as the searched one.
+    assert [source.url for source in result.sources] == [URL, OTHER_URL]
+    assert result.supports[0].source_ids == [result.sources[0].id]
 
 
 def test_unicode_indices_are_python_characters_and_exclusive() -> None:

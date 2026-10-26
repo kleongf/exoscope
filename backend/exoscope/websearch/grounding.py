@@ -1,7 +1,8 @@
-"""Parse xAI Web evidence without claiming provider-guaranteed semantic spans.
+"""Parse Responses API web-search evidence without claiming guaranteed semantic spans.
 
-Annotations index citation Markdown, using Python characters and exclusive ends:
-https://docs.x.ai/developers/tools/citations
+Annotations index citation Markdown, using Python characters and exclusive ends. OpenAI cites
+as `claim ([domain](url?utm_source=openai))`; the parentheses may sit inside or outside the
+annotated span, and the tracking parameter is dropped so a cited page matches its search source.
 Our parser convention associates each validated marker with the immediately
 preceding original paragraph (or text since the previous citation). Adjacent
 markers share that nearby text. This records citation placement, not a semantic
@@ -12,7 +13,7 @@ import hashlib
 import re
 from datetime import UTC, datetime
 from typing import Any, cast
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlunsplit
 
 from pydantic import HttpUrl, ValidationError
 
@@ -44,6 +45,12 @@ def _domain(url: str) -> str | None:
         return None
 
 
+def _untracked(url: str) -> str:
+    parts = urlsplit(url)
+    query = "&".join(p for p in parts.query.split("&") if p and p != "utm_source=openai")
+    return urlunsplit(parts._replace(query=query))
+
+
 def _title(value: object, url: str, domain: str) -> str:
     title = value.strip() if isinstance(value, str) else ""
     return title if title and not title.strip("[] ").isdecimal() and title != url else domain
@@ -55,6 +62,7 @@ def _source(
     retrieved_at: datetime,
 ) -> WebSource | None:
     url = raw.get("url")
+    url = _untracked(url) if isinstance(url, str) else url
     domain = _domain(url) if isinstance(url, str) else None
     if not isinstance(url, str) or domain is None:
         return None
@@ -89,6 +97,8 @@ def _marker(text: str, annotation: dict[str, Any]) -> tuple[int, int] | None:
     # Accept numbered [[1]](url) and normal [label](url), including <url>
     # destinations and balanced parentheses inside URLs. The destination must
     # match the annotation exactly; never infer citations by scanning prose.
+    if text[start] == "(" and text[end - 1] == ")" and text[start + 1 : start + 2] == "[":
+        start, end = start + 1, end - 1  # OpenAI's "([domain](url))" with parens in the span
     marker = text[start:end]
     label, separator, destination = marker[1:].partition("](")
     if (
@@ -103,6 +113,8 @@ def _marker(text: str, annotation: dict[str, Any]) -> tuple[int, int] | None:
     target = destination[:-1]
     if target not in {url, f"<{url}>"}:
         return None
+    if start > 0 and text[start - 1] == "(" and text[end : end + 1] == ")":
+        return start - 1, end + 1  # the wrapping parentheses belong to the citation
     return start, end
 
 

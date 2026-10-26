@@ -10,7 +10,7 @@ import httpx
 import pytest
 
 from exoscope.websearch import service
-from tests.xai_fixtures import response
+from tests.search_fixtures import response
 
 
 @dataclass
@@ -43,29 +43,28 @@ def mocked(monkeypatch: pytest.MonkeyPatch) -> Transport:
         return httpx.MockTransport(transport.handle)
 
     monkeypatch.setattr(service.httpx, "AsyncHTTPTransport", factory)
-    monkeypatch.setenv("XAI_API_KEY", "dummy-xai-key")
-    monkeypatch.setenv("GEMINI_API_KEY", "unused-gemini-key")
-    monkeypatch.setenv("GOOGLE_API_KEY", "unused-google-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "dummy-openai-key")
+    monkeypatch.delenv("OPENAI_SEARCH_MODEL", raising=False)
     return transport
 
 
-def test_one_post_configuration_and_call_time_xai_key(
+def test_one_post_configuration_and_call_time_key(
     mocked: Transport,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("XAI_API_KEY", "new-dummy-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "new-dummy-key")
     result = service.search_web("  water?  ")
     assert result.status == "ok"
     assert result.query == "water?"
     assert len(mocked.requests) == 1
     request = mocked.requests[0]
     assert request.method == "POST"
-    assert str(request.url) == "https://api.x.ai/v1/responses"
+    assert str(request.url) == "https://api.openai.com/v1/responses"
     assert request.headers["authorization"] == "Bearer new-dummy-key"
     payload = json.loads(request.content)
     assert payload["input"] == "water?"
-    assert payload["model"] == "grok-4.20-0309-non-reasoning"
-    assert payload["tools"] == [{"type": "web_search"}]
+    assert payload["model"] == "gpt-4.1-mini"
+    assert payload["tools"] == [{"type": "web_search", "search_context_size": "low"}]
     assert payload["include"] == ["web_search_call.action.sources"]
     assert payload["max_output_tokens"] == 200
     assert payload["stream"] is False
@@ -88,12 +87,20 @@ def test_maximum_trimmed_query_is_accepted(mocked: Transport) -> None:
     assert len(mocked.requests) == 1
 
 
-def test_no_xai_key_does_not_fall_back_to_google(
+def test_search_model_comes_from_env(mocked: Transport, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("OPENAI_SEARCH_MODEL", "gpt-6-luna")
+    service.search_web("water?")
+    assert json.loads(mocked.requests[0].content)["model"] == "gpt-6-luna"
+
+
+def test_no_key_is_honestly_unavailable(
     mocked: Transport,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.delenv("XAI_API_KEY")
-    assert service.search_web("water?").status == "unavailable"
+    monkeypatch.delenv("OPENAI_API_KEY")
+    result = service.search_web("water?")
+    assert result.status == "unavailable"
+    assert result.error == "Web search is unavailable: OPENAI_API_KEY is not configured."
     assert mocked.requests == []
 
 
@@ -104,21 +111,21 @@ def test_http_errors_and_redirects_are_honest_and_never_retried(
 ) -> None:
     mocked.status = status
     mocked.headers = {"Location": "https://other.example/redirect"}
-    mocked.body = {"error": "secret provider body dummy-xai-key"}
+    mocked.body = {"error": "secret provider body dummy-openai-key"}
     result = service.search_web("water?")
     assert result.status == "unavailable"
     assert result.sources == result.supports == []
     assert "secret" not in result.model_dump_json()
-    assert "dummy-xai-key" not in result.model_dump_json()
+    assert "dummy-openai-key" not in result.model_dump_json()
     assert len(mocked.requests) == 1
 
 
 @pytest.mark.parametrize(
     "error",
     [
-        httpx.ConnectError("secret dummy-xai-key"),
-        httpx.ReadTimeout("secret dummy-xai-key"),
-        RuntimeError("secret dummy-xai-key"),
+        httpx.ConnectError("secret dummy-openai-key"),
+        httpx.ReadTimeout("secret dummy-openai-key"),
+        RuntimeError("secret dummy-openai-key"),
     ],
 )
 def test_transport_errors_never_leak_or_retry(mocked: Transport, error: Exception) -> None:
@@ -126,7 +133,7 @@ def test_transport_errors_never_leak_or_retry(mocked: Transport, error: Exceptio
     result = service.search_web("water?")
     assert result.status == "unavailable"
     assert "secret" not in result.model_dump_json()
-    assert "dummy-xai-key" not in result.model_dump_json()
+    assert "dummy-openai-key" not in result.model_dump_json()
     assert len(mocked.requests) == 1
 
 
@@ -156,7 +163,7 @@ def test_malformed_body_is_unavailable(mocked: Transport, body: Any) -> None:
     [
         ("status", "incomplete"),
         ("status", "in_progress"),
-        ("error", {"message": "secret dummy-xai-key"}),
+        ("error", {"message": "secret dummy-openai-key"}),
         ("incomplete_details", {"reason": "max_output_tokens"}),
         ("output", [None]),
         ("output", {}),
@@ -199,11 +206,11 @@ def test_active_event_loop_returns_unavailable_before_request(mocked: Transport)
 
 
 def test_invalid_json_body_is_sanitized(mocked: Transport) -> None:
-    mocked.raw = b"<html>secret dummy-xai-key</html>"
+    mocked.raw = b"<html>secret dummy-openai-key</html>"
     result = service.search_web("water?")
     assert result.status == "unavailable"
     assert "secret" not in result.model_dump_json()
-    assert "dummy-xai-key" not in result.model_dump_json()
+    assert "dummy-openai-key" not in result.model_dump_json()
 
 
 def test_overall_timeout_cancels_a_slow_drip_body(
@@ -236,7 +243,7 @@ def test_overall_timeout_cancels_a_slow_drip_body(
     assert closed == [True]
 
 
-def test_provider_boundary_accepts_shared_evidence_without_xai_transport(
+def test_provider_boundary_accepts_shared_evidence_without_provider_transport(
     mocked: Transport, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     from tests.test_agent_web import evidence
