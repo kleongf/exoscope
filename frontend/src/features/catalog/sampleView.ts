@@ -50,8 +50,8 @@ export function toSampleView(sample: Sample): ComparisonView {
   const [xName, yName] = sampleAxes(sample);
   const field = (name: string) => sample.fields.find((f) => f.name === name);
   return {
-    x: { label: field(xName)?.label ?? xName, unit: field(xName)?.unit ?? null },
-    y: { label: field(yName)?.label ?? yName, unit: field(yName)?.unit ?? null },
+    x: { label: field(xName)?.label ?? xName, unit: field(xName)?.unit ?? null, property: xName },
+    y: { label: field(yName)?.label ?? yName, unit: field(yName)?.unit ?? null, property: yName },
     rows: sample.planets.map((p) => {
       const x = toValue(p.values[xName]);
       const y = toValue(p.values[yName]);

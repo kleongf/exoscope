@@ -6,6 +6,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useExoStore, type ConversationTurn } from "@/store/store";
 import { WebEvidence } from "@/features/websearch/WebEvidence";
 import { provenanceLabel } from "@/features/scene/provenance";
+import { provenanceTone } from "@/lib/palette";
+import { ReplyText } from "./ReplyText";
 
 function Waiting({ startedAt }: { startedAt: number }) {
   const [now, setNow] = useState(startedAt);
@@ -46,7 +48,7 @@ function ReplyFinding({ turn }: { turn: ConversationTurn }) {
             className="whitespace-pre-wrap break-words text-sm leading-relaxed"
             data-testid="student-reply"
           >
-            {turn.reply}
+            <ReplyText text={turn.reply} />
           </p>
         </div>
       )}
@@ -99,7 +101,10 @@ function TurnBlock({ turn }: { turn: ConversationTurn }) {
             </p>
           ))}
           {turn.provenance && (
-            <Badge variant="outline" className="text-[10px]">
+            <Badge
+              variant="outline"
+              className={`text-[10px] ${provenanceTone(turn.provenance.mode)}`}
+            >
               {provenanceLabel(turn.provenance)}
             </Badge>
           )}

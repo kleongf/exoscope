@@ -1,3 +1,4 @@
+import type { QuantityParts } from "@/features/scene/quantity";
 import type { AxisView, ComparisonView, ExclusionView, ValueView } from "./types";
 
 const EXCLUSION_TEXT: Record<ExclusionView, string> = {
@@ -19,14 +20,24 @@ function trim(n: number): string {
   return Number(n.toPrecision(4)).toString();
 }
 
+/** formatValue split into colourable pieces (units live in the column header here). */
+export function valueParts(v: ValueView): QuantityParts {
+  const base = { missing: false, limit: "", uncertainty: "", unit: "" };
+  if (v.status === "missing") return { ...base, missing: true, value: "missing" };
+  if (v.limit === "upper") return { ...base, limit: "< ", value: trim(v.value) };
+  if (v.limit === "lower") return { ...base, limit: "> ", value: trim(v.value) };
+  if (v.errLo === null || v.errHi === null) return { ...base, value: trim(v.value) };
+  const uncertainty =
+    trim(v.errLo) === trim(v.errHi)
+      ? ` ± ${trim(v.errHi)}`
+      : ` +${trim(v.errHi)}/−${trim(v.errLo)}`;
+  return { ...base, value: trim(v.value), uncertainty };
+}
+
 /** "0.92 +0.013/−0.013", "< 1.2", or "missing". Never renders a missing value as 0. */
 export function formatValue(v: ValueView): string {
-  if (v.status === "missing") return "missing";
-  if (v.limit === "upper") return `< ${trim(v.value)}`;
-  if (v.limit === "lower") return `> ${trim(v.value)}`;
-  if (v.errLo === null || v.errHi === null) return trim(v.value);
-  if (trim(v.errLo) === trim(v.errHi)) return `${trim(v.value)} ± ${trim(v.errHi)}`;
-  return `${trim(v.value)} +${trim(v.errHi)}/−${trim(v.errLo)}`;
+  const p = valueParts(v);
+  return `${p.limit}${p.value}${p.uncertainty}`;
 }
 
 export function countRows(c: ComparisonView): { plotted: number; excluded: number } {

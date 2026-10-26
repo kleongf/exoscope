@@ -5,6 +5,7 @@ import { useExoStore } from "@/store/store";
 import { OrbitScene, toOrbitSystem } from "./orbits";
 import { PlanetPanel } from "./PlanetPanel";
 import { SystemEvidence } from "./SystemEvidence";
+import { provenanceTone } from "@/lib/palette";
 import { provenanceLabel } from "./provenance";
 
 /** The orbit scene, driven by the store so agent commands and manual controls share one state. */
@@ -55,7 +56,11 @@ export function SystemView() {
             {system?.hostname ?? "Choose your first System"}
           </h1>
         </div>
-        {system && <Badge variant="outline">{provenanceLabel(system.provenance)}</Badge>}
+        {system && (
+          <Badge variant="outline" className={provenanceTone(system.provenance.mode)}>
+            {provenanceLabel(system.provenance)}
+          </Badge>
+        )}
       </header>
       <div className="relative min-h-96 flex-1 bg-[#05060a]" data-testid="system-view">
         {system ? (

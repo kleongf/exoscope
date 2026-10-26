@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { provenanceTone } from "@/lib/palette";
 import { useExoStore } from "@/store/store";
 import { projectTurnController } from "@/features/voice/turnController";
 import { SampleList } from "@/features/catalog/SampleList";
@@ -52,7 +53,10 @@ export function ProjectExplorer() {
               }}
             >
               {system.hostname}
-              <Badge variant="outline" className="text-[10px]">
+              <Badge
+                variant="outline"
+                className={`text-[10px] ${provenanceTone(system.provenance.mode)}`}
+              >
                 {system.provenance.mode === "live" ? "Live" : "Cached"}
               </Badge>
             </Button>
