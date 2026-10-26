@@ -15,6 +15,9 @@ export async function exerciseWeb(page) {
   const archiveBefore = await archive.innerText();
   const systemBefore = await scene.innerText();
   const projectSources = page.getByRole("region", { name: "Project Web sources" });
+  // The explorer's Web sources section starts collapsed; open it once for the checks below.
+  const sourcesSection = page.getByRole("region", { name: "Web sources", exact: true }).first();
+  await sourcesSection.getByRole("button").first().click();
   const history = page.getByTestId("conversation-turn");
   const initialTurns = await history.count();
   const requests = [];
@@ -67,7 +70,13 @@ export async function exerciseWeb(page) {
     assert(!(await scene.innerText()).includes("987.65"));
     assert.equal(await page.locator("table").count(), 1);
   };
+  // Provider details (Grok text and claim associations) start collapsed under each answer.
+  const openProviderDetails = async (evidence) => {
+    const toggle = evidence.getByTestId("provider-details-toggle");
+    if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+  };
   const assertCitationTargets = async (evidence) => {
+    await openProviderDetails(evidence);
     const citations = evidence.getByTestId("web-supports").getByRole("link");
     for (const citation of await citations.all()) {
       const href = await citation.getAttribute("href");
@@ -89,6 +98,7 @@ export async function exerciseWeb(page) {
     exact: true,
   });
   await source.waitFor();
+  await openProviderDetails(evidence);
   assert.equal(await evidence.locator('[data-slot="badge"]').count(), 2);
   await evidence.getByText("science.nasa.gov", { exact: true }).waitFor();
   assert.equal(await source.getAttribute("href"), webResult.sources[0].url);
@@ -101,10 +111,9 @@ export async function exerciseWeb(page) {
   assert.equal(await support.locator("p").innerText(), webResult.supports[0].text);
   assert.equal(await support.getByRole("link", { name: "[1]", exact: true }).count(), 1);
   assert.equal(await support.getByRole("link", { name: "[2]", exact: true }).count(), 0);
+  // The association note moved from a visible line to each source's hover tooltip.
   assert.equal(
-    await evidence
-      .getByText("Retrieved only · no claim association returned", { exact: true })
-      .count(),
+    await evidence.locator('li[title*="Retrieved only · no claim association returned"]').count(),
     1,
   );
   await evidence.getByTestId("spoken-attribution").waitFor();

@@ -10,9 +10,11 @@ export function ExplorerSection(props: {
   empty: string;
   children: ReactNode;
   footer?: ReactNode;
+  /** Long lists (e.g. Web sources) start collapsed so they don't crowd the explorer. */
+  defaultOpen?: boolean;
 }) {
   return (
-    <Collapsible defaultOpen asChild>
+    <Collapsible defaultOpen={props.defaultOpen ?? true} asChild>
       <section className="border-t px-3 py-2" aria-label={props.title}>
         <CollapsibleTrigger className="group flex w-full items-center gap-1.5 rounded px-1 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
           <ChevronDown className="size-3.5 transition-transform group-data-[state=closed]:-rotate-90" />

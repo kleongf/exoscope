@@ -11,7 +11,10 @@ export async function exerciseAr(page, outDir) {
   const label = await dialog.getByTestId("ar-label").innerText();
   assert(label.includes("Radius: 1.116 −0.012 / +0.014 Earth radii"), label);
   assert(label.includes("not a photograph"), label);
-  await page.waitForFunction(() => document.querySelector("model-viewer")?.loaded === true);
+  // Software WebGL on CI (and a busy laptop) can take well over the 15 s default to load the model.
+  await page.waitForFunction(() => document.querySelector("model-viewer")?.loaded === true, null, {
+    timeout: 60_000,
+  });
   const bytes = await page.evaluate(async () => {
     const src = document.querySelector("model-viewer")?.src;
     return src ? (await (await fetch(src)).arrayBuffer()).byteLength : 0;
@@ -20,7 +23,7 @@ export async function exerciseAr(page, outDir) {
   const status = await dialog.getByTestId("ar-status").innerText();
   assert(status.includes("can't start AR"), status);
   await page.waitForTimeout(800);
-  await page.screenshot({ path: `${outDir}ar.png` });
+  await page.screenshot({ path: `${outDir}ar.png`, timeout: 60_000 });
   await page.keyboard.press("Escape");
   await dialog.waitFor({ state: "detached" });
   await page.getByRole("button", { name: "Close planet properties" }).click();

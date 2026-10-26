@@ -65,7 +65,8 @@ describe("Web evidence in the Project layout", () => {
     expect(articles[3]).toContain("Web search unavailable. Explicit failure");
     expect(articles[3]).not.toContain("Original mock claim");
     expect(articles[3]).not.toContain(source.url);
-    expect(html.match(/href="https:\/\/example.org\/evidence"/g)).toHaveLength(3);
+    // Two turns; the Project's Web sources section starts collapsed, so it renders no links.
+    expect(html.match(/href="https:\/\/example.org\/evidence"/g)).toHaveLength(2);
     expect(html.match(/data-testid="spoken-attribution"/g)).toHaveLength(2);
     const ids = [...html.matchAll(/ id="([^"]+)"/g)].map((match) => match[1]);
     expect(new Set(ids).size).toBe(ids.length);

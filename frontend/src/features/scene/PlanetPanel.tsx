@@ -36,12 +36,12 @@ export function PlanetPanel() {
   return (
     <aside
       aria-label="Selected planet"
-      className="absolute top-3 right-3 z-10 w-72 max-w-[calc(100%-1.5rem)]"
+      className="absolute top-3 right-3 z-10 w-60 max-w-[calc(100%-1.5rem)]"
     >
-      <Card size="sm" data-testid="planet-card" className="shadow-lg">
+      <Card size="sm" data-testid="planet-card" className="gap-2 py-3 shadow-lg">
         <CardHeader>
-          <CardTitle>{planet.name}</CardTitle>
-          <CardDescription className="text-xs">
+          <CardTitle className="text-sm">{planet.name}</CardTitle>
+          <CardDescription className="text-[10px]">
             {provenanceLabel(system.provenance)}
           </CardDescription>
           <CardAction>
@@ -58,22 +58,23 @@ export function PlanetPanel() {
           </CardAction>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-64">
-            <dl className="space-y-3 pr-3 text-xs">
+          {/* Compact: about five properties visible, the rest scroll. */}
+          <ScrollArea className="h-40">
+            <dl className="space-y-1.5 pr-3 text-[11px]">
               {properties.map(([label, quantity]) => (
                 <div key={label}>
-                  <dt className="text-muted-foreground">{label}</dt>
-                  <dd className="mt-1">
+                  <dt className="text-[10px] text-muted-foreground">{label}</dt>
+                  <dd>
                     <QuantityValue quantity={quantity} />
                   </dd>
                 </div>
               ))}
             </dl>
           </ScrollArea>
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p className="mt-2 text-[10px] text-muted-foreground">
             Source papers may differ between properties.
           </p>
-          <div className="mt-3">
+          <div className="mt-2">
             <ArButton planet={planet} system={system} />
           </div>
         </CardContent>

@@ -44,3 +44,23 @@ export function collectWebSources(turns: ConversationTurn[]) {
     associatedIds: entries.filter((entry) => entry.associated).map((entry) => entry.source.id),
   };
 }
+
+const NUMERIC_TITLE = /^\[?\d+\]?$/;
+const ID_LIKE = /^[\da-f-]{8,}$/i;
+
+/** xAI returns no page titles (only "[1]"-style labels), so derive one from the URL slug. */
+export function displayTitle(source: Pick<WebSource, "title" | "url" | "domain">) {
+  const title = source.title.trim();
+  if (title && title !== source.domain && title !== source.url && !NUMERIC_TITLE.test(title)) {
+    return title;
+  }
+  try {
+    const segments = new URL(source.url).pathname.split("/").filter(Boolean);
+    const slug = decodeURIComponent(segments.at(-1) ?? "").replace(/\.[a-z0-9]{2,5}$/i, "");
+    const words = slug.replace(/[-_+]+/g, " ").trim();
+    if (words.length < 4 || ID_LIKE.test(slug) || !/[a-z]/i.test(words)) return source.domain;
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  } catch {
+    return source.domain;
+  }
+}
