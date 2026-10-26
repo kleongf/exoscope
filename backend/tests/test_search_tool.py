@@ -3,25 +3,18 @@
 from functools import partial
 
 import pytest
-from google.genai import types
 
 from exoscope.agent import loop
 from exoscope.agent.tools import search_catalog as search_tool
 from exoscope.agent.tools.registry import TOOLS
 from exoscope.catalog import search_catalog
+from tests.model_fakes import Item, answer
+from tests.model_fakes import call as fake_call
 from tests.test_search_catalog import offline, unavailable
 
 
-def answer(*parts: types.Part) -> types.GenerateContentResponse:
-    return types.GenerateContentResponse(
-        candidates=[types.Candidate(content=types.Content(role="model", parts=list(parts)))]
-    )
-
-
-def call(**arguments: object) -> types.Part:
-    return types.Part(
-        function_call=types.FunctionCall(id="t", name="search_catalog", args=arguments)
-    )
+def call(**arguments: object) -> Item:
+    return fake_call("search_catalog", "t", **arguments)
 
 
 @pytest.fixture(autouse=True)
@@ -34,7 +27,7 @@ def offline_search(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def run(arguments: dict[str, object]) -> loop.AgentResult:
-    responses = iter([answer(call(**arguments)), answer(types.Part(text="Done."))])
+    responses = iter([answer(call(**arguments)), answer("Done.")])
     return loop.run_loop("Find small planets", None, lambda _: next(responses))
 
 

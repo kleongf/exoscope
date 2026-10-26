@@ -1,12 +1,12 @@
 """An unsuccessful Gemma synthesis must never fall back to provider prose or speech."""
 
 import pytest
-from google.genai import types
 
 from exoscope.agent import loop, runner, turn
 from exoscope.agent.models import TurnRequest
 from exoscope.agent.tools import web_search
 from exoscope.websearch.models import WebSearchResult
+from tests.model_fakes import Item
 from tests.test_agent import answer, call, offline_system
 from tests.test_agent_web import OVERCLAIM, QUESTION, evidence
 
@@ -28,7 +28,7 @@ def test_unsuccessful_synthesis_retains_provider_evidence_without_speaking(
     def agent(text: str, current: str | None) -> loop.AgentResult:
         first = True
 
-        def generate(_: list[types.Content]) -> types.GenerateContentResponse:
+        def generate(_: list[Item]) -> dict[str, object]:
             nonlocal first
             if first:
                 first = False
@@ -39,9 +39,9 @@ def test_unsuccessful_synthesis_retains_provider_evidence_without_speaking(
                     )
                 return answer(call("web_search", query=QUESTION))
             if failure == "empty":
-                return answer(types.Part(text="  "))
+                return answer("  ")
             if failure == "no_candidates":
-                return types.GenerateContentResponse()
+                return {"output": []}
             raise RuntimeError("synthetic private provider failure")
 
         return runner.run_loop(text, current, generate)
@@ -73,7 +73,7 @@ def test_compare_and_web_synthesis_share_turn_without_replacing_archive_values(
     responses = iter(
         [
             answer(call("compare", x="radius", y="insolation"), call("web_search", query=QUESTION)),
-            answer(types.Part(text=SYNTHESIS)),
+            answer(SYNTHESIS),
         ]
     )
     result = runner.run_loop(

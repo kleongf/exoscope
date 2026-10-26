@@ -3,7 +3,6 @@
 from datetime import UTC, date, datetime
 
 import pytest
-from google.genai import types
 
 from exoscope.agent import loop, runner
 from exoscope.agent.tools import load_system as load_tool
@@ -56,7 +55,7 @@ def run_mixed(
     replies = iter(
         [
             answer(call("web_search", query=question)),
-            answer(types.Part(text=SYNTHESIS)),
+            answer(SYNTHESIS),
         ]
     )
     return runner.run_loop(question, "TRAPPIST-1", lambda _: next(replies))
@@ -136,7 +135,7 @@ def test_failed_web_search_retains_archive_comparison_without_citation(
     replies = iter(
         [
             answer(call("web_search", query=QUESTION)),
-            answer(types.Part(text="Water is certain.")),
+            answer("Water is certain."),
         ]
     )
     result = runner.run_loop(QUESTION, "TRAPPIST-1", lambda _: next(replies))

@@ -1,7 +1,6 @@
 """Cited and unavailable findings retain the shared voice and archive pipeline."""
 
 import pytest
-from google.genai import types
 
 from exoscope.agent import loop, runner, turn
 from exoscope.agent.models import TurnRequest
@@ -44,7 +43,7 @@ def test_web_success_is_spoken_and_failure_uses_shared_error_path(
         responses = iter(
             [
                 answer(call(name="TRAPPIST-1"), call("web_search", query=text)),
-                answer(types.Part(text=SYNTHESIS)),
+                answer(SYNTHESIS),
             ]
         )
         return runner.run_loop(text, current, lambda _: next(responses))
@@ -98,9 +97,7 @@ def test_missing_archive_radius_is_never_filled_from_web(monkeypatch: pytest.Mon
     monkeypatch.setattr(loop, "load_system", load)
     monkeypatch.setattr(load_tool, "load_system", load)
     monkeypatch.setattr(web_search, "search_web", forbidden)
-    responses = iter(
-        [answer(call("web_search", query="planet radius")), answer(types.Part(text="Radius 9999"))]
-    )
+    responses = iter([answer(call("web_search", query="planet radius")), answer("Radius 9999")])
     result = runner.run_loop("What is planet b's radius?", "TRAPPIST-1", lambda _: next(responses))
     assert (
         result.data.system is not None and result.data.system.planets[0].radius.status == "missing"
@@ -133,7 +130,7 @@ def test_web_numbers_and_instructions_cannot_modify_archive_or_scene(
     responses = iter(
         [
             answer(call(name="TRAPPIST-1"), call("web_search", query=QUESTION)),
-            answer(types.Part(text=SYNTHESIS)),
+            answer(SYNTHESIS),
         ]
     )
     result = runner.run_loop(QUESTION, None, lambda _: next(responses))
@@ -170,7 +167,7 @@ def test_invalid_web_dispatch_reserves_attempt_and_records_real_failed_steps(
     invalid = call("web_search", **arguments)
     valid = call("web_search", query=QUESTION)
     rounds = [answer(invalid, valid)] if batched else [answer(invalid), answer(valid)]
-    replies = iter([*rounds, answer(types.Part(text="Claiming success"))])
+    replies = iter([*rounds, answer("Claiming success")])
     result = runner.run_loop(QUESTION, "TRAPPIST-1", lambda _: next(replies))
     assert result.error is not None and result.data.web_search is None
     assert "Invalid web_search arguments" in result.reply_text
@@ -191,7 +188,7 @@ def test_web_query_accepts_exactly_1000_characters(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(load_tool, "load_system", offline_system)
     monkeypatch.setattr(web_search, "search_web", search)
     query = "x" * 1000
-    replies = iter([answer(call("web_search", query=query)), answer(types.Part(text="Done"))])
+    replies = iter([answer(call("web_search", query=query)), answer("Done")])
     result = runner.run_loop(QUESTION, "TRAPPIST-1", lambda _: next(replies))
     assert queries == [query] and result.error is None
     assert result.steps[0].status == "completed"
@@ -212,7 +209,7 @@ def test_recovered_lookup_warning_survives_a_cited_web_finding(
         [
             answer(call(name="Trappist One")),
             answer(call(name="TRAPPIST-1"), call("web_search", query=QUESTION)),
-            answer(types.Part(text=SYNTHESIS)),
+            answer(SYNTHESIS),
         ]
     )
     result = runner.run_loop(QUESTION, None, lambda _: next(replies))

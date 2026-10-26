@@ -1,6 +1,5 @@
-"""Every tool Gemma may call. Add a tool by adding its module and one line here."""
+"""Every tool the model may call. Add a tool by adding its module and one line here."""
 
-from google.genai import types
 from pydantic import BaseModel
 
 from exoscope.agent.tools.base import Tool
@@ -25,14 +24,15 @@ TOOLS: dict[str, Tool[BaseModel]] = {
 }
 
 
-def declaration() -> types.Tool:
-    return types.Tool(
-        function_declarations=[
-            types.FunctionDeclaration(
-                name=tool.name,
-                description=tool.description,
-                parameters_json_schema=tool.arguments.model_json_schema(),
-            )
-            for tool in TOOLS.values()
-        ]
-    )
+def tool_definitions() -> list[dict[str, object]]:
+    """Responses API function tools. Not strict: Pydantic schemas keep optional fields."""
+    return [
+        {
+            "type": "function",
+            "name": tool.name,
+            "description": tool.description,
+            "parameters": tool.arguments.model_json_schema(),
+            "strict": False,
+        }
+        for tool in TOOLS.values()
+    ]

@@ -3,13 +3,13 @@
 from datetime import UTC, datetime
 
 import pytest
-from google.genai import types
 
 from exoscope.agent import loop, runner
 from exoscope.agent.tools import load_system as load_tool
 from exoscope.agent.tools import web_search
 from exoscope.catalog import CatalogError, System
 from exoscope.websearch.models import WebSearchResult, WebSource, WebSupport
+from tests.model_fakes import Item
 from tests.test_agent import answer, call, offline_system
 
 QUESTION = "Does any of these have liquid water?"
@@ -40,23 +40,22 @@ def evidence(query: str) -> WebSearchResult:
 
 
 def run_search(
-    monkeypatch: pytest.MonkeyPatch, question: str = QUESTION, *calls: types.Part
+    monkeypatch: pytest.MonkeyPatch, question: str = QUESTION, *calls: Item
 ) -> loop.AgentResult:
     monkeypatch.setattr(loop, "load_system", offline_system)
     monkeypatch.setattr(load_tool, "load_system", offline_system)
     responses = iter(
         [
             answer(*(calls or (call("web_search", query=question),))),
-            answer(types.Part(text=SYNTHESIS)),
+            answer(SYNTHESIS),
         ]
     )
     return runner.run_loop(question, "TRAPPIST-1", lambda _: next(responses))
 
 
 def test_custom_declaration_does_not_mix_builtin_search() -> None:
-    tool = loop.declaration()
-    declarations = tool.function_declarations or []
-    assert {item.name for item in declarations} == {
+    declarations = loop.tool_definitions()
+    assert {item["name"] for item in declarations} == {
         "load_system",
         "compare",
         "search_catalog",
@@ -65,12 +64,14 @@ def test_custom_declaration_does_not_mix_builtin_search() -> None:
         "list_project_items",
         "export_report",
     }
-    assert tool.google_search is None
-    web = next(item for item in declarations if item.name == "web_search")
-    assert web.parameters_json_schema is not None
-    assert web.parameters_json_schema["required"] == ["query"]
-    assert web.parameters_json_schema["additionalProperties"] is False
-    assert web.parameters_json_schema["properties"]["query"]["maxLength"] == 1000
+    # Only our custom web_search: the built-in search tool would bypass the Web policy.
+    assert all(item["type"] == "function" for item in declarations)
+    web = next(item for item in declarations if item["name"] == "web_search")
+    schema = web["parameters"]
+    assert isinstance(schema, dict)
+    assert schema["required"] == ["query"]
+    assert schema["additionalProperties"] is False
+    assert schema["properties"]["query"]["maxLength"] == 1000
 
 
 def test_liquid_water_loads_first_then_retains_gemma_synthesis(
@@ -94,7 +95,7 @@ def test_liquid_water_loads_first_then_retains_gemma_synthesis(
     responses = iter(
         [
             answer(call(name="TRAPPIST-1"), call("web_search", query=QUESTION)),
-            answer(types.Part(text=SYNTHESIS)),
+            answer(SYNTHESIS),
         ]
     )
     result = runner.run_loop(QUESTION, None, lambda _: next(responses))
@@ -175,7 +176,7 @@ def test_duplicates_consume_one_attempt_including_batches(
     monkeypatch.setattr(load_tool, "load_system", offline_system)
     part = call("web_search", query=QUESTION)
     rounds = [answer(part, part)] if batched else [answer(part), answer(part)]
-    responses = iter([*rounds, answer(types.Part(text="Done"))])
+    responses = iter([*rounds, answer("Done")])
     result = runner.run_loop(QUESTION, "TRAPPIST-1", lambda _: next(responses))
     assert queries == [QUESTION]
     assert result.data.web_search is not None and result.data.web_search.status == "ok"
@@ -275,7 +276,7 @@ def test_search_requires_successful_archive_refresh(monkeypatch: pytest.MonkeyPa
     monkeypatch.setattr(loop, "load_system", fail)
     monkeypatch.setattr(load_tool, "load_system", fail)
     monkeypatch.setattr(web_search, "search_web", forbidden)
-    responses = iter([answer(call("web_search", query=QUESTION)), answer(types.Part(text="Done"))])
+    responses = iter([answer(call("web_search", query=QUESTION)), answer("Done")])
     result = runner.run_loop(QUESTION, "unknown", lambda _: next(responses))
     assert result.data.web_search is None and result.data.system is None
     assert "Load or refresh" in result.reply_text

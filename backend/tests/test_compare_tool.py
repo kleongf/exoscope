@@ -3,16 +3,16 @@
 import json
 
 import pytest
-from google.genai import types
 
 from exoscope.agent import loop
 from exoscope.agent.result import AgentResult
 from exoscope.agent.tools import compare as compare_tool
 from exoscope.agent.tools.base import ToolError
 from exoscope.agent.tools.compare import COMPARE
-from exoscope.agent.tools.registry import TOOLS, declaration
+from exoscope.agent.tools.registry import TOOLS, tool_definitions
 from exoscope.catalog import System, load_system
 from tests.catalog_fakes import unavailable
+from tests.model_fakes import answer, call
 
 
 def snapshot_system(name: str) -> System:
@@ -27,7 +27,7 @@ def with_current(name: str = "TRAPPIST-1") -> AgentResult:
 
 def test_compare_is_registered_and_declared() -> None:
     assert "compare" in TOOLS
-    names = [d.name for d in declaration().function_declarations or []]
+    names = [d["name"] for d in tool_definitions()]
     assert names == [
         "load_system",
         "compare",
@@ -84,25 +84,10 @@ def test_unlisted_property_never_reaches_compare_through_the_loop(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(loop, "load_system", snapshot_system)
-    call = types.Part(
-        function_call=types.FunctionCall(
-            name="compare", args={"x": "radius", "y": "habitability"}, id="c1"
-        )
-    )
     responses = iter(
         [
-            types.GenerateContentResponse(
-                candidates=[types.Candidate(content=types.Content(role="model", parts=[call]))]
-            ),
-            types.GenerateContentResponse(
-                candidates=[
-                    types.Candidate(
-                        content=types.Content(
-                            role="model", parts=[types.Part(text="I could not compare that.")]
-                        )
-                    )
-                ]
-            ),
+            answer(call("compare", "c1", x="radius", y="habitability")),
+            answer("I could not compare that."),
         ]
     )
     result = loop.run_loop(

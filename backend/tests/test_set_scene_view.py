@@ -1,7 +1,6 @@
 """set_scene_view validates against the open System and never claims a change it didn't make."""
 
 import pytest
-from google.genai import types
 from pydantic import ValidationError
 
 from exoscope.agent import loop
@@ -10,6 +9,7 @@ from exoscope.agent.tools.set_scene_view import SET_SCENE_VIEW
 from exoscope.catalog import CatalogUnavailableError, System, load_system
 from exoscope.catalog.tap import Row
 from exoscope.scene.planets import SceneError, resolve_planet
+from tests.model_fakes import Item, answer, call
 
 
 def offline_system(name: str) -> System:
@@ -63,16 +63,8 @@ def test_invalid_arguments_are_rejected(raw: dict[str, object]) -> None:
         SET_SCENE_VIEW.invoke(raw, AgentResult())
 
 
-def _answer(*parts: types.Part) -> types.GenerateContentResponse:
-    return types.GenerateContentResponse(
-        candidates=[types.Candidate(content=types.Content(role="model", parts=list(parts)))]
-    )
-
-
-def _scene_call(**arguments: object) -> types.Part:
-    return types.Part(
-        function_call=types.FunctionCall(id="scene", name="set_scene_view", args=arguments)
-    )
+def _scene_call(**arguments: object) -> Item:
+    return call("set_scene_view", "scene", **arguments)
 
 
 def _serve(monkeypatch: pytest.MonkeyPatch, system: System) -> None:
@@ -88,7 +80,7 @@ def test_loop_rejects_unknown_planet_in_current_system(
     monkeypatch: pytest.MonkeyPatch, trappist: System
 ) -> None:
     _serve(monkeypatch, trappist)
-    replies = iter([_answer(_scene_call(focus="z")), _answer(types.Part(text="Focused z."))])
+    replies = iter([answer(_scene_call(focus="z")), answer("Focused z.")])
     result = loop.run_loop("Focus on planet z", "TRAPPIST-1", lambda _: next(replies))
     assert result.ui_commands == []
     assert result.error is not None and "has no planet 'z'" in result.error
@@ -102,8 +94,8 @@ def test_loop_focus_and_speed_in_current_system(
     _serve(monkeypatch, trappist)
     replies = iter(
         [
-            _answer(_scene_call(focus="e", days_per_second=10)),
-            _answer(types.Part(text="Focused on TRAPPIST-1 e and sped up time.")),
+            answer(_scene_call(focus="e", days_per_second=10)),
+            answer("Focused on TRAPPIST-1 e and sped up time."),
         ]
     )
     result = loop.run_loop("Focus on e and speed up", "TRAPPIST-1", lambda _: next(replies))

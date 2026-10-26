@@ -1,26 +1,32 @@
-"""Plain google-genai loop. Only typed catalog tools can supply archive data."""
+"""OpenAI Responses API tool loop. Only typed catalog tools can supply archive data."""
 
 import json
-import os
 from collections.abc import Callable
-from time import monotonic
+from time import monotonic, sleep
 
-from google import genai
-from google.genai import types
+import httpx
 from pydantic import ValidationError
 
 from exoscope.agent import brief
-from exoscope.agent.model_config import gemma_model
 from exoscope.agent.models import ToolStep
+from exoscope.agent.responses import FunctionCall, Item, final_text, function_calls, output_items
 from exoscope.agent.result import AgentResult
 from exoscope.agent.tools.base import TOOL_ERRORS, ToolError
-from exoscope.agent.tools.registry import TOOLS, declaration
+from exoscope.agent.tools.registry import TOOLS, tool_definitions
 from exoscope.catalog import CatalogError, load_system
+from exoscope.openai_api import (
+    OpenAIUnavailableError,
+    agent_model,
+    failure_message,
+    openai_client,
+)
 
-__all__ = ["AgentResult", "declaration", "run_agent", "run_loop"]
+__all__ = ["AgentResult", "run_agent", "run_loop", "tool_definitions"]
 
 MAX_TOOL_CALLS = 5
-Generate = Callable[[list[types.Content]], types.GenerateContentResponse]
+TIMEOUT = httpx.Timeout(30.0, connect=5.0)
+ATTEMPTS = 3  # retry server errors only, never 429s
+Generate = Callable[[list[Item]], dict[str, object]]
 INSTRUCTIONS = (
     "You are ExoScope, a student exoplanet research assistant. Only tool results supply "
     "archive measurements; never invent numbers or canonical names. Call load_system to open "
@@ -44,13 +50,13 @@ INSTRUCTIONS = (
 )
 
 
-def _execute(call: types.FunctionCall, result: AgentResult) -> tuple[dict[str, object], str]:
-    tool = TOOLS.get(call.name or "")
+def _execute(call: FunctionCall, result: AgentResult) -> tuple[dict[str, object], str]:
+    tool = TOOLS.get(call.name)
     try:
         if tool is None:
             raise ToolError(f"Unsupported tool call; available tools: {', '.join(TOOLS)}.")
-        output = tool.invoke(call.args or {}, result)
-    except ValidationError:
+        output = tool.invoke(json.loads(call.arguments or "{}"), result)
+    except (ValidationError, json.JSONDecodeError):
         error = f"Invalid {call.name} arguments."
     except TOOL_ERRORS as exc:
         error = str(exc)
@@ -65,7 +71,7 @@ def _execute(call: types.FunctionCall, result: AgentResult) -> tuple[dict[str, o
     return {"error": error}, error
 
 
-def _dispatch(call: types.FunctionCall, result: AgentResult) -> dict[str, object]:
+def _dispatch(call: FunctionCall, result: AgentResult) -> dict[str, object]:
     started = monotonic()
     payload: dict[str, object] = {}
     detail = "Tool dispatch failed."
@@ -85,7 +91,7 @@ def _dispatch(call: types.FunctionCall, result: AgentResult) -> dict[str, object
         )
 
 
-def _contents(text: str, current_system: str | None, result: AgentResult) -> list[types.Content]:
+def _input(text: str, current_system: str | None, result: AgentResult) -> list[Item]:
     context = "No System is currently selected."
     if current_system is not None:
         # Re-fetch trusted archive data rather than accepting client numbers or a guessed name.
@@ -105,113 +111,84 @@ def _contents(text: str, current_system: str | None, result: AgentResult) -> lis
                 result.warnings.append("Live archive unavailable; using dated Snapshot data.")
             compact = json.dumps(brief.system(system), separators=(",", ":"), ensure_ascii=False)
             context = f"Current canonical System data: {compact}"
-    return [
-        types.Content(role="user", parts=[types.Part(text=f"{INSTRUCTIONS}\n{context}\n{text}")])
-    ]
-
-
-def gemma_failure(exc: Exception) -> str:
-    """A safe, specific message: status code and kind only, never the provider body."""
-    code = getattr(exc, "code", None)
-    if code == 429:
-        return (
-            "Gemma's rate limit was reached (free tier: 16k input tokens per minute). "
-            "Wait about a minute and ask again."
-        )
-    if isinstance(code, int) and code >= 500:
-        return f"Gemma's servers returned an error ({code}) after 3 attempts. Please ask again."
-    if isinstance(exc, TimeoutError) or "timeout" in type(exc).__name__.lower():
-        return "Gemma took too long to answer (over 30 s). Please ask again."
-    return "Gemma could not complete this turn. Please ask again."
+    return [{"role": "user", "content": f"{context}\n{text}"}]
 
 
 def run_loop(text: str, current_system: str | None, generate: Generate) -> AgentResult:
     result = AgentResult()
     try:
-        contents = _contents(text, current_system, result)
-        _iterate(contents, generate, result)
+        _iterate(_input(text, current_system, result), generate, result)
     except CatalogError as exc:
         result.error = str(exc)
     except Exception as exc:
-        # Do not expose SDK exception bodies/URLs, which can contain credentials.
-        message = gemma_failure(exc)
+        # Never expose provider bodies or URLs, which can contain credentials.
+        message = failure_message("The agent", exc)
         result.error = f"{result.error} {message}" if result.error else message
     if result.error:
         result.reply_text = result.error
     return result
 
 
-def _iterate(contents: list[types.Content], generate: Generate, result: AgentResult) -> None:
+def _iterate(items: list[Item], generate: Generate, result: AgentResult) -> None:
     count = 0
     for _ in range(MAX_TOOL_CALLS + 1):
-        response = generate(contents)
-        candidates = response.candidates or []
-        if not candidates or not candidates[0].content:
-            raise ValueError("No model content")
-        content = candidates[0].content
-        assert content is not None
-        parts = content.parts or []
-        calls = [part.function_call for part in parts if part.function_call]
+        output = output_items(generate(items))
+        calls = function_calls(output)
         if not calls:
-            result.reply_text = "".join(
-                part.text or "" for part in parts if not part.thought
-            ).strip()
+            result.reply_text = final_text(output)
             if not result.reply_text:
                 raise ValueError("No final answer")
             return
-        contents.append(content)  # Preserve IDs and thought signatures verbatim.
-        replies: list[types.Part] = []
+        # Send every output item back verbatim: reasoning items must accompany their calls.
+        items.extend(output)
         for call in calls:
             if count >= MAX_TOOL_CALLS:
                 error = "Tool-call limit reached (5); remaining actions were not run."
                 result.error = f"{result.error} {error}" if result.error else error
                 return
             count += 1
-            replies.append(
-                types.Part(
-                    function_response=types.FunctionResponse(
-                        id=call.id, name=call.name or "unknown", response=_dispatch(call, result)
-                    )
-                )
+            payload = _dispatch(call, result)
+            items.append(
+                {
+                    "type": "function_call_output",
+                    "call_id": call.call_id,
+                    "output": json.dumps(payload),
+                }
             )
-        contents.append(types.Content(role="tool", parts=replies))
+
+
+def _post(client: httpx.Client, body: dict[str, object]) -> dict[str, object]:
+    for attempt in range(ATTEMPTS):
+        response = client.post("/v1/responses", json=body)
+        if response.status_code >= 500 and attempt < ATTEMPTS - 1:
+            sleep(0.5 * 2**attempt)
+            continue
+        response.raise_for_status()
+        return response.json()
+    raise AssertionError("unreachable")
 
 
 def run_agent(text: str, current_system: str | None = None) -> AgentResult:
-    key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-    if not key:
-        error = "Gemma is unavailable: GEMINI_API_KEY (or GOOGLE_API_KEY) is not configured."
-        return AgentResult(reply_text=error, error=error)
     try:
-        model = gemma_model()
-        with genai.Client(
-            api_key=key,
-            http_options=types.HttpOptions(
-                timeout=30_000,
-                # Gemma intermittently returns 500 INTERNAL; retry server errors, never 429s.
-                retry_options=types.HttpRetryOptions(
-                    attempts=3,
-                    initial_delay=0.5,
-                    max_delay=2,
-                    http_status_codes=[500, 502, 503, 504],
-                ),
-            ),
-        ) as client:
+        with openai_client(TIMEOUT) as client:
+            model = agent_model()
+            tools = tool_definitions()
 
-            def generate(contents: list[types.Content]) -> types.GenerateContentResponse:
-                return client.models.generate_content(  # pyright: ignore[reportUnknownMemberType]
-                    model=model,
-                    contents=contents,
-                    config=types.GenerateContentConfig(
-                        tools=[declaration()],
-                        automatic_function_calling=types.AutomaticFunctionCallingConfig(
-                            disable=True
-                        ),
-                        max_output_tokens=1024,
-                    ),
+            def generate(items: list[Item]) -> dict[str, object]:
+                return _post(
+                    client,
+                    {
+                        "model": model,
+                        "instructions": INSTRUCTIONS,
+                        "input": items,
+                        "tools": tools,
+                        "max_output_tokens": 1024,
+                        "store": False,
+                        "include": ["reasoning.encrypted_content"],
+                    },
                 )
 
             return run_loop(text, current_system, generate)
-    except Exception:
-        error = "Gemma could not start this turn. Its live tool path remains unverified."
+    except OpenAIUnavailableError as exc:
+        error = f"The agent is unavailable: {exc}"
         return AgentResult(reply_text=error, error=error)

@@ -1,16 +1,16 @@
 """Typed tools and the manual route share the exporter and canonical Project."""
 
 import pytest
-from google.genai import types
 from pydantic import ValidationError
 
 from exoscope.agent import runner, turn
 from exoscope.agent.result import AgentResult
 from exoscope.agent.tools.base import ToolError
-from exoscope.agent.tools.registry import TOOLS, declaration
+from exoscope.agent.tools.registry import TOOLS, tool_definitions
 from exoscope.project import Project
 from exoscope.report.context import ACTIVE_PROJECT, active_project, bind_project
 from exoscope.report.models import ReportRequest
+from tests.model_fakes import Item
 from tests.report_fixtures import PNG, html, saved_project, snapshot, store
 from tests.test_agent import answer, call
 from tests.test_app import request
@@ -19,7 +19,7 @@ __all__ = ["saved_project"]
 
 
 def test_strict_registry_and_canonical_id_discovery(saved_project: Project) -> None:
-    names = {item.name for item in declaration().function_declarations or []}
+    names = {item["name"] for item in tool_definitions()}
     assert {"list_project_items", "export_report"} <= names
     with pytest.raises(ToolError, match="Choose and save"):
         TOOLS["export_report"].invoke(
@@ -67,7 +67,7 @@ def test_injected_model_export_survives_turn_record_and_voice_failure(
                     summary="Gemma narrative\n\nA short Results paragraph.",
                 )
             ),
-            answer(types.Part(text="The Report is ready.")),
+            answer("The Report is ready."),
         ]
     )
 
@@ -174,7 +174,7 @@ def test_completed_report_survives_model_reply_failure(
 ) -> None:
     calls = 0
 
-    def generate(_: list[types.Content]) -> types.GenerateContentResponse:
+    def generate(_: list[Item]) -> dict[str, object]:
         nonlocal calls
         calls += 1
         if calls == 1:
