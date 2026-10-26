@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import type {
   Comparison,
+  Project,
+  ProjectSummary,
   ReplyAudio,
   System,
   ToolStep,
@@ -8,6 +10,7 @@ import type {
   UiCommand,
   WebSearchResult,
 } from "../api/client";
+import { restoreProject, savedProject, type ProjectState } from "./project";
 import { addSample, type SampleState } from "./samples";
 
 export type TurnStatus = "idle" | "requesting" | "recording" | "processing";
@@ -43,7 +46,7 @@ export interface SceneState {
   colorBy: ColorBy;
 }
 export const DEFAULT_DAYS_PER_SECOND = 0.5;
-export interface ExoState extends SceneState, SampleState {
+export interface ExoState extends SceneState, SampleState, ProjectState {
   loadedSystems: System[];
   /** Comparisons build up across the Project; the drawer shows the active one. */
   comparisons: SavedComparison[];
@@ -72,6 +75,10 @@ export interface ExoState extends SceneState, SampleState {
   beginTurn: (transcript: string) => void;
   acceptTurn: (response: TurnResponse) => void;
   applyCommand: (command: UiCommand) => void;
+  /** Show a saved Project: its Systems, comparisons, Samples and chat replace what was shown. */
+  openProject: (project: Project) => void;
+  setProjects: (projects: ProjectSummary[]) => void;
+  failProject: (error: string) => void;
 }
 
 export function reduceCommand(state: SceneState, command: UiCommand): SceneState {
@@ -152,6 +159,9 @@ export const useExoStore = create<ExoState>()((set) => ({
   playback: "idle",
   error: null,
   warnings: [],
+  project: null,
+  projects: [],
+  projectError: null,
   setDrawerOpen: (drawerOpen) => {
     set({ drawerOpen });
   },
@@ -236,6 +246,7 @@ export const useExoStore = create<ExoState>()((set) => ({
           (systems, command) => remember(systems, command.system),
           state.loadedSystems,
         ),
+        ...savedProject(state, response),
         transcript: response.transcript,
         replyText: response.reply_text,
         replyAudio: response.reply_audio ?? null,
@@ -254,6 +265,15 @@ export const useExoStore = create<ExoState>()((set) => ({
         }),
       };
     });
+  },
+  openProject: (project) => {
+    set(restoreProject(project));
+  },
+  setProjects: (projects) => {
+    set({ projects });
+  },
+  failProject: (projectError) => {
+    set({ projectError });
   },
   applyCommand: (command) => {
     set((state) => ({

@@ -60,6 +60,109 @@
           }
         }
       }
+    },
+    "/projects": {
+      "get": {
+        "summary": "List Projects",
+        "operationId": "list_projects_projects_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectSummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Projects Projects Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Project",
+        "operationId": "create_project_projects_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewProject"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{project_id}": {
+      "get": {
+        "summary": "Load Project",
+        "operationId": "load_project_projects__project_id__get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -149,6 +252,29 @@
         "type": "object",
         "required": ["x", "y", "rows", "provenance", "notes"],
         "title": "Comparison"
+      },
+      "ComparisonItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "turn_id": {
+            "type": "string",
+            "title": "Turn Id"
+          },
+          "made_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Made At"
+          },
+          "comparison": {
+            "$ref": "#/components/schemas/Comparison"
+          }
+        },
+        "type": "object",
+        "required": ["id", "turn_id", "made_at", "comparison"],
+        "title": "ComparisonItem"
       },
       "ComparisonRow": {
         "properties": {
@@ -504,6 +630,24 @@
         "required": ["unit"],
         "title": "Missing"
       },
+      "NewProject": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "title": "NewProject"
+      },
       "Planet": {
         "properties": {
           "name": {
@@ -733,6 +877,154 @@
         ],
         "title": "Planet"
       },
+      "Project": {
+        "properties": {
+          "format": {
+            "type": "string",
+            "const": "exoscope.project",
+            "title": "Format",
+            "default": "exoscope.project"
+          },
+          "version": {
+            "type": "integer",
+            "const": 1,
+            "title": "Version",
+            "default": 1
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "current_system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current System",
+            "description": "Hostname shown in the System view"
+          },
+          "next_seq": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Next Seq",
+            "description": "Next number for turn and item IDs",
+            "default": 1
+          },
+          "turns": {
+            "items": {
+              "$ref": "#/components/schemas/TurnRecord"
+            },
+            "type": "array",
+            "title": "Turns"
+          },
+          "systems": {
+            "items": {
+              "$ref": "#/components/schemas/SystemItem"
+            },
+            "type": "array",
+            "title": "Systems"
+          },
+          "samples": {
+            "items": {
+              "$ref": "#/components/schemas/SampleItem"
+            },
+            "type": "array",
+            "title": "Samples"
+          },
+          "comparisons": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonItem"
+            },
+            "type": "array",
+            "title": "Comparisons"
+          },
+          "web_sources": {
+            "items": {
+              "$ref": "#/components/schemas/WebSourceItem"
+            },
+            "type": "array",
+            "title": "Web Sources"
+          },
+          "reports": {
+            "items": {
+              "$ref": "#/components/schemas/ReportRecord"
+            },
+            "type": "array",
+            "title": "Reports"
+          }
+        },
+        "type": "object",
+        "required": ["id", "name", "created_at", "updated_at"],
+        "title": "Project"
+      },
+      "ProjectSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "item_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Count"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": ["id", "name", "updated_at", "item_count"],
+        "title": "ProjectSummary",
+        "description": "One row in the Project switcher. A file that can't be read is listed with its error."
+      },
       "Reference": {
         "properties": {
           "label": {
@@ -771,6 +1063,44 @@
         "type": "object",
         "required": ["data_base64", "mime_type"],
         "title": "ReplyAudio"
+      },
+      "ReportRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "request": {
+            "type": "string",
+            "title": "Request",
+            "description": "What the student asked for, e.g. 'a report on ...'"
+          },
+          "written_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Written At"
+          },
+          "includes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Includes",
+            "description": "IDs of the Project items the Report covers"
+          },
+          "file": {
+            "type": "string",
+            "title": "File",
+            "description": "The Report's HTML file name, rendered once and never edited"
+          }
+        },
+        "type": "object",
+        "required": ["id", "title", "request", "written_at", "includes", "file"],
+        "title": "ReportRecord"
       },
       "Sample": {
         "properties": {
@@ -896,6 +1226,29 @@
         "type": "object",
         "required": ["name", "label", "unit"],
         "title": "SampleField"
+      },
+      "SampleItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "turn_id": {
+            "type": "string",
+            "title": "Turn Id"
+          },
+          "ran_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ran At"
+          },
+          "sample": {
+            "$ref": "#/components/schemas/Sample"
+          }
+        },
+        "type": "object",
+        "required": ["id", "turn_id", "ran_at", "sample"],
+        "title": "SampleItem"
       },
       "SamplePlanet": {
         "properties": {
@@ -1180,6 +1533,32 @@
         ],
         "title": "Star"
       },
+      "StepRecord": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["completed", "failed"],
+            "title": "Status"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "elapsed_ms": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Elapsed Ms"
+          }
+        },
+        "type": "object",
+        "required": ["name", "status", "detail", "elapsed_ms"],
+        "title": "StepRecord",
+        "description": "One operation that ran during a turn, as shown in the chat and a Report's tool-call log."
+      },
       "System": {
         "properties": {
           "hostname": {
@@ -1227,6 +1606,30 @@
         "required": ["hostname", "star", "planets", "provenance", "notes"],
         "title": "System",
         "description": "One host star and its known planets."
+      },
+      "SystemItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "turn_id": {
+            "type": "string",
+            "title": "Turn Id",
+            "description": "The turn that last opened this System"
+          },
+          "opened_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Opened At"
+          },
+          "system": {
+            "$ref": "#/components/schemas/System"
+          }
+        },
+        "type": "object",
+        "required": ["id", "turn_id", "opened_at", "system"],
+        "title": "SystemItem"
       },
       "SystemProvenance": {
         "properties": {
@@ -1360,6 +1763,59 @@
         "type": "object",
         "title": "TurnData"
       },
+      "TurnRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "transcript": {
+            "type": "string",
+            "title": "Transcript"
+          },
+          "reply_text": {
+            "type": "string",
+            "title": "Reply Text"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/StepRecord"
+            },
+            "type": "array",
+            "title": "Steps"
+          },
+          "web_search": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WebSearchResult"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The turn's web search, so its cited answer can be shown again"
+          }
+        },
+        "type": "object",
+        "required": ["id", "at", "transcript", "reply_text"],
+        "title": "TurnRecord"
+      },
       "TurnRequest": {
         "properties": {
           "text": {
@@ -1397,6 +1853,19 @@
               }
             ],
             "title": "Current System"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id",
+            "description": "The Project this turn is saved to"
           }
         },
         "additionalProperties": false,
@@ -1483,6 +1952,17 @@
             },
             "type": "array",
             "title": "Steps"
+          },
+          "project": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Project"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Project after this turn was saved; None if not saved"
           }
         },
         "type": "object",
@@ -1615,6 +2095,40 @@
         "type": "object",
         "required": ["id", "title", "url", "retrieved_at", "domain"],
         "title": "WebSource"
+      },
+      "WebSourceItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "turn_id": {
+            "type": "string",
+            "title": "Turn Id",
+            "description": "The turn that first cited it"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Retrieved At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "turn_id", "title", "url", "domain", "retrieved_at"],
+        "title": "WebSourceItem",
+        "description": "A Web source cited in the Project, listed once even if several turns cite it."
       },
       "WebSupport": {
         "properties": {

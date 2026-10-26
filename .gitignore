@@ -15,3 +15,6 @@ artifacts/
 
 # Agent worktrees
 .claude/worktrees/
+
+# Saved Projects (local student work)
+/projects/

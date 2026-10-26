@@ -1,11 +1,22 @@
 """FastAPI entrypoint. Routes stay thin; logic lives in feature modules."""
 
-from fastapi import FastAPI
+from datetime import UTC, datetime
+from typing import Annotated
+
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from exoscope.agent.environment import load_environment
 from exoscope.agent.turn import TurnRequest, TurnResponse, handle_turn
+from exoscope.project import (
+    Project,
+    ProjectCorruptError,
+    ProjectNotFoundError,
+    ProjectStore,
+    ProjectSummary,
+    projects_dir,
+)
 
 load_environment()
 
@@ -27,6 +38,37 @@ def health() -> Health:
     return Health(status="ok")
 
 
+def get_projects() -> ProjectStore:
+    return ProjectStore(projects_dir())
+
+
+Projects = Annotated[ProjectStore, Depends(get_projects)]
+
+
+class NewProject(BaseModel):
+    name: str | None = Field(default=None, max_length=120)
+
+
 @app.post("/turn")
-def turn(request: TurnRequest) -> TurnResponse:
-    return handle_turn(request)
+def turn(request: TurnRequest, projects: Projects) -> TurnResponse:
+    return handle_turn(request, projects)
+
+
+@app.get("/projects")
+def list_projects(projects: Projects) -> list[ProjectSummary]:
+    return projects.list()
+
+
+@app.post("/projects")
+def create_project(body: NewProject, projects: Projects) -> Project:
+    return projects.create(body.name, now=datetime.now(UTC))
+
+
+@app.get("/projects/{project_id}", responses={404: {}, 409: {}})
+def load_project(project_id: str, projects: Projects) -> Project:
+    try:
+        return projects.load(project_id)
+    except ProjectNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from None
+    except ProjectCorruptError as exc:
+        raise HTTPException(409, str(exc)) from None

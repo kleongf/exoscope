@@ -32,6 +32,9 @@ for port in 8000 5173; do
     exit 1
   fi
 done
+# Smoke runs save Projects here, never among the student's real Projects.
+rm -rf artifacts/projects
+export EXOSCOPE_PROJECTS_DIR="$ROOT/artifacts/projects"
 (cd backend && uv run uvicorn exoscope.app:app --port 8000 >"$ROOT/artifacts/backend.log" 2>&1) &
 BACK=$!
 (cd frontend && pnpm -s preview >"$ROOT/artifacts/frontend.log" 2>&1) &

@@ -18,11 +18,34 @@ describe("single turn controller", () => {
     const controller = new TurnController();
     await controller.submit({ text: "Open TRAPPIST-1" });
     expect(sendTurn).toHaveBeenCalledWith(
-      { text: "Open TRAPPIST-1", current_system: null },
+      { text: "Open TRAPPIST-1", current_system: null, project_id: null },
       expect.any(AbortSignal),
     );
     expect(useExoStore.getState().transcript).toBe(reply.transcript);
     expect(useExoStore.getState().status).toBe("idle");
+    controller.dispose();
+  });
+  it("saves the turn to the open Project", async () => {
+    vi.mocked(sendTurn).mockResolvedValue(reply);
+    const at = "2026-10-25T15:00:00Z";
+    useExoStore.setState({
+      project: {
+        format: "exoscope.project",
+        version: 1,
+        id: "p-0000000a",
+        name: "Rocky worlds",
+        created_at: at,
+        updated_at: at,
+        next_seq: 1,
+      },
+    });
+    const controller = new TurnController();
+    await controller.submit({ text: "Compare radius" });
+    expect(sendTurn).toHaveBeenLastCalledWith(
+      expect.objectContaining({ project_id: "p-0000000a" }),
+      expect.any(AbortSignal),
+    );
+    useExoStore.setState({ project: null });
     controller.dispose();
   });
   it("suppresses duplicate submits and ignores a response arriving after unmount", async () => {

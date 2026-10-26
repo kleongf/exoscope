@@ -38,6 +38,7 @@ def test_turn_returns_validated_response(monkeypatch: pytest.MonkeyPatch) -> Non
         "error": "Agent unavailable",
         "warnings": [],
         "steps": [],
+        "project": None,
     }
 
 

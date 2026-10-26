@@ -76,7 +76,9 @@ export async function exerciseLayout(page) {
     () => document.querySelectorAll('[data-testid="conversation-turn"]').length === 4,
   );
   await page.getByTestId("turn-status").filter({ hasText: "Ready" }).waitFor();
-  assert.deepEqual(reloads, [{ text: "Open TRAPPIST-1", current_system: "TRAPPIST-1" }]);
+  const sent = reloads.map(({ text, current_system }) => ({ text, current_system }));
+  assert.deepEqual(sent, [{ text: "Open TRAPPIST-1", current_system: "TRAPPIST-1" }]);
+  assert.match(reloads[0].project_id, /^p-[0-9a-f]{8}$/, "turn is not saved to a Project");
   console.log(
     "layout smoke: three panels, canonical selection, floating card, units/uncertainties/source tooltips, missing values, drawer, history and responsive layout",
   );
