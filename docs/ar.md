@@ -2,6 +2,8 @@
 
 Select a planet, open its card, and press **View in AR**. ExoScope builds a schematic model in the browser: a sphere tinted by equilibrium temperature with a latitude/longitude grid, and a label baked into the model. The label gives the planet's name, radius (with unit and uncertainty, or "Missing"), equilibrium temperature, what the colour means, and the Live/Snapshot provenance. Nothing is downloaded or generated, and the model is never presented as a photograph.
 
+When the selected planet has a measured radius, **Compare with Earth in AR** places Earth and the planet side by side at the same radius scale. Each body carries its radius and provenance in the model. Earth is explicitly a standard reference value rather than archive data. The planet's faint outer shell and label show its ±1σ radius range. If the archive has no radius, the comparison is disabled and says **Radius missing in the archive**; ExoScope never invents a size.
+
 ## Which phones work
 
 | Device | Browser | AR mode |

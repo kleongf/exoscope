@@ -23,6 +23,37 @@ export async function exerciseAr(page, outDir) {
   await page.screenshot({ path: `${outDir}ar.png` });
   await page.keyboard.press("Escape");
   await dialog.waitFor({ state: "detached" });
+
+  await card.getByRole("button", { name: "Compare with Earth in AR" }).click();
+  const comparison = page.getByTestId("ar-compare-dialog");
+  await comparison.waitFor();
+  const comparisonLabels = await comparison.getByTestId("ar-compare-label").allInnerTexts();
+  assert(comparisonLabels.some((label) => label.includes("Standard reference value")));
+  assert(comparisonLabels.some((label) => label.includes("Source paper: Agol et al. 2021")));
+  assert(comparisonLabels.some((label) => label.includes("±1σ range")));
+  await page.waitForFunction(() => document.querySelector("model-viewer")?.loaded === true);
+  const comparisonBytes = await page.evaluate(async () => {
+    const src = document.querySelector("model-viewer")?.src;
+    return src ? (await (await fetch(src)).arrayBuffer()).byteLength : 0;
+  });
+  assert(comparisonBytes > bytes, "comparison GLB should contain both bodies and their labels");
+  await page.screenshot({ path: `${outDir}ar-comparison.png` });
+  await page.keyboard.press("Escape");
+  await comparison.waitFor({ state: "detached" });
   await page.getByRole("button", { name: "Close planet properties" }).click();
-  console.log(`ar smoke: model built (${bytes} bytes), label honest, unavailable reason shown`);
+
+  await page.getByRole("cell").getByRole("button", { name: "TRAPPIST-1 e", exact: true }).click();
+  const missingCard = page.getByTestId("planet-card");
+  assert.equal(
+    await missingCard.getByRole("button", { name: "Compare with Earth in AR" }).isDisabled(),
+    true,
+  );
+  assert.equal(
+    await missingCard.getByTestId("ar-compare-unavailable").innerText(),
+    "Radius missing in the archive",
+  );
+  await page.getByRole("button", { name: "Close planet properties" }).click();
+  console.log(
+    `ar smoke: planet (${bytes} bytes) and Earth comparison (${comparisonBytes} bytes) built; labels, uncertainty, unsupported-device reason, and missing-radius guard shown`,
+  );
 }

@@ -3,7 +3,6 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { arUnavailableReason } from "./arSupport";
-import { planetGlb } from "./planetModel";
 
 type ViewerState =
   | { kind: "building" }
@@ -28,8 +27,16 @@ function configure(viewer: ModelViewerElement, src: string, alt: string) {
   viewer.append(slot);
 }
 
-/** Builds the planet's model and shows it in <model-viewer>, which hands off to the phone's AR. */
-export function ArViewer({ color, lines }: { color: string; lines: string[] }) {
+/** Builds a GLB and shows it in <model-viewer>, which hands off to the phone's AR. */
+export function ArViewer({
+  buildModel,
+  alt,
+  startLabel = "Place it in your room",
+}: {
+  buildModel: () => Promise<Blob>;
+  alt: string;
+  startLabel?: string;
+}) {
   const host = useRef<HTMLDivElement>(null);
   const viewer = useRef<ModelViewerElement | null>(null);
   const [state, setState] = useState<ViewerState>({ kind: "building" });
@@ -40,12 +47,12 @@ export function ArViewer({ color, lines }: { color: string; lines: string[] }) {
     const fail = (message: string) => {
       if (!cancelled) setState({ kind: "failed", message });
     };
-    void Promise.all([planetGlb(color, lines), import("@google/model-viewer")])
+    void Promise.all([buildModel(), import("@google/model-viewer")])
       .then(([blob]) => {
         if (cancelled || !host.current) return;
         url = URL.createObjectURL(blob);
         const element = document.createElement("model-viewer");
-        configure(element, url, `Schematic model of ${lines[0] ?? "the planet"}`);
+        configure(element, url, alt);
         element.addEventListener("load", () => {
           if (!cancelled) setState({ kind: "ready", arSupported: element.canActivateAR });
         });
@@ -68,13 +75,14 @@ export function ArViewer({ color, lines }: { color: string; lines: string[] }) {
       viewer.current = null;
       if (url) URL.revokeObjectURL(url);
     };
-  }, [color, lines]);
+  }, [alt, buildModel]);
 
   return (
     <div className="flex flex-col gap-3">
       <div ref={host} className="h-72 rounded-md bg-[#05060a]" data-testid="ar-model" />
       <ArStatus
         state={state}
+        startLabel={startLabel}
         onStart={() => {
           void viewer.current?.activateAR();
         }}
@@ -83,7 +91,15 @@ export function ArViewer({ color, lines }: { color: string; lines: string[] }) {
   );
 }
 
-function ArStatus({ state, onStart }: { state: ViewerState; onStart: () => void }) {
+function ArStatus({
+  state,
+  startLabel,
+  onStart,
+}: {
+  state: ViewerState;
+  startLabel: string;
+  onStart: () => void;
+}) {
   if (state.kind === "building") {
     return (
       <p className="flex items-center gap-2 text-sm text-muted-foreground" data-testid="ar-status">
@@ -107,7 +123,7 @@ function ArStatus({ state, onStart }: { state: ViewerState; onStart: () => void 
   }
   return (
     <Button onClick={onStart} data-testid="ar-start">
-      Place it in your room
+      {startLabel}
     </Button>
   );
 }

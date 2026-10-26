@@ -59,28 +59,41 @@ function labelTexture(lines: string[]): CanvasTexture {
   return texture(element);
 }
 
-export function buildPlanetGroup(color: string, lines: string[]): Group {
-  const group = new Group();
-  const sphere = new Mesh(
-    new SphereGeometry(SPHERE_RADIUS_M, 64, 32),
+/** A schematic gridded sphere shared by the single-planet and comparison models. */
+export function schematicSphere(radius: number, color: string): Mesh {
+  return new Mesh(
+    new SphereGeometry(radius, 64, 32),
     new MeshStandardMaterial({ map: surfaceTexture(color), roughness: 0.9, metalness: 0 }),
   );
-  sphere.position.y = SPHERE_RADIUS_M;
-  const labelHeight = (LABEL_WIDTH_M * LABEL_PX.height) / LABEL_PX.width;
-  const label = new Mesh(
-    new PlaneGeometry(LABEL_WIDTH_M, labelHeight),
+}
+
+/** A label plane whose text is baked into the exported model. */
+export function modelLabel(lines: string[], width = LABEL_WIDTH_M): Mesh {
+  const height = (width * LABEL_PX.height) / LABEL_PX.width;
+  return new Mesh(
+    new PlaneGeometry(width, height),
     new MeshBasicMaterial({ map: labelTexture(lines), transparent: true, side: DoubleSide }),
   );
-  label.position.y = SPHERE_RADIUS_M * 2 + 0.04 + labelHeight / 2;
+}
+
+/** Export any AR group as a binary glTF blob. */
+export async function groupGlb(group: Group): Promise<Blob> {
+  const result = await new GLTFExporter().parseAsync(group, { binary: true });
+  if (!(result instanceof ArrayBuffer)) throw new Error("GLTFExporter returned JSON, expected GLB");
+  return new Blob([result], { type: "model/gltf-binary" });
+}
+
+export function buildPlanetGroup(color: string, lines: string[]): Group {
+  const group = new Group();
+  const sphere = schematicSphere(SPHERE_RADIUS_M, color);
+  sphere.position.y = SPHERE_RADIUS_M;
+  const label = modelLabel(lines);
+  label.position.y = SPHERE_RADIUS_M * 2 + 0.04 + LABEL_WIDTH_M / 6;
   group.add(sphere, label);
   return group;
 }
 
 /** The planet model as a binary glTF blob, ready for <model-viewer>. */
 export async function planetGlb(color: string, lines: string[]): Promise<Blob> {
-  const result = await new GLTFExporter().parseAsync(buildPlanetGroup(color, lines), {
-    binary: true,
-  });
-  if (!(result instanceof ArrayBuffer)) throw new Error("GLTFExporter returned JSON, expected GLB");
-  return new Blob([result], { type: "model/gltf-binary" });
+  return groupGlb(buildPlanetGroup(color, lines));
 }

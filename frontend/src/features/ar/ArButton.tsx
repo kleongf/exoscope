@@ -1,5 +1,5 @@
 import { Box } from "lucide-react";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import type { Planet, System } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,12 +12,14 @@ import {
 } from "@/components/ui/dialog";
 import { ArViewer } from "./ArViewer";
 import { arLabelLines } from "./label";
+import { planetGlb } from "./planetModel";
 import { planetTint } from "./tint";
 
 /** "View in AR" for the selected planet: a schematic model the phone can place on a surface. */
 export function ArButton({ planet, system }: { planet: Planet; system: System }) {
   const lines = useMemo(() => arLabelLines(planet, system), [planet, system]);
   const { color } = planetTint(planet.equilibrium_temperature);
+  const buildModel = useCallback(() => planetGlb(color, lines), [color, lines]);
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -32,7 +34,7 @@ export function ArButton({ planet, system }: { planet: Planet; system: System })
             A schematic model, not a photograph. Walk around it and pinch to resize.
           </DialogDescription>
         </DialogHeader>
-        <ArViewer color={color} lines={lines} />
+        <ArViewer buildModel={buildModel} alt={`Schematic model of ${planet.name}`} />
         <ul className="text-xs text-muted-foreground" data-testid="ar-label">
           {lines.map((line) => (
             <li key={line}>{line}</li>

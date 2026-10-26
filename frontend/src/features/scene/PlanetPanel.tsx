@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArButton } from "@/features/ar/ArButton";
+import { EarthCompareButton } from "@/features/ar/EarthCompareButton";
 import { useExoStore } from "@/store/store";
 import { QuantityValue } from "./QuantityValue";
 import { provenanceLabel } from "./provenance";
@@ -73,8 +74,9 @@ export function PlanetPanel() {
           <p className="mt-3 text-xs text-muted-foreground">
             Source papers may differ between properties.
           </p>
-          <div className="mt-3">
+          <div className="mt-3 space-y-2">
             <ArButton planet={planet} system={system} />
+            <EarthCompareButton planet={planet} />
           </div>
         </CardContent>
       </Card>
