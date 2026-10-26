@@ -47,6 +47,8 @@ export interface SceneState {
 }
 export const DEFAULT_DAYS_PER_SECOND = 0.5;
 export interface ExoState extends SceneState, SampleState, ProjectState {
+  reportWriting: boolean;
+  reportError: string | null;
   loadedSystems: System[];
   /** Comparisons build up across the Project; the drawer shows the active one. */
   comparisons: SavedComparison[];
@@ -162,6 +164,8 @@ export const useExoStore = create<ExoState>()((set) => ({
   project: null,
   projects: [],
   projectError: null,
+  reportWriting: false,
+  reportError: null,
   setDrawerOpen: (drawerOpen) => {
     set({ drawerOpen });
   },

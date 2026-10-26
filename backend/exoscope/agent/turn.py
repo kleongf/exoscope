@@ -6,10 +6,17 @@ from exoscope.agent.models import ToolStep, TurnRequest, TurnResponse
 from exoscope.agent.runner import run_agent
 from exoscope.agent.timing import timed_step
 from exoscope.project import Project, ProjectError, ProjectStore, StepRecord, record_turn
+from exoscope.report.context import bind_project
+from exoscope.report.locking import PROJECT_WRITES
 from exoscope.voice import service as voice
 
 
 def handle_turn(request: TurnRequest, projects: ProjectStore | None = None) -> TurnResponse:
+    with PROJECT_WRITES:
+        return _handle_turn(request, projects)
+
+
+def _handle_turn(request: TurnRequest, projects: ProjectStore | None) -> TurnResponse:
     transcript = request.text or ""
     steps: list[ToolStep] = []
     if request.audio is not None:
@@ -34,7 +41,8 @@ def handle_turn(request: TurnRequest, projects: ProjectStore | None = None) -> T
         )
     project, unsaved = open_project(request.project_id, projects)
     current = request.current_system or (project.current_system if project else None)
-    result = run_agent(transcript, current)
+    with bind_project(project, projects, transcript, request.report_snapshot):
+        result = run_agent(transcript, current)
     response = TurnResponse(transcript=transcript, **result.model_dump())
     response.steps = steps + response.steps
     if unsaved:

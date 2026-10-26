@@ -103,6 +103,7 @@ export function OrbitScene(props: OrbitSceneProps) {
     <div className="flex h-full w-full flex-col" data-testid="orbit-scene">
       <div className="relative min-h-0 flex-1">
         <Canvas
+          gl={{ preserveDrawingBuffer: true }}
           camera={{ position: [0, 8.5, 13], fov: 45 }}
           onPointerMissed={() => {
             onSelectPlanet(null);

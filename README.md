@@ -49,3 +49,5 @@ Questions beyond archive coverage can request xAI Web search. Sources stay attac
 ```
 
 This runs backend checks/tests, regenerates API types, checks/builds the frontend, and launches a browser smoke exercise. Inspect `artifacts/smoke.png` and `artifacts/console.log` afterward. Browser fixtures exercise controlled scenarios; service smoke checks make separate live requests. Use `./scripts/verify --no-app` for checks without the browser exercise.
+
+Write scoped, immutable offline HTML Reports from the Project explorer or with a typed/voice request. See [Reports](docs/reports.md).

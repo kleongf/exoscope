@@ -62,6 +62,8 @@ def test_custom_declaration_does_not_mix_builtin_search() -> None:
         "search_catalog",
         "set_scene_view",
         "web_search",
+        "list_project_items",
+        "export_report",
     }
     assert tool.google_search is None
     web = next(item for item in declarations if item.name == "web_search")
